@@ -8,7 +8,9 @@ import {
 import {
   createObjectKey,
   extensionForMime,
-  getObjectStorage,
+  getPrivateObjectStorage,
+  getPublicObjectStorage,
+  objectKeyIncludesOwner,
   validateUpload,
   type ObjectStorage,
 } from "@khepree/storage";
@@ -22,7 +24,7 @@ import type {
 
 function mapMedia(
   row: typeof mediaAssets.$inferSelect,
-  storage: ObjectStorage,
+  publicStorage: ObjectStorage,
 ): MediaRecord {
   return {
     id: row.id,
@@ -40,7 +42,7 @@ function mapMedia(
     ownerType: row.ownerType,
     ownerId: row.ownerId,
     context: row.context,
-    publicUrl: row.visibility === "public" ? storage.publicUrl(row.objectKey) : null,
+    publicUrl: row.visibility === "public" ? publicStorage.publicUrl(row.objectKey) : null,
     createdAt: row.createdAt,
   };
 }
@@ -48,8 +50,13 @@ function mapMedia(
 export class MediaService {
   constructor(
     private db: Database = requireDb(),
-    private storage: ObjectStorage = getObjectStorage(),
+    private publicStorage: ObjectStorage = getPublicObjectStorage(),
+    private privateStorage: ObjectStorage = getPrivateObjectStorage(),
   ) {}
+
+  private storageFor(bucket: MediaVisibility): ObjectStorage {
+    return bucket === "public" ? this.publicStorage : this.privateStorage;
+  }
 
   async prepareUpload(input: PrepareMediaUploadInput): Promise<PrepareMediaUploadResult> {
     validateUpload({
@@ -58,17 +65,20 @@ export class MediaService {
       bucket: input.visibility,
     });
 
+    const storage = this.storageFor(input.visibility);
     const extension = extensionForMime(input.mimeType);
     const objectKey = createObjectKey({
       namespace: input.namespace,
       extension,
       visibility: input.visibility,
+      ownerId: input.ownerId ?? undefined,
     });
 
-    const presigned = await this.storage.createPresignedUpload({
+    const presigned = await storage.createPresignedUpload({
       key: objectKey,
       contentType: input.mimeType,
       bucket: input.visibility,
+      contentLength: input.sizeBytes,
     });
 
     return {
@@ -89,7 +99,8 @@ export class MediaService {
       bucket: input.bucket,
     });
 
-    const head = await this.storage.headObject(input.objectKey, input.bucket);
+    const storage = this.storageFor(input.bucket);
+    const head = await storage.headObject(input.objectKey, input.bucket);
     if (!head?.contentLength) {
       throw new Error("Uploaded object not found in storage");
     }
@@ -102,11 +113,15 @@ export class MediaService {
       throw new Error("Uploaded object MIME type does not match declared type");
     }
 
+    if (input.ownerId && !objectKeyIncludesOwner(input.objectKey, input.ownerId)) {
+      throw new Error("Uploaded object does not belong to this owner");
+    }
+
     const [row] = await this.db
       .insert(mediaAssets)
       .values({
         publicId: createPublicId("med"),
-        storageProvider: this.storage.provider === "r2" ? "r2" : "mock",
+        storageProvider: storage.provider === "r2" ? "r2" : "mock",
         bucket: input.bucket,
         objectKey: input.objectKey,
         mimeType: input.mimeType,
@@ -123,7 +138,7 @@ export class MediaService {
       .returning();
 
     if (!row) throw new Error("Failed to register media asset");
-    return mapMedia(row, this.storage);
+    return mapMedia(row, this.publicStorage);
   }
 
   async getByPublicId(publicId: string): Promise<MediaRecord | null> {
@@ -133,27 +148,20 @@ export class MediaService {
       .where(eq(mediaAssets.publicId, publicId))
       .limit(1);
 
-    return row ? mapMedia(row, this.storage) : null;
-  }
-
-  async createPrivateDownloadUrl(publicId: string): Promise<{ url: string; expiresAt: Date }> {
-    const media = await this.getByPublicId(publicId);
-    if (!media) throw new Error("Media not found");
-    if (media.visibility !== "private") {
-      throw new Error("Public media does not require a signed download URL");
-    }
-
-    const presigned = await this.storage.createPresignedDownload({
-      key: media.objectKey,
-      bucket: "private",
-    });
-
-    return { url: presigned.url, expiresAt: presigned.expiresAt };
+    return row ? mapMedia(row, this.publicStorage) : null;
   }
 }
 
-export function createMediaService(db?: Database, storage?: ObjectStorage): MediaService {
-  return new MediaService(db, storage);
+export function createMediaService(
+  db?: Database,
+  publicStorage?: ObjectStorage,
+  privateStorage?: ObjectStorage,
+): MediaService {
+  return new MediaService(
+    db,
+    publicStorage ?? getPublicObjectStorage(),
+    privateStorage ?? getPrivateObjectStorage(),
+  );
 }
 
 export type { MediaVisibility };

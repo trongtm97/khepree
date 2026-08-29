@@ -40,10 +40,6 @@ export type EntitlementSubjectType = "user" | "organization";
 
 export type CurrencyCode = string;
 
-/** Money stored as integer minor units + ISO currency code */
-export interface MoneyAmount {
-  amountMinor: number;
-  currency: CurrencyCode;
-}
+export type { MoneyAmount, MoneyMinor } from "./money";
 
 export type IntegrationStatus = "configured" | "not_configured" | "mock";

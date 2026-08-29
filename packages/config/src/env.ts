@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export type IntegrationStatus = "configured" | "not_configured" | "mock";
 
+export const DEFAULT_CURRENCY = "USD";
+
 const optionalUrl = z.string().url().optional().or(z.literal(""));
 
 const envSchema = z.object({
@@ -25,6 +27,9 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().optional(),
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
 
+  PAYMENT_PROVIDER: z.enum(["mock"]).default("mock"),
+  MOCK_PAYMENT_WEBHOOK_SECRET: z.string().optional(),
+
   APP_URL: optionalUrl,
   ACCOUNT_URL: optionalUrl,
   ADMIN_URL: optionalUrl,
@@ -47,7 +52,7 @@ export function isDatabaseConfigured(env: Env = getEnv()): boolean {
   return Boolean(env.DATABASE_URL && !env.DATABASE_URL.includes("CHANGE_ME"));
 }
 
-export function isStorageConfigured(env: Env = getEnv()): boolean {
+export function isPublicStorageConfigured(env: Env = getEnv()): boolean {
   return Boolean(
     env.R2_ACCOUNT_ID &&
       env.R2_ACCESS_KEY_ID &&
@@ -56,12 +61,30 @@ export function isStorageConfigured(env: Env = getEnv()): boolean {
   );
 }
 
+export function isPrivateStorageConfigured(env: Env = getEnv()): boolean {
+  return Boolean(
+    env.R2_ACCOUNT_ID &&
+      env.R2_ACCESS_KEY_ID &&
+      env.R2_SECRET_ACCESS_KEY &&
+      env.R2_BUCKET_PRIVATE,
+  );
+}
+
+/** Both buckets configured — required for staging/production storage. */
+export function isStorageConfigured(env: Env = getEnv()): boolean {
+  return isPublicStorageConfigured(env) && isPrivateStorageConfigured(env);
+}
+
 export function isEmailConfigured(env: Env = getEnv()): boolean {
   return Boolean(env.EMAIL_FROM && env.EMAIL_PROVIDER_API_KEY);
 }
 
 export function isLicenseSigningConfigured(env: Env = getEnv()): boolean {
   return Boolean(env.LICENSE_SIGNING_PRIVATE_KEY && env.LICENSE_SIGNING_PUBLIC_KEY);
+}
+
+export function isMockPaymentConfigured(env: Env = getEnv()): boolean {
+  return env.PAYMENT_PROVIDER === "mock";
 }
 
 export function integrationStatus(check: boolean): IntegrationStatus {

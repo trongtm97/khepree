@@ -12,6 +12,17 @@ describe("createObjectKey", () => {
     expect(key.startsWith("prv/releases/")).toBe(true);
   });
 
+  it("embeds owner segment when ownerId is set", () => {
+    const ownerId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const key = createObjectKey({
+      namespace: "releases",
+      extension: "zip",
+      visibility: "private",
+      ownerId,
+    });
+    expect(key).toMatch(/^prv\/releases\/aaaaaaaabbbbccccddddeeeeeeeeeeee\/[a-f0-9]{32}\.zip$/);
+  });
+
   it("rejects unsafe namespace", () => {
     expect(() => createObjectKey({ namespace: "../evil", extension: "jpg", visibility: "public" })).toThrow();
   });

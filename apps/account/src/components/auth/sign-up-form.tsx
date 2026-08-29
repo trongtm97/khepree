@@ -2,13 +2,16 @@
 
 import { Alert, Button, Checkbox, Input } from "@khepree/ui";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { attributeSignupAction } from "@/app/(auth)/actions";
 import { authClient } from "@/lib/auth-client";
 import { AUTH_ROUTES } from "@/lib/routes";
 
 export function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const ref = searchParams.get("ref") ?? "";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,12 +28,15 @@ export function SignUpForm() {
     setError(null);
     setLoading(true);
     const result = await authClient.signUp.email({ name, email, password });
-    setLoading(false);
-
     if (result.error) {
+      setLoading(false);
       setError(result.error.message ?? "Sign up failed");
       return;
     }
+    if (ref) {
+      await attributeSignupAction(ref);
+    }
+    setLoading(false);
 
     router.push(`${AUTH_ROUTES.verifyEmail}?email=${encodeURIComponent(email)}`);
     router.refresh();

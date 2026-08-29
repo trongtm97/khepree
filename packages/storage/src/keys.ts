@@ -9,6 +9,20 @@ export interface ObjectKeyInput {
   /** Derived from validated MIME — never from client filename. */
   extension: string;
   visibility: "public" | "private";
+  /** When set, the key includes this owner segment so complete cannot claim another actor's object. */
+  ownerId?: string;
+}
+
+export function objectKeyOwnerSegment(ownerId: string): string {
+  const compact = ownerId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 32);
+  if (compact.length < 8 || !SAFE_NAMESPACE.test(compact)) {
+    throw new Error("Invalid owner id for storage key");
+  }
+  return compact;
+}
+
+export function objectKeyIncludesOwner(objectKey: string, ownerId: string): boolean {
+  return objectKey.includes(`/${objectKeyOwnerSegment(ownerId)}/`);
 }
 
 /** Generate a non-guessable, URL-safe object key. */
@@ -22,6 +36,10 @@ export function createObjectKey(input: ObjectKeyInput): string {
 
   const id = randomBytes(16).toString("hex");
   const prefix = input.visibility === "public" ? "pub" : "prv";
+  if (input.ownerId) {
+    const owner = objectKeyOwnerSegment(input.ownerId);
+    return `${prefix}/${input.namespace}/${owner}/${id}.${input.extension}`;
+  }
   return `${prefix}/${input.namespace}/${id}.${input.extension}`;
 }
 

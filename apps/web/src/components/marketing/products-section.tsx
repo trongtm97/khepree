@@ -1,7 +1,7 @@
 import { EmptyState, Container } from "@khepree/ui";
 import { ProductCard } from "@/components/catalog/product-card";
 import type { Messages } from "@/lib/i18n/get-messages";
-import { getProductService } from "@/lib/catalog";
+import { getPublicProducts } from "@/lib/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
 
 export async function ProductsSection({
@@ -11,7 +11,7 @@ export async function ProductsSection({
   locale: SupportedLocale;
   messages: Messages;
 }) {
-  const products = await getProductService().listPublicProducts();
+  const products = await getPublicProducts(locale);
 
   return (
     <section id="products" className="py-16 lg:py-24">

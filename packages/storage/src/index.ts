@@ -9,12 +9,24 @@ export type {
   StorageBucket,
 } from "./types";
 
-export { createObjectKey, sanitizeClientFilename } from "./keys";
+export {
+  createObjectKey,
+  objectKeyIncludesOwner,
+  objectKeyOwnerSegment,
+  sanitizeClientFilename,
+} from "./keys";
 export { extensionForMime, validateUpload, UploadValidationError, UPLOAD_SIZE_LIMITS } from "./validation";
 export { MockObjectStorage } from "./mock-storage";
 export { S3ObjectStorage } from "./s3-storage";
 export {
+  StorageConfigurationError,
+  StorageInfrastructureError,
+  isObjectNotFoundError,
+} from "./errors";
+export {
   getObjectStorage,
+  getPublicObjectStorage,
+  getPrivateObjectStorage,
   getPublicStorage,
   getPrivateStorage,
   getStorageStatus,

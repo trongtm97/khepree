@@ -5,7 +5,7 @@ import { SessionList } from "@/components/security/session-list";
 export const metadata: Metadata = { title: "Sessions" };
 
 export default async function SessionsPage() {
-  const session = await requireSession();
+  await requireSession();
   const sessions = await listActiveSessions();
 
   return (
@@ -16,7 +16,7 @@ export default async function SessionsPage() {
           Devices where you are signed in to Khepree.
         </p>
       </header>
-      <SessionList sessions={sessions} currentToken={session.session.token} />
+      <SessionList sessions={sessions} />
     </div>
   );
 }

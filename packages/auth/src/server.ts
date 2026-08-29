@@ -22,9 +22,8 @@ const secret =
     ? undefined
     : "dev-only-secret-min-32-characters-long");
 
-export function createAuth() {
+export function createAuth(baseURL = getAuthBaseUrl()) {
   const db = requireDb();
-  const baseURL = getAuthBaseUrl();
 
   return betterAuth({
     baseURL,
@@ -90,7 +89,6 @@ export function createAuth() {
       },
     },
     plugins: [
-      nextCookies(),
       twoFactor({
         otpOptions: {
           sendOTP: async ({ user, otp }) => {
@@ -103,6 +101,7 @@ export function createAuth() {
           },
         },
       }),
+      nextCookies(),
     ],
     databaseHooks: {
       user: {
@@ -155,13 +154,16 @@ export function createAuth() {
   });
 }
 
-let authInstance: ReturnType<typeof createAuth> | null = null;
+const authByBase = new Map<string, ReturnType<typeof createAuth>>();
 
-export function getAuth() {
-  if (!authInstance) {
-    authInstance = createAuth();
+export function getAuth(baseURL?: string) {
+  const key = baseURL ?? getAuthBaseUrl();
+  let instance = authByBase.get(key);
+  if (!instance) {
+    instance = createAuth(key);
+    authByBase.set(key, instance);
   }
-  return authInstance;
+  return instance;
 }
 
 export type Auth = ReturnType<typeof createAuth>;

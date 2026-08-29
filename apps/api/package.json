@@ -11,9 +11,15 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@khepree/auth": "workspace:*",
     "@khepree/catalog": "workspace:*",
+    "@khepree/commerce": "workspace:*",
     "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
+    "@khepree/entitlement": "workspace:*",
+    "@khepree/licensing": "workspace:*",
+    "@khepree/reseller": "workspace:*",
+    "@khepree/security": "workspace:*",
     "@khepree/storage": "workspace:*",
     "@khepree/types": "workspace:*",
     "next": "^16.0.0",

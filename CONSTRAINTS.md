@@ -1,6 +1,6 @@
 # Constraints
 
-Last reviewed: 2026-08-29 — Khepree platform foundation
+Last reviewed: 2026-08-30 — Phase 12 production readiness
 
 Read this file before writing code. Do not weaken it to make a change pass.
 
@@ -39,7 +39,7 @@ Read this file before writing code. Do not weaken it to make a change pass.
 | Metric | Today | Direction |
 |--------|-------|-----------|
 | Test coverage | minimal (foundation) | must not fall |
-| E2E (Playwright) | not set up | add for critical flows |
+| E2E (Playwright) | `apps/e2e` — skipped unless `E2E=1` | `E2E=1 pnpm test:e2e` against local apps |
 
 ## Exceptions
 

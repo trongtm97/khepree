@@ -1,5 +1,20 @@
 import type { NextConfig } from "next";
-export default {
-  transpilePackages: ["@khepree/ui", "@khepree/config", "@khepree/catalog", "@khepree/db", "@khepree/storage"],
+
+const nextConfig: NextConfig = {
+  transpilePackages: [
+    "@khepree/ui",
+    "@khepree/auth",
+    "@khepree/config",
+    "@khepree/db",
+    "@khepree/catalog",
+    "@khepree/entitlement",
+    "@khepree/licensing",
+    "@khepree/commerce",
+    "@khepree/reseller",
+    "@khepree/security",
+    "@khepree/types",
+  ],
   poweredByHeader: false,
-} satisfies NextConfig;
+};
+
+export default nextConfig;

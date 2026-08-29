@@ -7,8 +7,10 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { plans, products } from "./catalog";
 import { timestamps } from "./_shared";
 
@@ -64,6 +66,8 @@ export const entitlements = pgTable(
   ],
 );
 
+export const licenseStatusEnum = pgEnum("license_status", ["active", "suspended", "revoked"]);
+
 export const licenses = pgTable(
   "licenses",
   {
@@ -72,31 +76,54 @@ export const licenses = pgTable(
     entitlementId: uuid("entitlement_id")
       .notNull()
       .references(() => entitlements.id, { onDelete: "restrict" }),
+    status: licenseStatusEnum("status").notNull().default("active"),
     keyHash: text("key_hash"),
+    keyPrefix: text("key_prefix"),
+    keyLast4: text("key_last4"),
     label: text("label"),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokedReason: text("revoked_reason"),
     ...timestamps,
   },
   (table) => [
     index("licenses_entitlement_id_idx").on(table.entitlementId),
     index("licenses_public_id_idx").on(table.publicId),
+    index("licenses_status_idx").on(table.status),
+    uniqueIndex("licenses_key_hash_unique")
+      .on(table.keyHash)
+      .where(sql`${table.keyHash} IS NOT NULL`),
   ],
 );
+
+export const deviceStatusEnum = pgEnum("device_status", ["active", "deactivated", "blocked"]);
 
 export const devices = pgTable(
   "devices",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     publicId: text("public_id").notNull().unique(),
-    fingerprint: text("fingerprint").notNull(),
+    principalType: principalTypeEnum("principal_type").notNull(),
+    principalId: text("principal_id").notNull(),
+    installationHash: text("installation_hash").notNull(),
     platform: text("platform"),
     name: text("name"),
+    status: deviceStatusEnum("status").notNull().default("active"),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
     ...timestamps,
   },
   (table) => [
-    unique("devices_fingerprint_unique").on(table.fingerprint),
-    index("devices_fingerprint_idx").on(table.fingerprint),
+    unique("devices_principal_installation_unique").on(
+      table.principalType,
+      table.principalId,
+      table.installationHash,
+    ),
+    index("devices_principal_idx").on(table.principalType, table.principalId),
+    index("devices_status_idx").on(table.status),
   ],
 );
+
+export const activationStatusEnum = pgEnum("activation_status", ["active", "deactivated"]);
 
 export const activations = pgTable(
   "activations",
@@ -108,6 +135,7 @@ export const activations = pgTable(
     deviceId: uuid("device_id")
       .notNull()
       .references(() => devices.id, { onDelete: "restrict" }),
+    status: activationStatusEnum("status").notNull().default("active"),
     activatedAt: timestamp("activated_at", { withTimezone: true }).notNull().defaultNow(),
     deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
     ...timestamps,
@@ -115,7 +143,9 @@ export const activations = pgTable(
   (table) => [
     index("activations_license_id_idx").on(table.licenseId),
     index("activations_device_id_idx").on(table.deviceId),
-    index("activations_active_lookup_idx").on(table.licenseId, table.deactivatedAt),
+    uniqueIndex("activations_active_license_device_unique")
+      .on(table.licenseId, table.deviceId)
+      .where(sql`${table.status} = 'active' AND ${table.deactivatedAt} IS NULL`),
   ],
 );
 
@@ -132,7 +162,10 @@ export const licenseLeases = pgTable(
     deviceId: uuid("device_id")
       .notNull()
       .references(() => devices.id, { onDelete: "restrict" }),
-    leaseToken: text("lease_token").notNull().unique(),
+    jti: text("jti").notNull().unique(),
+    leaseHash: text("lease_hash"),
+    schemaVersion: integer("schema_version").notNull().default(1),
+    keyId: text("key_id"),
     issuedAt: timestamp("issued_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     ...timestamps,
@@ -140,6 +173,7 @@ export const licenseLeases = pgTable(
   (table) => [
     index("license_leases_license_id_idx").on(table.licenseId),
     index("license_leases_device_id_idx").on(table.deviceId),
+    index("license_leases_jti_idx").on(table.jti),
   ],
 );
 

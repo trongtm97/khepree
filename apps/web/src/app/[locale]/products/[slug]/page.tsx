@@ -3,12 +3,13 @@ import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ProductDetailSections } from "@/components/catalog/product-detail-sections";
 import { getMessages } from "@/lib/i18n/get-messages";
-import { getProductService } from "@/lib/catalog";
+import { getPublicProductBySlug } from "@/lib/catalog";
 import { breadcrumbJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
 import { createPageMetadata, siteUrl } from "@/lib/seo/metadata";
+import { accountPublicUrl } from "@/lib/urls";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -18,7 +19,7 @@ export async function generateMetadata({
   const { locale: raw, slug } = await params;
   if (!isSupportedLocale(raw)) return {};
 
-  const product = await getProductService().getPublicProductBySlug(slug);
+  const product = await getPublicProductBySlug(slug, raw);
   if (!product) return {};
 
   return createPageMetadata({
@@ -39,7 +40,7 @@ export default async function ProductDetailPage({
 
   const locale: SupportedLocale = raw;
   const messages = getMessages(locale);
-  const product = await getProductService().getPublicProductBySlug(slug);
+  const product = await getPublicProductBySlug(slug, raw);
   if (!product) notFound();
 
   const path = localePath(locale, `/products/${slug}`);
@@ -77,7 +78,12 @@ export default async function ProductDetailPage({
           <Breadcrumbs items={breadcrumbs} />
         </div>
       </div>
-      <ProductDetailSections product={product} locale={locale} messages={messages} />
+      <ProductDetailSections
+        product={product}
+        locale={locale}
+        messages={messages}
+        accountUrl={accountPublicUrl()}
+      />
     </>
   );
 }

@@ -68,7 +68,7 @@ describe("requireSession", () => {
     const session = await requireSession();
 
     expect(session.user.email).toBe("a@example.com");
-    expect(session.session.token).toBe("tok");
+    expect(session.session.id).toBe("s1");
   });
 });
 

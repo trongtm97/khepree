@@ -1,4 +1,6 @@
+import { getSession } from "@khepree/auth/session";
 import { createMediaService } from "@khepree/catalog";
+import { RATE_LIMITS, enforceRateLimit } from "@khepree/security";
 import { UploadValidationError } from "@khepree/storage";
 import { jsonError, jsonOk, getRequestId } from "@/lib/api-response";
 
@@ -6,7 +8,15 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const requestId = getRequestId(request);
-  const body = (await request.json()) as Record<string, unknown>;
+  const limited = enforceRateLimit(request, RATE_LIMITS.MEDIA);
+  if (limited) return limited;
+
+  const session = await getSession();
+  if (!session) {
+    return jsonError("UNAUTHORIZED", "Authentication required", 401, requestId);
+  }
+
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
   const mimeType = typeof body.mimeType === "string" ? body.mimeType : "";
   const sizeBytes = typeof body.sizeBytes === "number" ? body.sizeBytes : 0;
@@ -26,6 +36,8 @@ export async function POST(request: Request) {
       visibility,
       namespace,
       context,
+      ownerType: "user",
+      ownerId: session.user.id,
     });
     return jsonOk(result, requestId);
   } catch (err) {

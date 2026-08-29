@@ -8,6 +8,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getEnv } from "@khepree/config";
 import type { IntegrationStatus } from "@khepree/types";
+import { isObjectNotFoundError, StorageConfigurationError, StorageInfrastructureError } from "./errors";
 import type {
   HeadObjectResult,
   ObjectStorage,
@@ -22,117 +23,165 @@ import type {
 const DEFAULT_UPLOAD_TTL = 900;
 const DEFAULT_DOWNLOAD_TTL = 300;
 
-/** S3-compatible adapter — used with Cloudflare R2 in production. */
+/** S3-compatible adapter scoped to one logical bucket — no public/private fallback. */
 export class S3ObjectStorage implements ObjectStorage {
   readonly provider = "r2";
   readonly status: IntegrationStatus = "configured";
 
   private client: S3Client;
-  private publicBucket: string;
-  private privateBucket: string;
-  private publicBaseUrl: string;
+  private readonly bucketName: string;
+  readonly bucketKind: StorageBucket;
 
-  constructor() {
+  constructor(bucketKind: StorageBucket) {
     const env = getEnv();
-    this.publicBucket = env.R2_BUCKET_PUBLIC!;
-    this.privateBucket = env.R2_BUCKET_PRIVATE ?? env.R2_BUCKET_PUBLIC!;
-    this.publicBaseUrl = env.R2_PUBLIC_BASE_URL ?? "";
+    this.bucketKind = bucketKind;
+
+    if (bucketKind === "private") {
+      if (!env.R2_BUCKET_PRIVATE) {
+        throw new StorageConfigurationError("R2_BUCKET_PRIVATE is required for private storage");
+      }
+      this.bucketName = env.R2_BUCKET_PRIVATE;
+    } else {
+      if (!env.R2_BUCKET_PUBLIC) {
+        throw new StorageConfigurationError("R2_BUCKET_PUBLIC is required for public storage");
+      }
+      this.bucketName = env.R2_BUCKET_PUBLIC;
+    }
+
+    if (!env.R2_ACCOUNT_ID || !env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY) {
+      throw new StorageConfigurationError("R2 credentials are incomplete");
+    }
 
     this.client = new S3Client({
       region: "auto",
       endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: env.R2_ACCESS_KEY_ID!,
-        secretAccessKey: env.R2_SECRET_ACCESS_KEY!,
+        accessKeyId: env.R2_ACCESS_KEY_ID,
+        secretAccessKey: env.R2_SECRET_ACCESS_KEY,
       },
     });
   }
 
-  private resolveBucketName(bucket: StorageBucket): string {
-    return bucket === "private" ? this.privateBucket : this.publicBucket;
+  private assertBucket(requested: StorageBucket): void {
+    if (requested !== this.bucketKind) {
+      throw new StorageConfigurationError(
+        `Storage instance for ${this.bucketKind} bucket cannot serve ${requested} requests`,
+      );
+    }
   }
 
   async putObject(input: PutObjectInput): Promise<{ key: string; etag?: string }> {
-    const res = await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.resolveBucketName(input.bucket),
-        Key: input.key,
-        Body: input.body,
-        ContentType: input.contentType,
-      }),
-    );
-    return { key: input.key, etag: res.ETag };
+    this.assertBucket(input.bucket);
+    try {
+      const res = await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: input.key,
+          Body: input.body,
+          ContentType: input.contentType,
+        }),
+      );
+      return { key: input.key, etag: res.ETag };
+    } catch (error) {
+      throw new StorageInfrastructureError("Failed to put object", error);
+    }
   }
 
   async getObject(key: string, bucket: StorageBucket): Promise<Buffer | null> {
+    this.assertBucket(bucket);
     try {
       const res = await this.client.send(
-        new GetObjectCommand({ Bucket: this.resolveBucketName(bucket), Key: key }),
+        new GetObjectCommand({ Bucket: this.bucketName, Key: key }),
       );
       const bytes = await res.Body?.transformToByteArray();
       return bytes ? Buffer.from(bytes) : null;
-    } catch {
-      return null;
+    } catch (error) {
+      if (isObjectNotFoundError(error)) return null;
+      throw new StorageInfrastructureError("Failed to get object", error);
     }
   }
 
   async deleteObject(key: string, bucket: StorageBucket): Promise<void> {
-    await this.client.send(
-      new DeleteObjectCommand({ Bucket: this.resolveBucketName(bucket), Key: key }),
-    );
+    this.assertBucket(bucket);
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({ Bucket: this.bucketName, Key: key }),
+      );
+    } catch (error) {
+      throw new StorageInfrastructureError("Failed to delete object", error);
+    }
   }
 
   async headObject(key: string, bucket: StorageBucket): Promise<HeadObjectResult | null> {
+    this.assertBucket(bucket);
     try {
       const res = await this.client.send(
-        new HeadObjectCommand({ Bucket: this.resolveBucketName(bucket), Key: key }),
+        new HeadObjectCommand({ Bucket: this.bucketName, Key: key }),
       );
       return {
         contentType: res.ContentType,
         contentLength: res.ContentLength,
         etag: res.ETag,
       };
-    } catch {
-      return null;
+    } catch (error) {
+      if (isObjectNotFoundError(error)) return null;
+      throw new StorageInfrastructureError("Failed to head object", error);
     }
   }
 
   async createPresignedUpload(input: PresignUploadInput): Promise<PresignedUpload> {
+    this.assertBucket(input.bucket);
     const expiresIn = input.expiresInSeconds ?? DEFAULT_UPLOAD_TTL;
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
-    const command = new PutObjectCommand({
-      Bucket: this.resolveBucketName(input.bucket),
-      Key: input.key,
-      ContentType: input.contentType,
-    });
-    const url = await getSignedUrl(this.client, command, { expiresIn });
-    return {
-      url,
-      key: input.key,
-      bucket: input.bucket,
-      expiresAt,
-      headers: { "Content-Type": input.contentType },
-    };
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: input.key,
+        ContentType: input.contentType,
+        ...(typeof input.contentLength === "number" ? { ContentLength: input.contentLength } : {}),
+      });
+      const url = await getSignedUrl(this.client, command, { expiresIn });
+      const headers: Record<string, string> = { "Content-Type": input.contentType };
+      if (typeof input.contentLength === "number") {
+        headers["Content-Length"] = String(input.contentLength);
+      }
+      return {
+        url,
+        key: input.key,
+        bucket: input.bucket,
+        expiresAt,
+        headers,
+      };
+    } catch (error) {
+      throw new StorageInfrastructureError("Failed to create presigned upload", error);
+    }
   }
 
   async createPresignedDownload(input: PresignDownloadInput): Promise<PresignedDownload> {
+    this.assertBucket(input.bucket);
     const expiresIn = input.expiresInSeconds ?? DEFAULT_DOWNLOAD_TTL;
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
-    const command = new GetObjectCommand({
-      Bucket: this.resolveBucketName(input.bucket),
-      Key: input.key,
-    });
-    const url = await getSignedUrl(this.client, command, { expiresIn });
-    return {
-      url,
-      key: input.key,
-      bucket: input.bucket,
-      expiresAt,
-    };
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: input.key,
+      });
+      const url = await getSignedUrl(this.client, command, { expiresIn });
+      return {
+        url,
+        key: input.key,
+        bucket: input.bucket,
+        expiresAt,
+      };
+    } catch (error) {
+      throw new StorageInfrastructureError("Failed to create presigned download", error);
+    }
   }
 
   publicUrl(key: string): string | null {
-    if (!this.publicBaseUrl) return null;
-    return `${this.publicBaseUrl.replace(/\/$/, "")}/${key}`;
+    if (this.bucketKind !== "public") return null;
+    const env = getEnv();
+    if (!env.R2_PUBLIC_BASE_URL) return null;
+    return `${env.R2_PUBLIC_BASE_URL.replace(/\/$/, "")}/${key}`;
   }
 }

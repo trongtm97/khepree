@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -7,8 +8,10 @@ import {
   pgTable,
   text,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { timestamps } from "./_shared";
 import { mediaAssets } from "./content";
 
@@ -38,19 +41,14 @@ export const featureValueTypeEnum = pgEnum("feature_value_type", [
   "string",
 ]);
 
+/** Non-localized product identity — commercial text lives in product_translations. */
 export const products = pgTable(
   "products",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     publicId: text("public_id").notNull().unique(),
     slug: text("slug").notNull().unique(),
-    name: text("name").notNull(),
     status: productStatusEnum("status").notNull().default("draft"),
-    shortDescription: text("short_description"),
-    description: text("description"),
-    content: text("content"),
-    seoTitle: text("seo_title"),
-    seoDescription: text("seo_description"),
     iconMediaId: uuid("icon_media_id").references(() => mediaAssets.id, { onDelete: "set null" }),
     platformCapabilities: jsonb("platform_capabilities")
       .$type<ProductPlatform[]>()
@@ -66,6 +64,29 @@ export const products = pgTable(
   ],
 );
 
+export const productTranslations = pgTable(
+  "product_translations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    locale: text("locale").notNull(),
+    name: text("name").notNull(),
+    shortDescription: text("short_description"),
+    description: text("description"),
+    content: text("content"),
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    ...timestamps,
+  },
+  (table) => [
+    unique("product_translation_product_locale_unique").on(table.productId, table.locale),
+    index("product_translations_product_id_idx").on(table.productId),
+    index("product_translations_locale_idx").on(table.locale),
+  ],
+);
+
 export const plans = pgTable(
   "plans",
   {
@@ -75,7 +96,6 @@ export const plans = pgTable(
       .notNull()
       .references(() => products.id, { onDelete: "restrict" }),
     slug: text("slug").notNull(),
-    name: text("name").notNull(),
     billingType: planBillingTypeEnum("billing_type").notNull().default("free"),
     status: planStatusEnum("status").notNull().default("draft"),
     ...timestamps,
@@ -87,12 +107,29 @@ export const plans = pgTable(
   ],
 );
 
+export const planTranslations = pgTable(
+  "plan_translations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => plans.id, { onDelete: "cascade" }),
+    locale: text("locale").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    ...timestamps,
+  },
+  (table) => [
+    unique("plan_translation_plan_locale_unique").on(table.planId, table.locale),
+    index("plan_translations_plan_id_idx").on(table.planId),
+  ],
+);
+
 export const features = pgTable(
   "features",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     key: text("key").notNull().unique(),
-    name: text("name").notNull(),
     valueType: featureValueTypeEnum("value_type").notNull(),
     description: text("description"),
     ...timestamps,
@@ -100,6 +137,25 @@ export const features = pgTable(
   (table) => [index("features_key_idx").on(table.key)],
 );
 
+export const featureTranslations = pgTable(
+  "feature_translations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "cascade" }),
+    locale: text("locale").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    ...timestamps,
+  },
+  (table) => [
+    unique("feature_translation_feature_locale_unique").on(table.featureId, table.locale),
+    index("feature_translations_feature_id_idx").on(table.featureId),
+  ],
+);
+
+/** Canonical feature type is features.valueType — plan_features stores values only. */
 export const planFeatures = pgTable(
   "plan_features",
   {
@@ -110,7 +166,6 @@ export const planFeatures = pgTable(
     featureId: uuid("feature_id")
       .notNull()
       .references(() => features.id, { onDelete: "restrict" }),
-    valueType: featureValueTypeEnum("value_type").notNull(),
     booleanValue: boolean("boolean_value"),
     integerValue: integer("integer_value"),
     stringValue: text("string_value"),
@@ -132,7 +187,7 @@ export const prices = pgTable(
       .references(() => plans.id, { onDelete: "restrict" }),
     currency: text("currency").notNull(),
     region: text("region"),
-    amountMinor: integer("amount_minor").notNull(),
+    amountMinor: bigint("amount_minor", { mode: "bigint" }).notNull(),
     interval: text("interval"),
     isActive: boolean("is_active").notNull().default(true),
     ...timestamps,
@@ -140,5 +195,13 @@ export const prices = pgTable(
   (table) => [
     index("prices_plan_id_idx").on(table.planId),
     index("prices_active_idx").on(table.isActive),
+    uniqueIndex("prices_active_identity_unique")
+      .on(
+        table.planId,
+        table.currency,
+        sql`COALESCE(${table.region}, '')`,
+        sql`COALESCE(${table.interval}, '')`,
+      )
+      .where(sql`${table.isActive} = true`),
   ],
 );

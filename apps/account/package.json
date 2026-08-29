@@ -13,8 +13,13 @@
   "dependencies": {
     "@khepree/auth": "workspace:*",
     "@khepree/catalog": "workspace:*",
+    "@khepree/commerce": "workspace:*",
     "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
+    "@khepree/entitlement": "workspace:*",
+    "@khepree/licensing": "workspace:*",
+    "@khepree/reseller": "workspace:*",
+    "@khepree/security": "workspace:*",
     "@khepree/ui": "workspace:*",
     "better-auth": "^1.3.7",
     "geist": "^1.4.2",

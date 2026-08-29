@@ -1,6 +1,8 @@
 export {
   ContentService,
   createContentService,
+  bodyObjectKeyFor,
+  nextContentVersionNumber,
   sha256Hex,
   type ContentStatus,
 } from "./content/service";
@@ -14,6 +16,7 @@ export type {
   ContentType,
   ContentVersionRecord,
   CreateDraftInput,
+  CreateDraftVersionInput,
   PublishedContent,
   UpdateContentInput,
 } from "./content/types";
@@ -27,9 +30,31 @@ export type {
 } from "./content/types";
 
 export {
+  DownloadService,
+  createDownloadService,
+  defaultDownloadAccessPolicy,
+  type DownloadAccessPolicy,
+  type DownloadAuthorizationContext,
+  productIdFromMediaContext,
+} from "./download/service";
+
+export {
   ProductService,
   createProductService,
 } from "./product/service";
+export {
+  CatalogAdminService,
+  CatalogError,
+  createCatalogAdminService,
+  isCatalogError,
+  rejectIfReferenced,
+} from "./product/admin";
+export {
+  buildProductRevalidationPlan,
+  productRevalidationPaths,
+  productRevalidationTags,
+  type ProductRevalidationPlan,
+} from "./product/revalidation";
 export {
   PlanFeatureSet,
   mapPlanFeatureRow,
@@ -54,4 +79,6 @@ export type {
   PublicPrice,
   PublicProductDetail,
   PublicProductSummary,
+  PurchasableOffer,
 } from "./product/types";
+export { isPurchasableBillingType } from "./product/types";

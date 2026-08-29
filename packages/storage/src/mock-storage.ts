@@ -62,7 +62,12 @@ export class MockObjectStorage implements ObjectStorage {
       key: input.key,
       bucket: input.bucket,
       expiresAt,
-      headers: { "Content-Type": input.contentType },
+      headers: {
+        "Content-Type": input.contentType,
+        ...(typeof input.contentLength === "number"
+          ? { "Content-Length": String(input.contentLength) }
+          : {}),
+      },
     };
   }
 

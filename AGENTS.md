@@ -5,7 +5,7 @@ Read `CONSTRAINTS.md` before writing code. Do not weaken it to make a change pas
 ## Project
 
 Global software ecosystem — monorepo at `khepree.com` and related domains.
-See `docs/ARCHITECTURE.md` for domain map and package boundaries.
+See `docs/ARCHITECTURE.md` for domain map, phase status, and package boundaries.
 
 ## Commands
 
@@ -17,7 +17,7 @@ pnpm typecheck
 pnpm lint
 pnpm test
 pnpm build
-pnpm db:push          # Requires DATABASE_URL
+pnpm db:migrate       # Requires DATABASE_URL
 pnpm db:seed
 ```
 
@@ -28,17 +28,33 @@ pnpm db:seed
 - Better Auth (identity only)
 - pnpm workspaces + Turborepo
 
+## Phase status (do not skip)
+
+- **Phases 01–06:** complete
+- **Phase 06.5:** architecture hardening — complete
+- **Phase 07:** commerce — complete
+- **Phase 08:** entitlement + licensing — complete
+- **Phase 09:** partner + reseller platform — complete
+- **Phase 10:** admin control center — complete
+- **Phase 11:** production security, testing, observability — complete
+- **Phase 12:** final production readiness (docs, CI, public IA) — complete; **not** a production-ready claim
+
+Packages already implemented: `@khepree/auth`, `@khepree/catalog`, `@khepree/commerce`, `@khepree/storage`, `@khepree/db`, `@khepree/ui`, `@khepree/config`, `@khepree/security`, `@khepree/entitlement`, `@khepree/licensing`, `@khepree/reseller`, `@khepree/sdk`.
+
+Ops docs: `docs/DEPLOYMENT.md`, `docs/ENVIRONMENTS.md`, `docs/PRODUCTION-STATUS.md`.
+
+Later phases: TBD.
+
 ## Skills workflow
 
 Route work through `.agents/skills/using-agent-skills/SKILL.md`.
-
-Installed packs:
-- **addyosmani/agent-skills** — spec, plan, build, test, review, ship
-- **caveman / ponytail** — token efficiency, minimal code
 
 ## Non-negotiables
 
 - Server Components first; `"use client"` only when needed
 - Feature-based entitlement, never `if (plan === "PRO")`
 - No secrets in browser bundle
+- Money: BIGINT minor units + ISO currency
+- Private R2 bucket never falls back to public
+- i18n via translation tables, not `name_en` columns
 - Only implement the requested phase — do not skip ahead

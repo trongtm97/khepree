@@ -8,6 +8,21 @@ import { ValueStrip } from "@/components/marketing/value-strip";
 import { WhySection } from "@/components/marketing/why-section";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, type SupportedLocale } from "@/lib/i18n/config";
+import { createPageMetadata } from "@/lib/seo/metadata";
+
+export const revalidate = 3600;
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  if (!isSupportedLocale(raw)) return {};
+  const messages = getMessages(raw);
+  return createPageMetadata({
+    locale: raw,
+    title: messages.meta.siteName,
+    description: messages.meta.defaultDescription,
+    path: "/",
+  });
+}
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -22,7 +37,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <ValueStrip messages={messages} />
       <ProductsSection locale={locale} messages={messages} />
       <WhySection messages={messages} />
-      <AudienceSection messages={messages} />
+      <AudienceSection locale={locale} messages={messages} />
       <PhilosophySection messages={messages} />
       <GlobalSection messages={messages} />
       <CtaSection locale={locale} messages={messages} />

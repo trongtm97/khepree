@@ -2,6 +2,7 @@ import type { PublicPlan } from "@khepree/catalog";
 import {
   formatBillingInterval,
   formatPriceAmount,
+  isPurchasableBillingType,
   selectDisplayPrice,
 } from "@khepree/catalog";
 import { Badge, Card, CardDescription, CardTitle } from "@khepree/ui";
@@ -33,14 +34,20 @@ export function PricingPlanCard({
   locale,
   messages,
   preferredCurrency,
+  accountUrl,
 }: {
   plan: PublicPlan;
   locale: SupportedLocale;
   messages: Messages;
   preferredCurrency?: string;
+  accountUrl?: string;
 }) {
   const price = selectDisplayPrice(plan.prices, { currency: preferredCurrency });
   const interval = price ? formatBillingInterval(price.interval, locale) : null;
+  const checkoutHref =
+    accountUrl && price && isPurchasableBillingType(plan.billingType)
+      ? `${accountUrl}/checkout?plan=${encodeURIComponent(plan.publicId)}&price=${encodeURIComponent(price.publicId)}`
+      : null;
 
   return (
     <Card className="flex h-full flex-col">
@@ -75,6 +82,21 @@ export function PricingPlanCard({
         </ul>
       ) : (
         <CardDescription className="mt-6">{messages.catalog.noFeaturesListed}</CardDescription>
+      )}
+
+      {checkoutHref ? (
+        <div className="mt-auto pt-6">
+          <a
+            href={checkoutHref}
+            className="inline-flex h-11 w-full items-center justify-center rounded-[var(--radius-button)] bg-khepree-teal px-5 text-sm font-medium text-khepree-white shadow-sm shadow-khepree-teal/20 transition-colors hover:bg-khepree-teal/90"
+          >
+            {messages.catalog.checkout}
+          </a>
+        </div>
+      ) : plan.pricingMode === "contact_sales" ? (
+        <p className="mt-auto pt-6 text-sm font-medium text-khepree-slate/70">{messages.catalog.contactSales}</p>
+      ) : (
+        <div className="mt-auto" />
       )}
     </Card>
   );

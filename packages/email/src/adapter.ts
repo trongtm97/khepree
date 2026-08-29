@@ -7,6 +7,16 @@ export class DevPreviewEmailAdapter implements EmailAdapter {
 
   async send(input: SendEmailInput): Promise<{ id: string }> {
     const id = crypto.randomUUID();
+    if (process.env.NODE_ENV === "production") {
+      console.info(
+        JSON.stringify({
+          event: "email_dev_preview_blocked",
+          to: "[REDACTED]",
+          subject: input.subject,
+        }),
+      );
+      return { id };
+    }
     console.info("\n[khepree:email:dev-preview] ─────────────────────────");
     console.info("Status: NOT SENT (development preview only)");
     console.info(`To: ${input.to}`);

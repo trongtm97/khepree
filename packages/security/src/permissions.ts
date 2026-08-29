@@ -7,31 +7,60 @@ export type Permission =
   | "finance.read"
   | "finance.write"
   | "support.read"
+  | "catalog.read"
+  | "catalog.write"
+  | "content.read"
+  | "content.write"
+  | "entitlement.read"
+  | "entitlement.admin"
+  | "partner.admin"
   | "partner.access"
   | "partner.manage"
   | "org.manage"
   | "org.billing"
   | `feature.${FeatureKey}`;
 
+const SUPPORT_PERMISSIONS = [
+  "admin.access",
+  "admin.users.read",
+  "support.read",
+  "catalog.read",
+  "content.read",
+  "entitlement.read",
+] as const satisfies readonly Permission[];
+
+const FINANCE_PERMISSIONS = [
+  "admin.access",
+  "finance.read",
+  "finance.write",
+] as const satisfies readonly Permission[];
+
+const ADMIN_PERMISSIONS = [
+  "admin.access",
+  "admin.users.read",
+  "admin.users.write",
+  "finance.read",
+  "support.read",
+  "catalog.read",
+  "catalog.write",
+  "content.read",
+  "content.write",
+  "entitlement.read",
+  "entitlement.admin",
+  "partner.admin",
+] as const satisfies readonly Permission[];
+
+const SUPER_ADMIN_PERMISSIONS = [
+  ...ADMIN_PERMISSIONS,
+  "finance.write",
+] as const satisfies readonly Permission[];
+
 const GLOBAL_ROLE_PERMISSIONS: Record<GlobalRole, readonly Permission[]> = {
   USER: [],
-  SUPPORT: ["support.read", "admin.access"],
-  FINANCE: ["finance.read", "finance.write", "admin.access"],
-  ADMIN: [
-    "admin.access",
-    "admin.users.read",
-    "admin.users.write",
-    "finance.read",
-    "support.read",
-  ],
-  SUPER_ADMIN: [
-    "admin.access",
-    "admin.users.read",
-    "admin.users.write",
-    "finance.read",
-    "finance.write",
-    "support.read",
-  ],
+  SUPPORT: SUPPORT_PERMISSIONS,
+  FINANCE: FINANCE_PERMISSIONS,
+  ADMIN: ADMIN_PERMISSIONS,
+  SUPER_ADMIN: SUPER_ADMIN_PERMISSIONS,
 };
 
 const ORG_ROLE_PERMISSIONS: Record<OrgRole, readonly Permission[]> = {
@@ -76,6 +105,10 @@ export function permissionsForContext(ctx: PermissionContext): Set<Permission> {
 
 export function hasPermission(ctx: PermissionContext, permission: Permission): boolean {
   return permissionsForContext(ctx).has(permission);
+}
+
+export function hasAnyPermission(ctx: PermissionContext, permissions: readonly Permission[]): boolean {
+  return permissions.some((permission) => hasPermission(ctx, permission));
 }
 
 export function hasFeature(ctx: PermissionContext, feature: FeatureKey): boolean {

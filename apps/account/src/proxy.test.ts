@@ -17,11 +17,31 @@ describe("account proxy", () => {
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toContain("/sign-in");
     expect(res.headers.get("location")).toContain("next=%2Fdashboard");
+    expect(res.headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
   });
 
   it("redirects authenticated users away from sign-in", () => {
     const res = proxy(request("/sign-in", "session-token"));
     expect(res.headers.get("location")).toContain("/dashboard");
+  });
+
+  it("redirects unauthenticated checkout with query as a safe return path", () => {
+    const res = proxy(request("/checkout?plan=abc&price=def"));
+    expect(res.status).toBe(307);
+    const location = res.headers.get("location") ?? "";
+    expect(location).toContain("/sign-in");
+    expect(location).toContain("next=");
+    expect(decodeURIComponent(new URL(location).searchParams.get("next") ?? "")).toBe(
+      "/checkout?plan=abc&price=def",
+    );
+  });
+
+  it("sends authenticated users on sign-in to the safe next path", () => {
+    const res = proxy(request("/sign-in?next=%2Fcheckout%3Fplan%3Dabc", "session-token"));
+    const location = res.headers.get("location") ?? "";
+    expect(location).toContain("/checkout");
+    expect(location).toContain("plan=abc");
   });
 
   it("allows reset-password while authenticated", () => {

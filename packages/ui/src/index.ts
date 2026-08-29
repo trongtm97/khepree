@@ -14,6 +14,7 @@ export { Tabs, type TabItem } from "./components/tabs";
 export { Alert } from "./components/alert";
 export { Skeleton } from "./components/skeleton";
 export { EmptyState } from "./components/empty-state";
+export { ErrorScreen } from "./components/error-screen";
 export { PageHeader } from "./components/page-header";
 export { Container } from "./components/container";
 export { PublicShell } from "./shells/public-shell";

@@ -4,34 +4,28 @@ import { Alert, Button, Card, CardDescription, CardTitle } from "@khepree/ui";
 import type { SessionRow } from "@khepree/auth/session";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { revokeOtherSessionsAction, revokeSessionAction } from "@/lib/session-actions";
 
-export function SessionList({
-  sessions: initialSessions,
-  currentToken,
-}: {
-  sessions: SessionRow[];
-  currentToken: string;
-}) {
+export function SessionList({ sessions: initialSessions }: { sessions: SessionRow[] }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   async function revokeOthers() {
-    const result = await authClient.revokeOtherSessions();
-    if (result.error) {
-      setError(result.error.message ?? "Could not revoke sessions");
-      return;
+    try {
+      await revokeOtherSessionsAction();
+      router.refresh();
+    } catch {
+      setError("Could not revoke sessions");
     }
-    router.refresh();
   }
 
-  async function revokeOne(token: string) {
-    const result = await authClient.revokeSession({ token });
-    if (result.error) {
-      setError(result.error.message ?? "Could not revoke session");
-      return;
+  async function revokeOne(sessionId: string) {
+    try {
+      await revokeSessionAction(sessionId);
+      router.refresh();
+    } catch {
+      setError("Could not revoke session");
     }
-    router.refresh();
   }
 
   return (
@@ -45,7 +39,7 @@ export function SessionList({
       {error ? <Alert variant="error">{error}</Alert> : null}
       <ul className="space-y-3">
         {initialSessions.map((session) => {
-          const isCurrent = session.token === currentToken;
+          const isCurrent = Boolean(session.isCurrent);
           return (
             <li key={session.id}>
               <Card className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -59,7 +53,12 @@ export function SessionList({
                   </CardDescription>
                 </div>
                 {!isCurrent ? (
-                  <Button type="button" variant="ghost" size="sm" onClick={() => void revokeOne(session.token)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void revokeOne(session.id)}
+                  >
                     Revoke
                   </Button>
                 ) : (

@@ -113,9 +113,30 @@ export const userProfiles = pgTable(
     globalRole: globalRoleEnum("global_role").notNull().default("USER"),
     locale: text("locale").notNull().default("en"),
     timezone: text("timezone"),
+    suspendedAt: timestamp("suspended_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [index("user_profiles_global_role_idx").on(table.globalRole)],
+);
+
+export const legalDocumentTypeEnum = pgEnum("legal_document_type", ["TERMS", "PRIVACY"]);
+
+export const userConsents = pgTable(
+  "user_consents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    documentType: legalDocumentTypeEnum("document_type").notNull(),
+    documentVersion: text("document_version").notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (table) => [
+    unique("user_consent_unique").on(table.userId, table.documentType, table.documentVersion),
+    index("user_consents_user_id_idx").on(table.userId),
+  ],
 );
 
 export const organizations = pgTable(

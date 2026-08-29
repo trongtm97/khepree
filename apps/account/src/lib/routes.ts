@@ -16,6 +16,7 @@ export const PROTECTED_ROUTES = {
   devices: "/devices",
   billing: "/billing",
   downloads: "/downloads",
+  checkout: "/checkout",
 } as const;
 
 export const ACCOUNT_NAV = [

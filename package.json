@@ -10,6 +10,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "test:e2e": "pnpm --filter @khepree/e2e test:playwright",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "pnpm --filter @khepree/db db:generate",

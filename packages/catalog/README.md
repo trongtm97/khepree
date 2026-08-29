@@ -12,6 +12,7 @@ const products = createProductService();
 await products.listPublicProducts();
 await products.getPublicProductBySlug("development-sample");
 await products.listPricingGroups();
+await products.getPurchasableOffer(planPublicId, pricePublicId, { locale });
 
 const plan = detail.plans[0];
 const features = PlanFeatureSet.fromPublicFeatures(plan.features);
@@ -67,8 +68,23 @@ const intent = await media.prepareUpload({ mimeType, sizeBytes, visibility, name
 // Client PUTs to intent.upload.url with intent.upload.headers
 
 const record = await media.completeUpload({ objectKey, bucket, mimeType, expectedSizeBytes });
-const download = await media.createPrivateDownloadUrl(publicId);
 ```
+
+Private downloads require authorization — use `DownloadService`, not a generic presigned URL helper:
+
+```typescript
+import { createDownloadService } from "@khepree/catalog";
+
+const downloads = createDownloadService();
+const url = await downloads.createAuthorizedPrivateDownloadUrl(publicId, {
+  actorUserId: session.user.id,
+  purpose: "user-download",
+});
+```
+
+### CMS + storage consistency
+
+Content body uploads happen **outside** DB transactions. Each version gets an immutable object key (`prv/content/{entryId}/{locale}/v{n}.md`). Failed metadata writes trigger compensation cleanup; published version objects are never overwritten.
 
 ## API routes (`apps/api`)
 

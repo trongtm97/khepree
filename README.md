@@ -1,53 +1,24 @@
-# Khepree Platform — Phase 01 Foundation
+# Khepree Platform
 
-Monorepo foundation for the Khepree global software ecosystem.
+Monorepo for the Khepree global software ecosystem.
 
 **Software that moves you forward.**
 
 ## Prerequisites
 
 - Node.js 22+
-- pnpm 9+ (project uses pnpm 11)
-- Docker (optional, for PostgreSQL in later phases)
+- pnpm 9+
+- Docker (optional, for PostgreSQL locally)
 
 ## Quick start
 
 ```bash
-# 1. Install dependencies
 pnpm install
-
-# 2. Copy environment template
 cp .env.example .env
-
-# 3. Start all apps in development
-pnpm dev
-```
-
-Or start individual apps:
-
-```bash
-pnpm dev:web      # Marketing shell  → http://localhost:3000
-pnpm --filter @khepree/account dev   # Account shell  → http://localhost:3001
-pnpm --filter @khepree/admin dev     # Admin shell    → http://localhost:3002
-pnpm --filter @khepree/partner dev   # Partner shell  → http://localhost:3003
-pnpm --filter @khepree/api dev       # API            → http://localhost:3004
-```
-
-## Health check
-
-```bash
-curl http://localhost:3004/health
-```
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "environment": "development",
-  "timestamp": "2026-08-29T...",
-  "version": "0.1.0"
-}
+docker compose up -d postgres
+pnpm db:migrate
+pnpm db:seed
+pnpm dev:web      # Marketing → http://localhost:3000
 ```
 
 ## Development ports
@@ -69,41 +40,39 @@ Response:
 | `pnpm typecheck`  | TypeScript strict check        |
 | `pnpm lint`       | ESLint                         |
 | `pnpm test`       | Unit tests                     |
-| `pnpm format`     | Prettier format                |
+| `pnpm db:migrate` | Apply Drizzle migrations       |
+| `pnpm db:seed`    | Idempotent development seed    |
 
-## Stack (Phase 01)
+## Stack
 
 - **Monorepo:** pnpm workspaces + Turborepo
 - **Apps:** Next.js 16 App Router, React 19, TypeScript strict
-- **UI:** Tailwind CSS v4, `@khepree/ui` design system
-- **Config:** `@khepree/config` with Zod env validation
-- **Packages:** `ui`, `config`, `types`, `validation`, `db` (schema stub)
+- **UI:** Tailwind CSS v4, `@khepree/ui`
+- **Data:** PostgreSQL + Drizzle ORM
+- **Auth:** Better Auth (`@khepree/auth`) — identity only
+- **Storage:** Cloudflare R2 via `@khepree/storage` (public + private buckets)
 
-## Package imports
+## Phase status
 
-```typescript
-import { Button, PublicShell } from "@khepree/ui";
-import { getEnv, BRAND } from "@khepree/config";
-import type { GlobalRole } from "@khepree/types";
-import { emailSchema } from "@khepree/validation";
-```
+| Phase | Status |
+|-------|--------|
+| 01–06 | ✅ Complete |
+| **06.5** | ✅ Architecture hardening |
+| 07–11 | ✅ Complete |
+| **12** | ✅ Production readiness (docs + CI + public IA). Not a go-live certificate. |
 
-## What's included (Phase 01)
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) and [docs/PRODUCTION-STATUS.md](./docs/PRODUCTION-STATUS.md).
 
-- 5 app shells (web, account, admin, partner, api)
-- Shared UI component library with Khepree design tokens
-- Shared ESLint, Prettier, TypeScript configs in `tooling/`
-- Environment validation via `@khepree/config`
-- `GET /health` on API app
+## Environment
 
-## What's NOT included yet
+Copy `.env.example` to `.env`. Production requires:
 
-- Marketing homepage (Phase 02)
-- Database migrations & domain services (Phase 03)
-- Authentication (Phase 04)
-- Object storage & CMS (Phase 05)
+- `DATABASE_URL`
+- `BETTER_AUTH_SECRET` / `BETTER_AUTH_URL`
+- `R2_BUCKET_PUBLIC` **and** `R2_BUCKET_PRIVATE` (no fallback)
+- App URLs (`APP_URL`, `ACCOUNT_URL`, …)
 
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full phase roadmap.
+Private bucket missing in production **fail fast** — mock storage is dev/test only.
 
 ## License
 

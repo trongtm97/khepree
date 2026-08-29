@@ -1,3 +1,5 @@
+import { DEFAULT_CURRENCY } from "@khepree/config";
+import { moneyMinorToSafeNumber } from "@khepree/types";
 import type { PlanBillingType, PricingDisplayMode, PublicPrice } from "./types";
 
 /** ISO 4217 minor-unit exponents for common currencies; default 2 for unknown. */
@@ -13,17 +15,18 @@ export function currencyMinorUnits(currency: string): number {
   return CURRENCY_MINOR_UNITS[currency.toUpperCase()] ?? 2;
 }
 
-export function minorToMajor(amountMinor: number, currency: string): number {
+export function minorToMajor(amountMinor: bigint, currency: string): number {
   const exponent = currencyMinorUnits(currency);
-  return amountMinor / 10 ** exponent;
+  return moneyMinorToSafeNumber(amountMinor) / 10 ** exponent;
 }
 
 export function formatPriceAmount(
-  amountMinor: number,
+  amountMinor: bigint | string | number,
   currency: string,
   locale = "en",
 ): string {
-  const major = minorToMajor(amountMinor, currency);
+  const minor = typeof amountMinor === "bigint" ? amountMinor : BigInt(amountMinor);
+  const major = minorToMajor(minor, currency);
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currency.toUpperCase(),
@@ -50,36 +53,49 @@ export function resolvePricingDisplayMode(billingType: PlanBillingType): Pricing
   }
 }
 
+interface PriceSelectionOptions {
+  currency?: string;
+  region?: string | null;
+  defaultCurrency?: string;
+}
+
+function rankPrice(price: PublicPrice, options: PriceSelectionOptions): number {
+  const currency = options.currency?.toUpperCase();
+  const defaultCurrency = (options.defaultCurrency ?? DEFAULT_CURRENCY).toUpperCase();
+  let score = 0;
+  if (currency && price.currency.toUpperCase() === currency && price.region === options.region) {
+    score += 100;
+  } else if (currency && price.currency.toUpperCase() === currency && !price.region) {
+    score += 80;
+  } else if (currency && price.currency.toUpperCase() === currency) {
+    score += 60;
+  } else if (price.currency.toUpperCase() === defaultCurrency && !price.region) {
+    score += 40;
+  } else if (!price.region) {
+    score += 20;
+  }
+  return score;
+}
+
+/** Deterministic price selection — never `activePrices[0]`. */
 export function selectDisplayPrice(
-  prices: PublicPrice[],
-  options: { currency?: string; region?: string | null } = {},
+  priceList: PublicPrice[],
+  options: PriceSelectionOptions = {},
 ): PublicPrice | null {
-  const active = prices.filter((price) => price.isActive);
+  const active = priceList.filter((price) => price.isActive);
   if (active.length === 0) return null;
 
-  const { currency, region } = options;
+  const ranked = [...active].sort((a, b) => {
+    const scoreDiff = rankPrice(b, options) - rankPrice(a, options);
+    if (scoreDiff !== 0) return scoreDiff;
+    const currencyDiff = a.currency.localeCompare(b.currency);
+    if (currencyDiff !== 0) return currencyDiff;
+    const regionDiff = (a.region ?? "").localeCompare(b.region ?? "");
+    if (regionDiff !== 0) return regionDiff;
+    return a.publicId.localeCompare(b.publicId);
+  });
 
-  if (currency && region) {
-    const match = active.find(
-      (price) =>
-        price.currency.toUpperCase() === currency.toUpperCase() && price.region === region,
-    );
-    if (match) return match;
-  }
-
-  if (currency) {
-    const match = active.find(
-      (price) => price.currency.toUpperCase() === currency.toUpperCase() && !price.region,
-    );
-    if (match) return match;
-
-    const anyCurrency = active.find(
-      (price) => price.currency.toUpperCase() === currency.toUpperCase(),
-    );
-    if (anyCurrency) return anyCurrency;
-  }
-
-  return active.find((price) => !price.region) ?? active[0] ?? null;
+  return ranked[0] ?? null;
 }
 
 export function formatBillingInterval(interval: string | null, locale = "en"): string | null {

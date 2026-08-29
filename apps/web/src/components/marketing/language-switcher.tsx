@@ -24,12 +24,18 @@ export function LanguageSwitcher({ locale }: { locale: SupportedLocale }) {
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-[var(--radius-control)] border border-khepree-mist bg-khepree-white p-0.5">
+    <div
+      className="flex items-center gap-1 rounded-[var(--radius-control)] border border-khepree-mist bg-khepree-white p-0.5"
+      role="group"
+      aria-label="Language"
+    >
       {SUPPORTED_LOCALES.map((code) => (
         <button
           key={code}
           type="button"
           onClick={() => switchLocale(code)}
+          aria-label={LOCALE_LABELS[code]}
+          aria-pressed={code === locale}
           aria-current={code === locale ? "true" : undefined}
           className={cn(
             "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
@@ -41,9 +47,6 @@ export function LanguageSwitcher({ locale }: { locale: SupportedLocale }) {
           {code.toUpperCase()}
         </button>
       ))}
-      <span className="sr-only">
-        {LOCALE_LABELS[locale]} — switch language
-      </span>
     </div>
   );
 }

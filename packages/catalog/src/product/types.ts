@@ -6,6 +6,32 @@ export type PlanBillingType = "free" | "one_time" | "recurring" | "perpetual" | 
 export type PlanStatus = "draft" | "active" | "archived";
 export type PricingDisplayMode = "free" | "recurring" | "one_time" | "perpetual" | "contact_sales";
 
+export const PURCHASABLE_BILLING_TYPES = ["one_time", "recurring", "perpetual"] as const;
+export type PurchasableBillingType = (typeof PURCHASABLE_BILLING_TYPES)[number];
+
+export function isPurchasableBillingType(value: PlanBillingType): value is PurchasableBillingType {
+  return (PURCHASABLE_BILLING_TYPES as readonly string[]).includes(value);
+}
+
+/** Server-side checkout snapshot — includes internal ids for order item FKs. */
+export interface PurchasableOffer {
+  product: { id: string; publicId: string; slug: string; name: string };
+  plan: {
+    id: string;
+    publicId: string;
+    slug: string;
+    name: string;
+    billingType: PlanBillingType;
+  };
+  price: {
+    id: string;
+    publicId: string;
+    currency: string;
+    amountMinor: bigint;
+    interval: string | null;
+  };
+}
+
 export interface ProductMarketingMetadata {
   benefits?: Array<{ title: string; description: string }>;
   highlights?: Array<{ title: string; description: string }>;
@@ -30,13 +56,17 @@ export interface PublicProductSummary {
   status: ProductStatus;
   seoTitle: string | null;
   seoDescription: string | null;
+  locale: string;
+  updatedAt: Date;
 }
 
 export interface PublicPrice {
   publicId: string;
   currency: string;
   region: string | null;
-  amountMinor: number;
+  /** Integer minor units as a decimal string — JSON/cache safe (never bigint). */
+  amountMinor: string;
+  amountMinorNumber: number;
   interval: string | null;
   isActive: boolean;
 }

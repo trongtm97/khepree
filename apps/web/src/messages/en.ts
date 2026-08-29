@@ -42,7 +42,8 @@ export const en = {
     priceUnavailable: "Pricing unavailable",
     included: "Included",
     notIncluded: "Not included",
-    noFeaturesListed: "Feature list coming soon.",
+    noFeaturesListed: "No features listed.",
+    checkout: "Checkout",
     platforms: {
       desktop: "Desktop",
       web: "Web",
@@ -156,12 +157,30 @@ export const en = {
       description: "Software for creators, professionals, entrepreneurs, and businesses.",
       intro:
         "Whether you are shipping a product, running a practice, or scaling a team — Khepree focuses on outcomes that matter.",
+      audiences: {
+        creators: {
+          seoDescription: "Software that stays out of the way so you can create, publish, and keep moving.",
+          body: "Creators need tools that respect attention. Khepree products are built to reduce friction in the work itself — drafting, organizing, shipping — instead of adding dashboards you have to manage. Explore the catalog for what is available today; new tools appear only when they are actually useful.",
+        },
+        professionals: {
+          seoDescription: "Reliable software for professional work, without unnecessary complexity.",
+          body: "Professional work depends on software that is predictable. Khepree focuses on clear workflows, honest pricing, and features that earn their place. If a product is listed, its capabilities and prices come from the live catalog — not from placeholder claims.",
+        },
+        entrepreneurs: {
+          seoDescription: "Practical software for founders moving from idea to execution.",
+          body: "Early-stage work has little room for ceremony. Khepree is built for people who need to ship, invoice, license, and operate without a large IT team. Start with the product catalog and pricing pages; account and licensing tools sit on the account domain when you are ready to buy or activate.",
+        },
+        business: {
+          seoDescription: "Software foundations for teams and customers that depend on you.",
+          body: "When a team and customers rely on you, access control, licensing, and billing have to be real systems — not slogans. Khepree separates identity, entitlement, and licenses so you can grant features, not plan nicknames. Talk to us at hello@khepree.com if you need partner or volume arrangements.",
+        },
+      },
     },
     pricing: {
       title: "Pricing",
       description: "Clear pricing when products launch.",
       intro:
-        "Pricing will be published alongside each product. No hidden tiers, no surprise add-ons — just honest value for useful software.",
+        "Each product in the catalog shows its live prices. There are no hidden tiers. If a product is not listed, it is not for sale.",
     },
     resources: {
       title: "Resources",
@@ -183,37 +202,61 @@ export const en = {
     contact: {
       title: "Contact",
       description: "Get in touch with the Khepree team.",
-      intro:
-        "Questions, partnerships, or feedback — we read every message. Reach us at hello@khepree.com.",
+      intro: "Questions, partnerships, or feedback — we read every message.",
+      email: "hello@khepree.com",
+      emailLabel: "Email hello@khepree.com",
     },
     blog: {
       title: "Blog",
       description: "Updates and insights from Khepree.",
-      intro: "Product updates, engineering notes, and company news will appear here. Check back soon.",
+      intro: "Published articles appear here. Unpublished drafts are not listed.",
+      emptyTitle: "No articles published yet",
+      emptyDescription: "When we publish an update, it will show up on this page — we do not fill this list with sample posts.",
     },
     docs: {
       title: "Documentation",
       description: "Technical documentation for Khepree products.",
-      intro:
-        "Developer guides and API references will be published as products launch. Documentation follows the same clarity standard as our software.",
+      intro: "Published guides appear here. Unpublished drafts are not listed.",
+      emptyTitle: "No documentation published yet",
+      emptyDescription: "Guides and references will appear when they are ready to use. This page stays empty rather than showing placeholder docs.",
     },
     security: {
       title: "Security",
       description: "How Khepree approaches security.",
-      intro:
-        "Security is foundational — not a feature. We follow industry best practices for authentication, encryption, and responsible disclosure.",
+      intro: "Security is treated as a baseline for every surface, not a marketing feature.",
+      paragraphs: [
+        "Accounts use Better Auth for identity (email, sessions, optional Google sign-in). Entitlement and license keys are separate systems: a login does not grant product features by itself.",
+        "License keys are random identifiers. Only a SHA-256 hash is stored. Offline leases are signed with Ed25519; the private signing key belongs in production secret infrastructure and is never shipped to browsers.",
+        "Product files and CMS bodies live in a private object bucket. Public marketing assets use a separate public bucket. Private storage never falls back to public. Downloads that belong to a product require an entitlement before a signed URL is issued.",
+        "Public apps send security headers (including frame-ancestors none). Sensitive routes are rate-limited. Production configuration is validated at process start: database, auth secret, both storage buckets, license keys, and email settings must be present.",
+        "Report a vulnerability to hello@khepree.com. Please do not open a public issue with exploit details.",
+      ],
     },
     privacy: {
       title: "Privacy Policy",
       description: "How Khepree handles your data.",
-      intro:
-        "We collect only what is needed to provide our services. A full privacy policy will be published before public launch of customer-facing products.",
+      intro: "This describes the public website and account services as they exist today. It is not a substitute for a later, counsel-reviewed policy if the product set grows.",
+      paragraphs: [
+        "The public marketing site does not set marketing or analytics cookies. Language preference is part of the URL (for example /en or /vi). A /cookies page is not required for this model.",
+        "If you create an account, we store the identity data Better Auth needs: email, session, and related authentication records. Optional Google sign-in is used only when those credentials are configured.",
+        "Orders, payments, and entitlements are stored so we can fulfill access. When a live payment provider is connected, card data is handled by that provider — Khepree does not store full card numbers. Mock checkout exists only in development.",
+        "License identifiers are hashed at rest. Device activations store an installation hash, not hardware serials. Partner referral clicks store a hash of a visitor identifier, not a raw fingerprint.",
+        "Private files (installers, content bodies) are stored in a private bucket and are not listed on the public site. We do not sell personal data.",
+        "Contact hello@khepree.com to ask about access or deletion of account data. Public CMS pages, product copy, and legal pages may be crawled like any other public website.",
+      ],
     },
     terms: {
       title: "Terms of Service",
       description: "Terms for using Khepree products and services.",
-      intro:
-        "Clear, readable terms will be published alongside product launches. We avoid legal jargon where plain language works.",
+      intro: "These terms cover the public website and, when you create an account, the account, licensing, and partner surfaces.",
+      paragraphs: [
+        "Khepree provides software and related services as described on product pages. Catalog prices, plans, and features come from the live catalog. If a product is not listed, it is not offered.",
+        "You are responsible for keeping account credentials confidential and for activity under your account. Feature access is determined by entitlement records, not by the name of a plan.",
+        "License keys identify a license; they do not encode extra rights. Circumventing device limits, sharing keys in violation of a product's terms, or attacking the services is not allowed.",
+        "The public website, documentation, and blog are provided as-is. We may change, pause, or remove unpublished or unreleased products. Development sample catalog items are not commercial offers.",
+        "Paid access, refunds, and partner commissions follow the order, payment, and entitlement rules implemented in the platform. A payment-success URL is not proof of access.",
+        "These terms are governed by the laws applicable to the operator of khepree.com. Questions: hello@khepree.com.",
+      ],
     },
   },
 } ;

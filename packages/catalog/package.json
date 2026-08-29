@@ -15,6 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
     "@khepree/storage": "workspace:*",
     "@khepree/types": "workspace:*",

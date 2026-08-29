@@ -38,6 +38,8 @@ export interface PresignUploadInput {
   bucket: StorageBucket;
   /** Default 900s (15 min). */
   expiresInSeconds?: number;
+  /** When set, the signed PUT is bound to this Content-Length. */
+  contentLength?: number;
 }
 
 export interface PresignDownloadInput {

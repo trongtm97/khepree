@@ -39,6 +39,11 @@ export function SiteFooter({ locale, messages }: SiteFooterProps) {
                 </Link>
               </li>
               <li>
+                <Link href={localePath(locale, "/solutions")} className="hover:text-khepree-ink">
+                  {messages.nav.solutions}
+                </Link>
+              </li>
+              <li>
                 <Link href={localePath(locale, "/pricing")} className="hover:text-khepree-ink">
                   {messages.nav.pricing}
                 </Link>

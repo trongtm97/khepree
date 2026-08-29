@@ -13,6 +13,8 @@
     "@khepree/catalog": "workspace:*",
     "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
+    "@khepree/reseller": "workspace:*",
+    "@khepree/security": "workspace:*",
     "@khepree/ui": "workspace:*",
     "geist": "^1.4.2",
     "next": "^16.0.0",

@@ -6,6 +6,7 @@ import {
   selectDisplayPrice,
 } from "./pricing";
 import { parseProductMarketingMetadata } from "./metadata";
+import { isPurchasableBillingType } from "./types";
 
 describe("PlanFeatureSet", () => {
   const features = [
@@ -46,9 +47,17 @@ describe("pricing helpers", () => {
     expect(resolvePricingDisplayMode("custom")).toBe("contact_sales");
   });
 
+  it("treats only priced billing types as purchasable", () => {
+    expect(isPurchasableBillingType("recurring")).toBe(true);
+    expect(isPurchasableBillingType("one_time")).toBe(true);
+    expect(isPurchasableBillingType("perpetual")).toBe(true);
+    expect(isPurchasableBillingType("free")).toBe(false);
+    expect(isPurchasableBillingType("custom")).toBe(false);
+  });
+
   it("formats USD and VND minor amounts", () => {
-    expect(formatPriceAmount(999, "USD", "en")).toContain("9.99");
-    expect(formatPriceAmount(99000, "VND", "vi")).toMatch(/99/);
+    expect(formatPriceAmount(999n, "USD", "en")).toContain("9.99");
+    expect(formatPriceAmount(99000n, "VND", "vi")).toMatch(/99/);
   });
 
   it("prefers currency and region specific prices", () => {
@@ -58,7 +67,8 @@ describe("pricing helpers", () => {
           publicId: "price_us",
           currency: "USD",
           region: "US",
-          amountMinor: 1000,
+          amountMinor: "1000",
+          amountMinorNumber: 1000,
           interval: "month",
           isActive: true,
         },
@@ -66,7 +76,8 @@ describe("pricing helpers", () => {
           publicId: "price_global",
           currency: "USD",
           region: null,
-          amountMinor: 1200,
+          amountMinor: "1200",
+          amountMinorNumber: 1200,
           interval: "month",
           isActive: true,
         },

@@ -13,6 +13,16 @@ export interface CreateDraftInput {
   body?: string | null;
 }
 
+export interface CreateDraftVersionInput {
+  entryId: string;
+  locale: string;
+  title: string;
+  excerpt?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  body?: string | null;
+}
+
 export interface UpdateContentInput {
   versionId: string;
   title?: string;

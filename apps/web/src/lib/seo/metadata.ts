@@ -11,6 +11,8 @@ export interface PageSeoInput {
   description: string;
   path: string;
   noIndex?: boolean;
+  /** When omitted, both en and vi are advertised. Pass only locales that actually resolve. */
+  hreflangLocales?: readonly SupportedLocale[];
 }
 
 export function siteUrl(path = ""): string {
@@ -25,15 +27,21 @@ export function createPageMetadata({
   description,
   path,
   noIndex = false,
+  hreflangLocales,
 }: PageSeoInput): Metadata {
   const canonicalPath = localePath(locale, path);
   const url = siteUrl(canonicalPath);
   const fullTitle = title.includes("Khepree") ? title : `${title} | Khepree`;
 
-  const languages: Record<string, string> = {
-    en: siteUrl(localePath("en", path)),
-    vi: siteUrl(localePath("vi", path)),
-  };
+  const locales: readonly SupportedLocale[] = hreflangLocales ?? ["en", "vi"];
+  const languages: Record<string, string> = {};
+  for (const loc of locales) {
+    languages[loc] = siteUrl(localePath(loc, path));
+  }
+  const defaultLocale: SupportedLocale = locales.some((item) => item === "en")
+    ? "en"
+    : (locales[0] ?? locale);
+  languages["x-default"] = siteUrl(localePath(defaultLocale, path));
 
   return {
     title: fullTitle,

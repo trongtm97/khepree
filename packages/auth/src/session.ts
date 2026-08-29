@@ -1,9 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { hasPermission, type Permission, type PermissionContext } from "@khepree/security";
 import type { GlobalRole } from "@khepree/types";
-import { memberships, requireDb, userProfiles } from "@khepree/db";
+import { memberships, requireDb, session as sessionTable, userProfiles } from "@khepree/db";
 import { getAuth } from "./server";
 
 export interface SessionUser {
@@ -19,14 +19,13 @@ export interface AuthenticatedSession {
   user: SessionUser;
   session: {
     id: string;
-    token: string;
   };
   globalRole: GlobalRole;
   orgIds: string[];
 }
 
-export async function getSession(): Promise<AuthenticatedSession | null> {
-  const auth = getAuth();
+export async function getSession(authBaseURL?: string): Promise<AuthenticatedSession | null> {
+  const auth = getAuth(authBaseURL);
   const headerStore = await headers();
   const result = await auth.api.getSession({ headers: headerStore });
 
@@ -55,15 +54,17 @@ export async function getSession(): Promise<AuthenticatedSession | null> {
     },
     session: {
       id: result.session.id,
-      token: result.session.token,
     },
     globalRole: profile?.globalRole ?? "USER",
     orgIds: orgRows.map((row) => row.organizationId),
   };
 }
 
-export async function requireSession(redirectTo = "/sign-in"): Promise<AuthenticatedSession> {
-  const session = await getSession();
+export async function requireSession(
+  redirectTo = "/sign-in",
+  authBaseURL?: string,
+): Promise<AuthenticatedSession> {
+  const session = await getSession(authBaseURL);
   if (!session) {
     redirect(redirectTo);
   }
@@ -78,8 +79,9 @@ export async function requireUser(): Promise<SessionUser> {
 export async function requirePermission(
   permission: Permission,
   redirectTo = "/dashboard",
+  authBaseURL?: string,
 ): Promise<AuthenticatedSession> {
-  const session = await requireSession();
+  const session = await requireSession(redirectTo, authBaseURL);
   const ctx: PermissionContext = { globalRole: session.globalRole };
   if (!hasPermission(ctx, permission)) {
     redirect(redirectTo);
@@ -87,25 +89,71 @@ export async function requirePermission(
   return session;
 }
 
-export async function getOptionalSession(): Promise<AuthenticatedSession | null> {
-  try {
-    return await getSession();
-  } catch {
-    return null;
-  }
+export async function getOptionalSession(authBaseURL?: string): Promise<AuthenticatedSession | null> {
+  return getSession(authBaseURL);
 }
 
 export interface SessionRow {
   id: string;
-  token: string;
-  createdAt?: Date | string;
   ipAddress?: string | null;
   userAgent?: string | null;
+  createdAt?: Date | string;
+  isCurrent?: boolean;
 }
 
 export async function listActiveSessions(): Promise<SessionRow[]> {
   const auth = getAuth();
   const headerStore = await headers();
-  const result = await auth.api.listSessions({ headers: headerStore });
-  return (result ?? []) as SessionRow[];
+  const [sessions, current] = await Promise.all([
+    auth.api.listSessions({ headers: headerStore }),
+    auth.api.getSession({ headers: headerStore }),
+  ]);
+  const currentId = current?.session?.id;
+
+  return (sessions ?? []).map((row) => ({
+    id: row.id,
+    ipAddress: row.ipAddress,
+    userAgent: row.userAgent,
+    createdAt: row.createdAt,
+    isCurrent: row.id === currentId,
+  }));
+}
+
+/** Server-only: resolve session token for revoke API (better-auth 1.7.x is token-based). */
+async function getInternalSessionToken(sessionId: string, userId: string): Promise<string | null> {
+  const db = requireDb();
+  const [row] = await db
+    .select({ token: sessionTable.token })
+    .from(sessionTable)
+    .where(and(eq(sessionTable.id, sessionId), eq(sessionTable.userId, userId)))
+    .limit(1);
+
+  return row?.token ?? null;
+}
+
+export async function revokeSessionById(sessionId: string): Promise<void> {
+  const current = await getSession();
+  if (!current) {
+    throw new Error("Unauthorized");
+  }
+
+  const token = await getInternalSessionToken(sessionId, current.user.id);
+  if (!token) {
+    throw new Error("Session not found");
+  }
+
+  const auth = getAuth();
+  const headerStore = await headers();
+  await auth.api.revokeSession({ body: { token }, headers: headerStore });
+}
+
+export async function revokeOtherActiveSessions(): Promise<void> {
+  const current = await getSession();
+  if (!current) {
+    throw new Error("Unauthorized");
+  }
+
+  const auth = getAuth();
+  const headerStore = await headers();
+  await auth.api.revokeOtherSessions({ headers: headerStore });
 }

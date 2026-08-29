@@ -6,12 +6,22 @@ import { and, eq } from "drizzle-orm";
 import { createPublicId } from "../lib/ids";
 import { requireDb, closeDb } from "../client";
 import {
+  featureTranslations,
   features,
   planFeatures,
+  planTranslations,
   plans,
   prices,
+  productTranslations,
   products,
 } from "../schema/catalog";
+import {
+  partnerPrices,
+  partnerTiers,
+  partners,
+  referrals,
+  wallets,
+} from "../schema/partner";
 
 const DEV_SAMPLE_SLUG = "development-sample";
 
@@ -79,30 +89,63 @@ const MARKETING_METADATA = {
   },
 };
 
+const PRODUCT_COPY = {
+  en: {
+    name: "DEVELOPMENT SAMPLE — Khepree Platform",
+    shortDescription: "Local catalog sample — not a commercial product.",
+    description: "Non-commercial sample product for local development only. Not for sale.",
+    content:
+      "This page is rendered entirely from the product catalog domain. Marketing sections, plans, features, and prices are stored in Postgres and surfaced through ProductService.",
+    seoTitle: "DEVELOPMENT SAMPLE — Khepree Platform",
+    seoDescription: "Database-driven product page sample for local development.",
+  },
+  vi: {
+    name: "MẪU PHÁT TRIỂN — Khepree Platform",
+    shortDescription: "Mẫu catalog cục bộ — không phải sản phẩm thương mại.",
+    description: "Sản phẩm mẫu cho môi trường dev. Không bán.",
+    content: "Trang này được render từ domain catalog sản phẩm trong Postgres.",
+    seoTitle: "MẪU PHÁT TRIỂN — Khepree Platform",
+    seoDescription: "Trang sản phẩm mẫu cho phát triển cục bộ.",
+  },
+};
+
 async function upsertFeature(
   db: ReturnType<typeof requireDb>,
   input: {
     key: string;
-    name: string;
+    nameEn: string;
+    nameVi: string;
     valueType: "boolean" | "integer" | "string";
     description?: string;
   },
 ) {
   const [existing] = await db.select().from(features).where(eq(features.key, input.key)).limit(1);
-  if (existing) return existing;
+  const feature =
+    existing ??
+    (
+      await db
+        .insert(features)
+        .values({
+          key: input.key,
+          valueType: input.valueType,
+          description: input.description,
+        })
+        .returning()
+    )[0];
 
-  const [created] = await db
-    .insert(features)
-    .values({
-      key: input.key,
-      name: input.name,
-      valueType: input.valueType,
-      description: input.description,
-    })
-    .returning();
+  if (!feature) throw new Error(`Failed to seed feature ${input.key}`);
 
-  if (!created) throw new Error(`Failed to seed feature ${input.key}`);
-  return created;
+  for (const [locale, name] of [
+    ["en", input.nameEn],
+    ["vi", input.nameVi],
+  ] as const) {
+    await db
+      .insert(featureTranslations)
+      .values({ featureId: feature.id, locale, name, description: input.description ?? null })
+      .onConflictDoNothing();
+  }
+
+  return feature;
 }
 
 async function upsertPlan(
@@ -110,7 +153,8 @@ async function upsertPlan(
   productId: string,
   input: {
     slug: string;
-    name: string;
+    nameEn: string;
+    nameVi: string;
     billingType: "free" | "one_time" | "recurring" | "perpetual" | "custom";
   },
 ) {
@@ -120,49 +164,53 @@ async function upsertPlan(
     .where(and(eq(plans.productId, productId), eq(plans.slug, input.slug)))
     .limit(1);
 
-  if (existing) return existing;
+  const plan =
+    existing ??
+    (
+      await db
+        .insert(plans)
+        .values({
+          publicId: createPublicId("plan"),
+          productId,
+          slug: input.slug,
+          billingType: input.billingType,
+          status: "active",
+        })
+        .returning()
+    )[0];
 
-  const [created] = await db
-    .insert(plans)
-    .values({
-      publicId: createPublicId("plan"),
-      productId,
-      slug: input.slug,
-      name: input.name,
-      billingType: input.billingType,
-      status: "active",
-    })
-    .onConflictDoNothing()
-    .returning();
+  if (!plan) throw new Error(`Failed to seed plan ${input.slug}`);
 
-  if (created) return created;
+  for (const [locale, name] of [
+    ["en", input.nameEn],
+    ["vi", input.nameVi],
+  ] as const) {
+    await db
+      .insert(planTranslations)
+      .values({ planId: plan.id, locale, name })
+      .onConflictDoNothing();
+  }
 
-  const [row] = await db
-    .select()
-    .from(plans)
-    .where(and(eq(plans.productId, productId), eq(plans.slug, input.slug)))
-    .limit(1);
-
-  if (!row) throw new Error(`Failed to seed plan ${input.slug}`);
-  return row;
+  return plan;
 }
 
-async function upsertPlanFeature(
+async function upsertPlanFeatureValue(
   db: ReturnType<typeof requireDb>,
   planId: string,
   featureId: string,
-  value:
-    | { valueType: "boolean"; booleanValue: boolean }
-    | { valueType: "integer"; integerValue: number }
-    | { valueType: "string"; stringValue: string },
+  valueType: "boolean" | "integer" | "string",
+  value: boolean | number | string,
 ) {
+  const columns =
+    valueType === "boolean"
+      ? { booleanValue: value as boolean, integerValue: null, stringValue: null }
+      : valueType === "integer"
+        ? { booleanValue: null, integerValue: value as number, stringValue: null }
+        : { booleanValue: null, integerValue: null, stringValue: value as string };
+
   await db
     .insert(planFeatures)
-    .values({
-      planId,
-      featureId,
-      ...value,
-    })
+    .values({ planId, featureId, ...columns })
     .onConflictDoNothing();
 }
 
@@ -172,7 +220,7 @@ async function upsertPrice(
   input: {
     publicId: string;
     currency: string;
-    amountMinor: number;
+    amountMinor: bigint;
     interval?: string | null;
     region?: string | null;
   },
@@ -199,159 +247,178 @@ async function seed() {
     .values({
       publicId: createPublicId("prod"),
       slug: DEV_SAMPLE_SLUG,
-      name: "DEVELOPMENT SAMPLE — Khepree Platform",
-      shortDescription: "Local catalog sample — not a commercial product.",
-      description: "Non-commercial sample product for local development only. Not for sale.",
-      content:
-        "This page is rendered entirely from the product catalog domain. Marketing sections, plans, features, and prices are stored in Postgres and surfaced through ProductService.",
       status: "active",
       platformCapabilities: ["web", "desktop", "mobile"],
-      seoTitle: "DEVELOPMENT SAMPLE — Khepree Platform",
-      seoDescription: "Database-driven product page sample for local development.",
       metadata: MARKETING_METADATA,
     })
     .onConflictDoNothing({ target: products.slug })
     .returning();
 
-  let product =
+  const product =
     inserted ??
     (await db.select().from(products).where(eq(products.slug, DEV_SAMPLE_SLUG)).limit(1))[0];
 
-  if (!product) {
-    throw new Error("Failed to seed development sample product");
-  }
+  if (!product) throw new Error("Failed to seed development sample product");
 
-  if (product.status !== "active" || !product.shortDescription) {
-    const [updated] = await db
-      .update(products)
-      .set({
-        status: "active",
-        shortDescription: "Local catalog sample — not a commercial product.",
-        content:
-          "This page is rendered entirely from the product catalog domain. Marketing sections, plans, features, and prices are stored in Postgres and surfaced through ProductService.",
-        platformCapabilities: ["web", "desktop", "mobile"],
-        seoTitle: "DEVELOPMENT SAMPLE — Khepree Platform",
-        seoDescription: "Database-driven product page sample for local development.",
-        metadata: MARKETING_METADATA,
-      })
-      .where(eq(products.id, product.id))
-      .returning();
-    product = updated ?? product;
+  for (const locale of ["en", "vi"] as const) {
+    const copy = PRODUCT_COPY[locale];
+    await db
+      .insert(productTranslations)
+      .values({ productId: product.id, locale, ...copy })
+      .onConflictDoUpdate({
+        target: [productTranslations.productId, productTranslations.locale],
+        set: { ...copy, updatedAt: new Date() },
+      });
   }
 
   const apiAccess = await upsertFeature(db, {
     key: "api_access",
-    name: "API access",
+    nameEn: "API access",
+    nameVi: "Truy cập API",
     valueType: "boolean",
-    description: "Access to HTTP APIs",
   });
   const teamMembers = await upsertFeature(db, {
     key: "team_members",
-    name: "Team members",
+    nameEn: "Team members",
+    nameVi: "Thành viên nhóm",
     valueType: "integer",
-    description: "Seats included in the plan",
   });
   const storageGb = await upsertFeature(db, {
     key: "storage_gb",
-    name: "Storage (GB)",
+    nameEn: "Storage (GB)",
+    nameVi: "Dung lượng (GB)",
     valueType: "integer",
-    description: "Included storage capacity",
+  });
+  const devicesMax = await upsertFeature(db, {
+    key: "devices.max",
+    nameEn: "Max devices",
+    nameVi: "Số thiết bị tối đa",
+    valueType: "integer",
   });
 
   const freePlan = await upsertPlan(db, product.id, {
     slug: "sample-free",
-    name: "Sample Free",
+    nameEn: "Sample Free",
+    nameVi: "Mẫu Miễn phí",
     billingType: "free",
   });
   const proPlan = await upsertPlan(db, product.id, {
     slug: "sample-pro",
-    name: "Sample Pro",
+    nameEn: "Sample Pro",
+    nameVi: "Mẫu Pro",
     billingType: "recurring",
   });
   const lifetimePlan = await upsertPlan(db, product.id, {
     slug: "sample-lifetime",
-    name: "Sample Lifetime",
+    nameEn: "Sample Lifetime",
+    nameVi: "Mẫu Trọn đời",
     billingType: "one_time",
   });
   const enterprisePlan = await upsertPlan(db, product.id, {
     slug: "sample-enterprise",
-    name: "Sample Enterprise",
+    nameEn: "Sample Enterprise",
+    nameVi: "Mẫu Doanh nghiệp",
     billingType: "custom",
   });
 
-  await upsertPlanFeature(db, freePlan.id, apiAccess.id, {
-    valueType: "boolean",
-    booleanValue: false,
-  });
-  await upsertPlanFeature(db, freePlan.id, teamMembers.id, {
-    valueType: "integer",
-    integerValue: 1,
-  });
-  await upsertPlanFeature(db, freePlan.id, storageGb.id, {
-    valueType: "integer",
-    integerValue: 1,
-  });
+  await upsertPlanFeatureValue(db, freePlan.id, apiAccess.id, "boolean", false);
+  await upsertPlanFeatureValue(db, freePlan.id, teamMembers.id, "integer", 1);
+  await upsertPlanFeatureValue(db, freePlan.id, storageGb.id, "integer", 1);
+  await upsertPlanFeatureValue(db, freePlan.id, devicesMax.id, "integer", 1);
 
-  await upsertPlanFeature(db, proPlan.id, apiAccess.id, {
-    valueType: "boolean",
-    booleanValue: true,
-  });
-  await upsertPlanFeature(db, proPlan.id, teamMembers.id, {
-    valueType: "integer",
-    integerValue: 5,
-  });
-  await upsertPlanFeature(db, proPlan.id, storageGb.id, {
-    valueType: "integer",
-    integerValue: 25,
-  });
+  await upsertPlanFeatureValue(db, proPlan.id, apiAccess.id, "boolean", true);
+  await upsertPlanFeatureValue(db, proPlan.id, teamMembers.id, "integer", 5);
+  await upsertPlanFeatureValue(db, proPlan.id, storageGb.id, "integer", 25);
+  await upsertPlanFeatureValue(db, proPlan.id, devicesMax.id, "integer", 5);
 
-  await upsertPlanFeature(db, lifetimePlan.id, apiAccess.id, {
-    valueType: "boolean",
-    booleanValue: true,
-  });
-  await upsertPlanFeature(db, lifetimePlan.id, teamMembers.id, {
-    valueType: "integer",
-    integerValue: 3,
-  });
-  await upsertPlanFeature(db, lifetimePlan.id, storageGb.id, {
-    valueType: "integer",
-    integerValue: 10,
-  });
+  await upsertPlanFeatureValue(db, lifetimePlan.id, apiAccess.id, "boolean", true);
+  await upsertPlanFeatureValue(db, lifetimePlan.id, teamMembers.id, "integer", 3);
+  await upsertPlanFeatureValue(db, lifetimePlan.id, storageGb.id, "integer", 10);
+  await upsertPlanFeatureValue(db, lifetimePlan.id, devicesMax.id, "integer", 3);
 
-  await upsertPlanFeature(db, enterprisePlan.id, apiAccess.id, {
-    valueType: "boolean",
-    booleanValue: true,
-  });
-  await upsertPlanFeature(db, enterprisePlan.id, teamMembers.id, {
-    valueType: "integer",
-    integerValue: 100,
-  });
-  await upsertPlanFeature(db, enterprisePlan.id, storageGb.id, {
-    valueType: "integer",
-    integerValue: 500,
-  });
+  await upsertPlanFeatureValue(db, enterprisePlan.id, apiAccess.id, "boolean", true);
+  await upsertPlanFeatureValue(db, enterprisePlan.id, teamMembers.id, "integer", 100);
+  await upsertPlanFeatureValue(db, enterprisePlan.id, storageGb.id, "integer", 500);
+  await upsertPlanFeatureValue(db, enterprisePlan.id, devicesMax.id, "integer", 100);
 
   await upsertPrice(db, proPlan.id, {
     publicId: "price_sample_pro_usd",
     currency: "USD",
-    amountMinor: 1900,
+    amountMinor: 1900n,
     interval: "month",
   });
   await upsertPrice(db, proPlan.id, {
     publicId: "price_sample_pro_vnd",
     currency: "VND",
-    amountMinor: 490000,
+    amountMinor: 490000n,
     interval: "month",
     region: "VN",
   });
   await upsertPrice(db, lifetimePlan.id, {
     publicId: "price_sample_lifetime_usd",
     currency: "USD",
-    amountMinor: 19900,
+    amountMinor: 19900n,
     interval: null,
   });
 
+  const [tierInserted] = await db
+    .insert(partnerTiers)
+    .values({ slug: "standard", name: "Standard", commissionBps: 1000 })
+    .onConflictDoNothing({ target: partnerTiers.slug })
+    .returning();
+  const tier =
+    tierInserted ??
+    (await db.select().from(partnerTiers).where(eq(partnerTiers.slug, "standard")).limit(1))[0];
+  if (!tier) throw new Error("Failed to seed partner tier");
+
+  const PARTNER_SLUG = "development-sample-partner";
+  const [partnerInserted] = await db
+    .insert(partners)
+    .values({
+      publicId: createPublicId("ptr"),
+      slug: PARTNER_SLUG,
+      name: "DEVELOPMENT SAMPLE Partner",
+      tierId: tier.id,
+      status: "active",
+      modes: ["REFERRAL", "RESELLER"],
+      allowNegativeBalance: false,
+    })
+    .onConflictDoNothing({ target: partners.slug })
+    .returning();
+  const partner =
+    partnerInserted ??
+    (await db.select().from(partners).where(eq(partners.slug, PARTNER_SLUG)).limit(1))[0];
+  if (!partner) throw new Error("Failed to seed development partner");
+
+  await db
+    .insert(wallets)
+    .values({ partnerId: partner.id, balanceMinor: 0n, currency: "USD" })
+    .onConflictDoNothing({ target: wallets.partnerId });
+
+  await db
+    .insert(partnerPrices)
+    .values({
+      partnerId: partner.id,
+      planId: proPlan.id,
+      amountMinor: 1500n,
+      currency: "USD",
+    })
+    .onConflictDoNothing();
+
+  await db
+    .insert(referrals)
+    .values({
+      publicId: createPublicId("ref"),
+      partnerId: partner.id,
+      code: "KHDEV001",
+      label: "Development sample",
+    })
+    .onConflictDoNothing({ target: referrals.code });
+
   console.log(`[seed] Development sample product ready: ${product.slug} (${product.publicId})`);
+  console.log(
+    `[seed] Partner ${partner.slug} is ACTIVE (referral+reseller). Attach a partner_memberships row after creating an account.`,
+  );
   await closeDb();
 }
 

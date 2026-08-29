@@ -27,10 +27,12 @@ export function ProductDetailSections({
   product,
   locale,
   messages,
+  accountUrl,
 }: {
   product: PublicProductDetail;
   locale: SupportedLocale;
   messages: Messages;
+  accountUrl?: string;
 }) {
   const { marketing } = product;
 
@@ -122,6 +124,7 @@ export function ProductDetailSections({
                 plan={plan}
                 locale={locale}
                 messages={messages}
+                accountUrl={accountUrl}
               />
             ))}
           </div>

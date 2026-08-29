@@ -1,4 +1,4 @@
-import { BRAND, DOMAINS } from "@khepree/config";
+import { BRAND } from "@khepree/config";
 import { siteUrl } from "./metadata";
 
 export function organizationJsonLd() {
@@ -58,4 +58,31 @@ export function softwareApplicationJsonLd(input: {
   return payload;
 }
 
-export { DOMAINS };
+export function articleJsonLd(input: {
+  headline: string;
+  description: string;
+  url: string;
+  datePublished?: Date | string | null;
+  inLanguage: string;
+}) {
+  const payload: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.headline,
+    description: input.description,
+    url: input.url,
+    inLanguage: input.inLanguage,
+    publisher: {
+      "@type": "Organization",
+      name: BRAND.name,
+      url: siteUrl(),
+    },
+  };
+  if (input.datePublished) {
+    payload.datePublished =
+      input.datePublished instanceof Date
+        ? input.datePublished.toISOString()
+        : input.datePublished;
+  }
+  return payload;
+}

@@ -22,7 +22,7 @@ export default async function SecurityPage() {
 
       <ChangePasswordForm />
       <hr className="border-khepree-slate/10" />
-      <SessionList sessions={sessions} currentToken={session.session.token} />
+      <SessionList sessions={sessions} />
       <hr className="border-khepree-slate/10" />
       <TwoFactorPanel enabled={twoFactorEnabled} />
     </div>

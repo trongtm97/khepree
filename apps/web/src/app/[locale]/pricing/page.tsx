@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 import { PricingPlanCard } from "@/components/catalog/pricing-plan-card";
 import { MarketingPageLayout } from "@/components/marketing/marketing-page-layout";
 import { getMessages } from "@/lib/i18n/get-messages";
-import { getProductService } from "@/lib/catalog";
+import { getPricingGroups } from "@/lib/catalog";
 import { createPageMetadata } from "@/lib/seo/metadata";
+import { accountPublicUrl } from "@/lib/urls";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -28,7 +29,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
   const locale: SupportedLocale = raw;
   const messages = getMessages(locale);
   const content = messages.pages.pricing;
-  const groups = await getProductService().listPricingGroups();
+  const groups = await getPricingGroups(locale);
 
   return (
     <MarketingPageLayout
@@ -57,6 +58,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
                     locale={locale}
                     messages={messages}
                     preferredCurrency={locale === "vi" ? "VND" : "USD"}
+                    accountUrl={accountPublicUrl()}
                   />
                 ))}
               </div>

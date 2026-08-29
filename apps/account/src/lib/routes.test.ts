@@ -11,6 +11,8 @@ describe("account routes", () => {
     expect(isProtectedPath(PROTECTED_ROUTES.dashboard)).toBe(true);
     expect(isProtectedPath("/profile")).toBe(true);
     expect(isProtectedPath("/products/extra")).toBe(true);
+    expect(isProtectedPath("/checkout")).toBe(true);
+    expect(isProtectedPath("/checkout/mock/ord_x")).toBe(true);
   });
 
   it("does not treat auth pages as protected", () => {

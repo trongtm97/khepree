@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/catalog/product-card";
 import { MarketingPageLayout } from "@/components/marketing/marketing-page-layout";
 import { getMessages } from "@/lib/i18n/get-messages";
-import { getProductService } from "@/lib/catalog";
+import { getPublicProducts } from "@/lib/catalog";
 import { createPageMetadata } from "@/lib/seo/metadata";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -28,7 +28,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
   const locale: SupportedLocale = raw;
   const messages = getMessages(locale);
   const content = messages.pages.products;
-  const products = await getProductService().listPublicProducts();
+  const products = await getPublicProducts(locale);
 
   return (
     <MarketingPageLayout

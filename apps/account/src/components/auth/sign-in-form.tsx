@@ -1,5 +1,6 @@
 "use client";
 
+import { safeReturnPath } from "@khepree/auth/safe-return-path";
 import { Alert, Button, Input } from "@khepree/ui";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,7 +11,7 @@ import { AUTH_ROUTES } from "@/lib/routes";
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = safeReturnPath(searchParams.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

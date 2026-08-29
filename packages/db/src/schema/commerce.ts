@@ -1,4 +1,6 @@
 import {
+  bigint,
+  check,
   index,
   integer,
   jsonb,
@@ -7,10 +9,12 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { plans, products } from "./catalog";
-import { user } from "./identity";
+import { sql } from "drizzle-orm";
+import { plans, prices, products } from "./catalog";
+import { organizations, user } from "./identity";
 import { timestamps } from "./_shared";
 
 export const customers = pgTable(
@@ -18,21 +22,36 @@ export const customers = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     publicId: text("public_id").notNull().unique(),
-    userId: text("user_id")
-      .notNull()
-      .unique()
-      .references(() => user.id, { onDelete: "restrict" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "restrict" }),
+    organizationId: uuid("organization_id").references(() => organizations.id, {
+      onDelete: "restrict",
+    }),
     ...timestamps,
   },
-  (table) => [index("customers_user_id_idx").on(table.userId)],
+  (table) => [
+    index("customers_user_id_idx").on(table.userId),
+    index("customers_organization_id_idx").on(table.organizationId),
+    uniqueIndex("customers_user_id_unique").on(table.userId).where(sql`${table.userId} IS NOT NULL`),
+    uniqueIndex("customers_organization_id_unique")
+      .on(table.organizationId)
+      .where(sql`${table.organizationId} IS NOT NULL`),
+    check(
+      "customers_exactly_one_owner",
+      sql`(
+        (${table.userId} IS NOT NULL AND ${table.organizationId} IS NULL)
+        OR (${table.userId} IS NULL AND ${table.organizationId} IS NOT NULL)
+      )`,
+    ),
+  ],
 );
 
 export const orderStatusEnum = pgEnum("order_status", [
-  "pending",
+  "draft",
+  "pending_payment",
   "paid",
-  "failed",
-  "refunded",
   "cancelled",
+  "refunded",
+  "partially_refunded",
 ]);
 
 export const orders = pgTable(
@@ -43,9 +62,9 @@ export const orders = pgTable(
     customerId: uuid("customer_id")
       .notNull()
       .references(() => customers.id, { onDelete: "restrict" }),
-    status: orderStatusEnum("status").notNull().default("pending"),
+    status: orderStatusEnum("status").notNull().default("draft"),
     currency: text("currency").notNull(),
-    totalMinor: integer("total_minor").notNull(),
+    totalMinor: bigint("total_minor", { mode: "bigint" }).notNull(),
     ...timestamps,
   },
   (table) => [
@@ -63,11 +82,19 @@ export const orderItems = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id, { onDelete: "restrict" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "restrict" }),
     planId: uuid("plan_id")
       .notNull()
       .references(() => plans.id, { onDelete: "restrict" }),
+    priceId: uuid("price_id").references(() => prices.id, { onDelete: "restrict" }),
     quantity: integer("quantity").notNull().default(1),
-    unitAmountMinor: integer("unit_amount_minor").notNull(),
+    unitAmountMinor: bigint("unit_amount_minor", { mode: "bigint" }).notNull(),
+    currency: text("currency").notNull(),
+    productNameSnapshot: text("product_name_snapshot").notNull(),
+    planNameSnapshot: text("plan_name_snapshot").notNull(),
+    billingIntervalSnapshot: text("billing_interval_snapshot"),
     ...timestamps,
   },
   (table) => [index("order_items_order_id_idx").on(table.orderId)],
@@ -91,7 +118,7 @@ export const payments = pgTable(
     provider: text("provider").notNull(),
     providerPaymentId: text("provider_payment_id"),
     status: paymentStatusEnum("status").notNull().default("pending"),
-    amountMinor: integer("amount_minor").notNull(),
+    amountMinor: bigint("amount_minor", { mode: "bigint" }).notNull(),
     currency: text("currency").notNull(),
     ...timestamps,
   },
@@ -99,6 +126,9 @@ export const payments = pgTable(
     index("payments_order_id_idx").on(table.orderId),
     index("payments_status_idx").on(table.status),
     index("payments_created_at_idx").on(table.createdAt),
+    uniqueIndex("payments_provider_payment_unique")
+      .on(table.provider, table.providerPaymentId)
+      .where(sql`${table.providerPaymentId} IS NOT NULL`),
   ],
 );
 
@@ -124,6 +154,9 @@ export const subscriptions = pgTable(
     productId: uuid("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "restrict" }),
+    priceId: uuid("price_id").references(() => prices.id, { onDelete: "restrict" }),
+    provider: text("provider"),
+    providerSubscriptionId: text("provider_subscription_id"),
     status: subscriptionStatusEnum("status").notNull().default("trialing"),
     currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
     currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
@@ -132,6 +165,9 @@ export const subscriptions = pgTable(
   (table) => [
     index("subscriptions_customer_id_idx").on(table.customerId),
     index("subscriptions_status_idx").on(table.status),
+    uniqueIndex("subscriptions_provider_subscription_unique")
+      .on(table.provider, table.providerSubscriptionId)
+      .where(sql`${table.providerSubscriptionId} IS NOT NULL`),
   ],
 );
 
@@ -152,3 +188,20 @@ export const webhookEvents = pgTable(
     index("webhook_events_event_id_idx").on(table.eventId),
   ],
 );
+
+/** Valid order transitions — enforced by `@khepree/commerce`. */
+export const ORDER_STATUS_TRANSITIONS = {
+  draft: ["pending_payment", "cancelled"],
+  pending_payment: ["paid", "cancelled"],
+  paid: ["refunded", "partially_refunded"],
+  partially_refunded: ["refunded"],
+  cancelled: [],
+  refunded: [],
+} as const;
+
+export const PAYMENT_STATUS_TRANSITIONS = {
+  pending: ["succeeded", "failed"],
+  succeeded: ["refunded"],
+  failed: [],
+  refunded: [],
+} as const;

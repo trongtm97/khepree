@@ -1,5 +1,12 @@
-import { createMediaService } from "@khepree/catalog";
+import { getSession } from "@khepree/auth/session";
+import {
+  createDownloadService,
+  createMediaService,
+  productIdFromMediaContext,
+} from "@khepree/catalog";
+import { RATE_LIMITS, enforceRateLimit } from "@khepree/security";
 import { jsonError, jsonOk, getRequestId } from "@/lib/api-response";
+import { getPlatform } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
 
@@ -8,20 +15,46 @@ export async function GET(
   context: { params: Promise<{ publicId: string }> },
 ) {
   const requestId = getRequestId(request);
+  const limited = enforceRateLimit(request, RATE_LIMITS.MEDIA, "download");
+  if (limited) return limited;
+
   const { publicId } = await context.params;
+  const session = await getSession();
+  if (!session) {
+    return jsonError("UNAUTHORIZED", "Authentication required for private download", 401, requestId);
+  }
 
   try {
-    const media = createMediaService();
-    const download = await media.createPrivateDownloadUrl(publicId);
+    const media = await createMediaService().getByPublicId(publicId);
+    if (!media) {
+      return jsonError("NOT_FOUND", "Media not found", 404, requestId);
+    }
+
+    const productId = productIdFromMediaContext(media.context);
+    const entitled = productId
+      ? await getPlatform().entitlement.canUseProduct({ type: "USER", id: session.user.id }, productId)
+      : false;
+
+    const download = await createDownloadService().authorizePrivateDownload({
+      mediaPublicId: publicId,
+      context: {
+        actorUserId: session.user.id,
+        purpose: "download",
+        entitled,
+      },
+    });
     return jsonOk(download, requestId);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Download unavailable";
     if (message.includes("not found")) {
-      return jsonError("NOT_FOUND", message, 404, requestId);
+      return jsonError("NOT_FOUND", "Media not found", 404, requestId);
+    }
+    if (message.includes("not authorized")) {
+      return jsonError("FORBIDDEN", "Download not authorized", 403, requestId);
     }
     if (message.includes("Public media")) {
-      return jsonError("NOT_PRIVATE", message, 400, requestId);
+      return jsonError("NOT_PRIVATE", "Public media does not use a signed URL", 400, requestId);
     }
-    return jsonError("DOWNLOAD_FAILED", message, 500, requestId);
+    return jsonError("DOWNLOAD_FAILED", "Download unavailable", 500, requestId);
   }
 }

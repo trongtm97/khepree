@@ -1,4 +1,5 @@
 import { getAuth } from "@khepree/auth/server";
+import { authRateLimitPolicy, enforceRateLimit } from "@khepree/security";
 import { toNextJsHandler } from "better-auth/next-js";
 
 let handlers: ReturnType<typeof toNextJsHandler> | null = null;
@@ -15,5 +16,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, authRateLimitPolicy(new URL(request.url).pathname));
+  if (limited) return limited;
   return authHandlers().POST(request);
 }

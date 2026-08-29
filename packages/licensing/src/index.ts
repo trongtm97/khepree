@@ -1,15 +1,27 @@
-/** @khepree/licensing — license activation, leases, Ed25519 signing (foundation stub) */
 export const LICENSING_PACKAGE = "@khepree/licensing" as const;
 
-export interface LicenseLeasePayload {
-  subject: string;
-  entitlementId: string;
-  licenseId: string;
-  product: string;
-  plan: string;
-  deviceId: string;
-  featureSnapshotVersion: number;
-  issuedAt: string;
-  expiresAt: string;
-  leaseId: string;
-}
+export { LicensingError, isLicensingError } from "./errors";
+export { canonicalizeLeasePayload } from "./canonicalize";
+export {
+  generateEphemeralSigningKeys,
+  publicKeyFromSpkiBase64,
+  signLease,
+  verifyLease,
+} from "./lease";
+export { hashInstallationId } from "./hash";
+export { MemoryLicensingRepository } from "./store";
+export {
+  LicensingService,
+  createLicensingService,
+  DEFAULT_DEACTIVATE_COOLDOWN_SECONDS,
+} from "./service";
+export { createLicensingPlatform } from "./platform";
+export type { ActivationResult, CreateLicensingServiceOverrides } from "./service";
+export type {
+  ActivateInput,
+  ActivationRecord,
+  DeviceRecord,
+  LicenseLeasePayload,
+  SignedLease,
+} from "./types";
+export { LEASE_SCHEMA_VERSION } from "./types";

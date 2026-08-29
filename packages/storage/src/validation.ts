@@ -20,6 +20,9 @@ const PUBLIC_MIME_EXACT = new Set([
   "text/markdown",
 ]);
 
+/** SVG uploads are disallowed on public bucket — executable when served same-origin. */
+const BLOCKED_PUBLIC_MIMES = new Set(["image/svg+xml"]);
+
 const PRIVATE_MIME_PREFIXES = [
   "application/",
   "image/",
@@ -35,7 +38,6 @@ export function extensionForMime(mimeType: string): string {
     "image/png": "png",
     "image/webp": "webp",
     "image/gif": "gif",
-    "image/svg+xml": "svg",
     "video/mp4": "mp4",
     "application/pdf": "pdf",
     "text/plain": "txt",
@@ -55,6 +57,7 @@ export function extensionForMime(mimeType: string): string {
 }
 
 function isAllowedPublicMime(mimeType: string): boolean {
+  if (BLOCKED_PUBLIC_MIMES.has(mimeType)) return false;
   if (PUBLIC_MIME_EXACT.has(mimeType)) return true;
   return PUBLIC_MIME_PREFIXES.some((p) => mimeType.startsWith(p));
 }

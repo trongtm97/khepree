@@ -1,4 +1,5 @@
-import { index, integer, pgEnum, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { softDelete, timestamps } from "./_shared";
 
 export const contentTypeEnum = pgEnum("content_type", [
@@ -61,6 +62,9 @@ export const contentVersions = pgTable(
     index("content_versions_entry_id_idx").on(table.entryId),
     index("content_versions_status_idx").on(table.status),
     index("content_versions_published_at_idx").on(table.publishedAt),
+    uniqueIndex("content_versions_one_published_per_locale")
+      .on(table.entryId, table.locale)
+      .where(sql`${table.status} = 'PUBLISHED'`),
   ],
 );
 

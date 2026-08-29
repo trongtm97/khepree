@@ -10,7 +10,7 @@ Central PostgreSQL access for the Khepree monorepo via Drizzle ORM.
 ## Quick start
 
 ```bash
-# 1. Start PostgreSQL
+# 1. Start PostgreSQL (`POSTGRES_PORT` in `.env` if 5432 is taken)
 docker compose up -d postgres
 
 # 2. Copy env template (if not done)
@@ -64,7 +64,7 @@ import {
 | Content | `content_entries`, `content_versions`, `media_assets` — metadata in Postgres, bodies/binaries in R2 |
 | Commerce | `customers`, `orders`, `order_items`, `payments`, `subscriptions`, `webhook_events` |
 | Entitlement | `entitlements`, `licenses`, `devices`, `activations`, `license_leases`, `license_events` |
-| Partners | `partners`, `partner_tiers`, `partner_prices`, `wallets`, `wallet_transactions`, `referrals`, `commissions` |
+| Partners | `partners`, `partner_tiers`, `partner_prices`, `wallets`, `wallet_transactions`, `referrals`, `referral_attributions`, `commissions`, `partner_memberships`, `partner_customers`, `partner_issues` |
 | System | `audit_logs`, `notifications`, `system_events` |
 
 ## Design notes
