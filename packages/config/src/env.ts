@@ -1,0 +1,72 @@
+import { z } from "zod";
+
+export type IntegrationStatus = "configured" | "not_configured" | "mock";
+
+const optionalUrl = z.string().url().optional().or(z.literal(""));
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+  DATABASE_URL: z.string().min(1).optional(),
+
+  BETTER_AUTH_SECRET: z.string().min(32).optional(),
+  BETTER_AUTH_URL: optionalUrl,
+
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET_PUBLIC: z.string().optional(),
+  R2_BUCKET_PRIVATE: z.string().optional(),
+  R2_PUBLIC_BASE_URL: optionalUrl,
+
+  LICENSE_SIGNING_PRIVATE_KEY: z.string().optional(),
+  LICENSE_SIGNING_PUBLIC_KEY: z.string().optional(),
+
+  EMAIL_FROM: z.string().optional(),
+  EMAIL_PROVIDER_API_KEY: z.string().optional(),
+
+  APP_URL: optionalUrl,
+  ACCOUNT_URL: optionalUrl,
+  ADMIN_URL: optionalUrl,
+  PARTNER_URL: optionalUrl,
+  API_URL: optionalUrl,
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+function parseEnv(input: Record<string, string | undefined>): Env {
+  return envSchema.parse(input);
+}
+
+/** Validated environment — never throws during Next.js build phase. */
+export function getEnv(source: Record<string, string | undefined> = process.env): Env {
+  return parseEnv(source);
+}
+
+export function isDatabaseConfigured(env: Env = getEnv()): boolean {
+  return Boolean(env.DATABASE_URL && !env.DATABASE_URL.includes("CHANGE_ME"));
+}
+
+export function isStorageConfigured(env: Env = getEnv()): boolean {
+  return Boolean(
+    env.R2_ACCOUNT_ID &&
+      env.R2_ACCESS_KEY_ID &&
+      env.R2_SECRET_ACCESS_KEY &&
+      env.R2_BUCKET_PUBLIC,
+  );
+}
+
+export function isEmailConfigured(env: Env = getEnv()): boolean {
+  return Boolean(env.EMAIL_FROM && env.EMAIL_PROVIDER_API_KEY);
+}
+
+export function isLicenseSigningConfigured(env: Env = getEnv()): boolean {
+  return Boolean(env.LICENSE_SIGNING_PRIVATE_KEY && env.LICENSE_SIGNING_PUBLIC_KEY);
+}
+
+export function integrationStatus(check: boolean): IntegrationStatus {
+  if (check) return "configured";
+  return process.env.NODE_ENV === "development" ? "mock" : "not_configured";
+}
+
+export { envSchema };

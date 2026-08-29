@@ -1,0 +1,31 @@
+{
+  "name": "khepree",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@khepree/web",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @khepree/db db:generate",
+    "db:migrate": "pnpm --filter @khepree/db db:migrate",
+    "db:push": "pnpm --filter @khepree/db db:push",
+    "db:studio": "pnpm --filter @khepree/db db:studio",
+    "db:seed": "pnpm --filter @khepree/db db:seed"
+  },
+  "devDependencies": {
+    "@khepree/eslint-config": "workspace:*",
+    "@khepree/prettier-config": "workspace:*",
+    "@khepree/typescript-config": "workspace:*",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2",
+    "@types/node": "^22.18.0"
+  }
+}

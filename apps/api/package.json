@@ -1,0 +1,33 @@
+{
+  "name": "@khepree/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3004",
+    "build": "next build",
+    "start": "next start --port 3004",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@khepree/catalog": "workspace:*",
+    "@khepree/config": "workspace:*",
+    "@khepree/db": "workspace:*",
+    "@khepree/storage": "workspace:*",
+    "@khepree/types": "workspace:*",
+    "next": "^16.0.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@khepree/eslint-config": "workspace:*",
+    "@khepree/typescript-config": "workspace:*",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.12",
+    "eslint": "^9.34.0",
+    "eslint-config-next": "^16.0.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

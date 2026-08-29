@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-khepree-ink: #0b1220;
+  --color-khepree-slate: #111827;
+  --color-khepree-teal: #14b8a6;
+  --color-khepree-cyan: #22d3ee;
+  --color-khepree-indigo: #6366f1;
+  --color-khepree-solar: #f5b942;
+  --color-khepree-cloud: #f8fafc;
+  --color-khepree-mist: #eef2f7;
+  --color-khepree-white: #ffffff;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --radius-button: 0.875rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-khepree-cloud text-khepree-ink antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-khepree-teal;
+  }
+}

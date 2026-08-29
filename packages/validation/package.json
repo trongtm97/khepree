@@ -1,0 +1,15 @@
+{
+  "name": "@khepree/validation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc --noEmit", "lint": "eslint src/" },
+  "dependencies": { "zod": "^4.1.5" },
+  "devDependencies": {
+    "@khepree/eslint-config": "workspace:*",
+    "@khepree/typescript-config": "workspace:*",
+    "eslint": "^9.34.0",
+    "typescript": "^5.9.2"
+  }
+}

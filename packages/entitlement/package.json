@@ -1,0 +1,14 @@
+{
+  "name": "@khepree/entitlement",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@khepree/db": "workspace:*",
+    "@khepree/security": "workspace:*",
+    "@khepree/types": "workspace:*"
+  },
+  "devDependencies": { "@khepree/typescript-config": "workspace:*", "typescript": "^5.9.2" }
+}

@@ -1,0 +1,30 @@
+---
+description: Route technical work through addyosmani/agent-skills workflows
+alwaysApply: true
+---
+
+# Agent Skills workflow
+
+Before non-trivial technical work in this repo:
+
+1. Route via `.agents/skills/using-agent-skills/SKILL.md`.
+2. Read and follow the matching skill under `.agents/skills/<name>/SKILL.md`.
+3. Read `CONSTRAINTS.md` before writing code — do not weaken it to make a change pass.
+4. Prefer project skills over guessing; the user does not need to say "read skill" each time.
+
+## Phase → skill (Khepree)
+
+| Phase | Skill |
+|-------|-------|
+| New feature / phase | `spec-driven-development` → `planning-and-task-breakdown` |
+| Implement | `incremental-implementation` |
+| UI / marketing | `frontend-ui-engineering` |
+| API / packages | `api-and-interface-design` |
+| Auth / security | `security-and-hardening` |
+| DB / migration | `deprecation-and-migration` |
+| Tests | `test-driven-development` |
+| Debug | `debugging-and-error-recovery` |
+| Review | `code-review-and-quality` |
+| Ship | `shipping-and-launch` |
+
+Stack-specific rules live in `docs/ARCHITECTURE.md` and the Khepree Master Prompt (inherit on every phase).

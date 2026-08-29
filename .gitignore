@@ -1,0 +1,43 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# build
+.next
+out
+dist
+.turbo
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# test
+coverage
+playwright-report
+test-results
+
+# drizzle
+packages/db/drizzle/meta
+
+# secrets
+*.pem
+*.key
+!public/**/*.key
