@@ -52,30 +52,25 @@ export function SiteHeader({
           : "border-border/25 bg-background/55 supports-[backdrop-filter]:bg-background/45",
       )}
     >
-      <div className="relative mx-auto flex h-14 max-w-[90rem] items-center px-4 sm:px-6 lg:px-8">
-        <Link
-          href={localePath(locale)}
-          className="relative z-10 flex shrink-0 items-center self-center py-1"
-        >
+      <div className="mx-auto flex h-16 max-w-[76rem] items-center px-4 sm:px-6 lg:px-8">
+        <Link href={localePath(locale)} className="flex shrink-0 items-center py-1">
           <BrandLogo context="header" />
         </Link>
 
-        <div className="pointer-events-none absolute inset-x-4 hidden items-center justify-center sm:inset-x-6 lg:flex lg:inset-x-8">
-          <div className="pointer-events-auto max-w-full">
-            <PrimaryNav
-              locale={locale}
-              messages={messages}
-              products={products}
-              ecosystemSurfaces={ecosystemSurfaces}
-            />
-          </div>
+        <div className="ml-6 hidden lg:flex">
+          <PrimaryNav
+            locale={locale}
+            messages={messages}
+            products={products}
+            ecosystemSurfaces={ecosystemSurfaces}
+          />
         </div>
 
-        <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-2 lg:flex">
+        <div className="ml-auto hidden shrink-0 items-center gap-2 lg:flex">
           <LanguageSwitcher locale={locale} />
           <Link
             href={signInUrl}
-            className="inline-flex min-h-11 items-center rounded-[var(--radius-control)] px-3 text-sm font-medium text-muted transition-colors hover:text-foreground"
+            className="inline-flex h-10 items-center rounded-[var(--radius-control)] px-3 text-sm font-medium text-muted transition-colors hover:text-foreground"
           >
             {messages.nav.signIn}
           </Link>
@@ -84,7 +79,7 @@ export function SiteHeader({
           </ButtonLink>
         </div>
 
-        <div className="relative z-10 ml-auto lg:hidden">
+        <div className="ml-auto lg:hidden">
           <MobileNav
             locale={locale}
             messages={messages}

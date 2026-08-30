@@ -7,7 +7,7 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 /** Fixed height + horizontal padding only — vertical centering via flex (no py bloat). */
 export const buttonSizes: Record<ButtonSize, string> = {
-  sm: "h-11 min-h-[44px] px-[18px] text-[14px] leading-[1.25] sm:text-[15px]",
+  sm: "h-10 min-h-[40px] px-4 text-[14px] leading-[1.25] lg:text-[15px]",
   md: "h-11 min-h-[44px] px-5 text-[15px] leading-[1.25]",
   lg: "h-12 min-h-[48px] px-6 text-[15px] leading-[1.25] sm:text-[16px]",
 };
@@ -29,9 +29,9 @@ export const buttonVariants: Record<ButtonVariant, string> = {
   danger: "border border-red-600/30 bg-red-600 text-white hover:bg-red-700",
 };
 
-/** Responsive CTA row — full-width stacked buttons below sm, inline from sm up. */
+/** Responsive CTA row — layout only; pair with `fullWidthMobile` on each button/link. */
 export const ctaButtonGroupClass =
-  "flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 [&_a]:w-full [&_a]:max-w-full [&_a]:sm:w-auto [&_button]:w-full [&_button]:max-w-full [&_button]:sm:w-auto";
+  "flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-3";
 
 export const buttonMobileFullWidthClass = "w-full max-w-full sm:w-auto";
 
@@ -68,9 +68,12 @@ export function buttonClassName(options: {
 export function CtaArrow() {
   return (
     <svg
-      aria-hidden
+      width={16}
+      height={16}
       viewBox="0 0 16 16"
-      className="size-4 shrink-0 transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
+      aria-hidden="true"
+      focusable="false"
+      className="h-4 w-4 shrink-0 transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.75"

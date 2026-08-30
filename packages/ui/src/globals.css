@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@source "./**/*.{ts,tsx}";
+
 @theme {
   /* Semantic surfaces — light mode primary */
   --color-background: #f6f8fb;

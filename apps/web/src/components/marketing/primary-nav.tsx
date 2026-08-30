@@ -28,7 +28,7 @@ export function PrimaryNav({
   const aboutActive = pathname === aboutHref || pathname.startsWith(`${aboutHref}/`);
 
   return (
-    <nav aria-label="Primary" className="flex items-center gap-1">
+    <nav aria-label="Primary" className="flex items-center gap-0">
       <ProductsMenu locale={locale} messages={messages} products={products} />
       <ResourcesMenu locale={locale} messages={messages} />
       <EcosystemMenu messages={messages} surfaces={ecosystemSurfaces} align="left" />
@@ -36,7 +36,7 @@ export function PrimaryNav({
         href={aboutHref}
         aria-current={aboutActive ? "page" : undefined}
         className={cn(
-          "inline-flex min-h-11 items-center rounded-[var(--radius-control)] px-3 py-2 text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40",
+          "inline-flex h-10 items-center rounded-[var(--radius-control)] px-3 text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40",
           aboutActive ? "font-medium text-foreground" : "text-muted",
         )}
       >

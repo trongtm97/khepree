@@ -39,5 +39,13 @@ describe("button-contract", () => {
     expect(buttonMobileFullWidthClass).toContain("sm:w-auto");
     expect(ctaButtonGroupClass).toContain("flex-col");
     expect(ctaButtonGroupClass).toContain("sm:flex-row");
+    expect(ctaButtonGroupClass).not.toContain("[&_a]");
+    expect(ctaButtonGroupClass).not.toContain("[&_button]");
+  });
+
+  it("sm size stays compact for header CTAs", () => {
+    expect(buttonSizes.sm).toContain("h-10");
+    expect(buttonSizes.sm).toContain("text-[14px]");
+    expect(buttonSizes.sm).not.toContain("py-");
   });
 });
