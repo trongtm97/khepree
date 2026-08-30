@@ -14,7 +14,7 @@ export async function POST(
 ) {
   const requestId = getRequestId(request);
   const { provider } = await context.params;
-  const limited = enforceRateLimit(request, RATE_LIMITS.WEBHOOK, provider);
+  const limited = await enforceRateLimit(request, RATE_LIMITS.WEBHOOK, provider);
   if (limited) return limited;
 
   const rawBody = await request.text();

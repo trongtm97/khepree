@@ -1,4 +1,4 @@
-import { and, eq, inArray, lte } from "drizzle-orm";
+import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import { outboxEvents, withTransaction, type Database } from "@khepree/db";
 import type { NewOutboxEvent, OutboxEventRecord, OutboxStatus, OutboxStore } from "./types";
 
@@ -19,6 +19,21 @@ export class DrizzleOutboxStore implements OutboxStore {
       if (isUniqueViolation(error)) return;
       throw error;
     }
+  }
+
+  async reclaimStaleLocks(lockTimeoutMs: number, now: Date): Promise<number> {
+    const cutoff = new Date(now.getTime() - lockTimeoutMs);
+    const rows = await this.db
+      .update(outboxEvents)
+      .set({
+        status: "PENDING",
+        lockedAt: null,
+        updatedAt: now,
+        lastError: sql`COALESCE(${outboxEvents.lastError}, '') || ' [stale lock reclaimed]'`,
+      })
+      .where(and(eq(outboxEvents.status, "PROCESSING"), lte(outboxEvents.lockedAt, cutoff)))
+      .returning({ id: outboxEvents.id });
+    return rows.length;
   }
 
   async claimBatch(limit: number, now: Date): Promise<OutboxEventRecord[]> {

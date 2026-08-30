@@ -1,12 +1,13 @@
-import { AudienceSection } from "@/components/marketing/audience-section";
 import { CtaSection } from "@/components/marketing/cta-section";
+import { EcosystemSection } from "@/components/marketing/ecosystem-section";
 import { GlobalSection } from "@/components/marketing/global-section";
 import { HeroSection } from "@/components/marketing/hero-section";
-import { PhilosophySection } from "@/components/marketing/philosophy-section";
-import { ProductsSection } from "@/components/marketing/products-section";
+import { ProductShowcaseSection } from "@/components/marketing/product-showcase-section";
 import { ResourcesSection } from "@/components/marketing/resources-section";
+import { TechnologySection } from "@/components/marketing/technology-section";
 import { ValueStrip } from "@/components/marketing/value-strip";
 import { WhySection } from "@/components/marketing/why-section";
+import { getEcosystemNetworkSurfaces } from "@/lib/ecosystem-nav";
 import { listPublishedContent } from "@/lib/content";
 import { getPublicProducts } from "@/lib/catalog";
 import { getMessages } from "@/lib/i18n/get-messages";
@@ -34,8 +35,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const locale: SupportedLocale = raw;
   const messages = getMessages(locale);
   const products = await getPublicProducts(locale);
-  const screenshot = products.find((product) => product.gallery?.[0] || product.icon);
-  const screenshotMedia = screenshot?.gallery[0] ?? screenshot?.icon ?? null;
+  const heroProduct = products.find((product) => product.gallery?.[0] || product.icon);
+  const heroMedia = heroProduct?.gallery[0] ?? heroProduct?.icon ?? null;
 
   const [articles, docs] = await Promise.all([
     listPublishedContent("article", locale),
@@ -53,19 +54,22 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       href: localePath(locale, `${item.contentType === "article" ? "/blog" : "/docs"}/${item.slug}`),
     }));
 
+  const ecosystemSurfaces = getEcosystemNetworkSurfaces(locale);
+
   return (
     <>
       <HeroSection
         locale={locale}
         messages={messages}
-        screenshotUrl={screenshotMedia?.url}
-        screenshotAlt={screenshotMedia?.altText || screenshot?.name}
+        screenshotUrl={heroMedia?.url}
+        screenshotAlt={heroMedia?.altText || heroProduct?.name}
+        productName={heroProduct?.name}
       />
       <ValueStrip messages={messages} />
-      <ProductsSection locale={locale} messages={messages} />
+      <ProductShowcaseSection locale={locale} messages={messages} products={products} />
+      <TechnologySection messages={messages} />
       <WhySection messages={messages} />
-      <AudienceSection locale={locale} messages={messages} />
-      <PhilosophySection messages={messages} />
+      <EcosystemSection messages={messages} surfaces={ecosystemSurfaces} />
       <GlobalSection messages={messages} />
       <ResourcesSection locale={locale} messages={messages} items={resources} />
       <CtaSection locale={locale} messages={messages} />

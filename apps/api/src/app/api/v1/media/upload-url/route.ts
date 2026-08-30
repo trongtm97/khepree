@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const requestId = getRequestId(request);
-  const limited = enforceRateLimit(request, RATE_LIMITS.MEDIA);
+  const limited = await enforceRateLimit(request, RATE_LIMITS.MEDIA);
   if (limited) return limited;
 
   const session = await getSession();

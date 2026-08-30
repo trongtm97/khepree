@@ -1,19 +1,113 @@
 name: E2E
 
-# Staging/preview smoke. Not run on every unit PR.
-# Dispatch against a running stack (local or staging). SePay sandbox stays manual.
+# PR smoke: Postgres + migrate + start apps + Playwright.
+# Staging: workflow_dispatch with deployed base URLs (no localhost).
 
 on:
+  pull_request:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Run against local CI stack or deployed staging URLs
+        type: choice
+        options:
+          - local
+          - staging
+        default: local
+      web_base_url:
+        description: WEB_BASE_URL (staging mode)
+        required: false
+        default: ""
+      account_base_url:
+        description: ACCOUNT_BASE_URL (staging mode)
+        required: false
+        default: ""
+      admin_base_url:
+        description: ADMIN_BASE_URL (staging mode)
+        required: false
+        default: ""
+      partner_base_url:
+        description: PARTNER_BASE_URL (staging mode)
+        required: false
+        default: ""
 
 jobs:
-  playwright:
-    name: smoke
+  smoke-local:
+    name: smoke (local stack)
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'local')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: khepree
+          POSTGRES_PASSWORD: khepree_local
+          POSTGRES_DB: khepree_local
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U khepree -d khepree_local"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E: "1"
+      TURBO_TELEMETRY_DISABLED: "1"
+      DATABASE_URL: postgresql://khepree:khepree_local@localhost:5432/khepree_local
+      BETTER_AUTH_SECRET: ci-e2e-test-secret-minimum-32-characters-long
+      BETTER_AUTH_URL: http://localhost:3001
+      APP_URL: http://localhost:3000
+      ACCOUNT_URL: http://localhost:3001
+      ADMIN_URL: http://localhost:3002
+      PARTNER_URL: http://localhost:3003
+      API_URL: http://localhost:3004
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_ACCOUNT_URL: http://localhost:3001
+      NEXT_PUBLIC_ADMIN_URL: http://localhost:3002
+      NEXT_PUBLIC_PARTNER_URL: http://localhost:3003
+      PAYMENT_PROVIDER: mock
+      MOCK_PAYMENT_WEBHOOK_SECRET: ci-mock-webhook-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrate
+        run: pnpm db:migrate
+
+      - name: Build apps
+        run: pnpm build
+
+      - name: Install Playwright browser
+        run: pnpm --filter @khepree/e2e exec playwright install --with-deps chromium
+
+      - name: Playwright smoke
+        run: |
+          bash apps/e2e/scripts/start-smoke-stack.sh
+          pnpm test:e2e
+
+  smoke-staging:
+    name: smoke (staging URLs)
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'staging'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       E2E: "1"
+      E2E_MODE: staging
       TURBO_TELEMETRY_DISABLED: "1"
+      WEB_BASE_URL: ${{ github.event.inputs.web_base_url }}
+      ACCOUNT_BASE_URL: ${{ github.event.inputs.account_base_url }}
+      ADMIN_BASE_URL: ${{ github.event.inputs.admin_base_url }}
+      PARTNER_BASE_URL: ${{ github.event.inputs.partner_base_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,5 +124,5 @@ jobs:
       - name: Install Playwright browser
         run: pnpm --filter @khepree/e2e exec playwright install --with-deps chromium
 
-      - name: Smoke
+      - name: Playwright smoke (staging)
         run: pnpm test:e2e

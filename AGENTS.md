@@ -43,6 +43,13 @@ pnpm db:seed
 - **Phase 14:** platform reliability — transactional outbox, `@khepree/platform` composition root, partner/CMS/auth/email/CI hardening — complete; **not** a production-ready claim; B1 still open
 - **Phase 15:** Product Studio, software releases, CMS editor — complete; **not** a production-ready claim; B1 still open
 - **Phase 16:** public website consistency, Vietnamese copy, product/CMS/SEO polish — complete in source; **not** a production-ready claim; B1 still open
+- **Phase 17.0:** system consistency & reliability — complete; **not** a production-ready claim; B1 still open
+- **Phase 17.1:** visual design system (`@khepree/ui` tokens, primitives, motion) — complete
+- **Phase 17.2:** homepage redesign (khepree.com marketing) — complete; **not** a production-ready claim; B1 still open
+- **Phase 17.3:** Khepree ecosystem navigation (central registry, header/footer launcher, back links) — complete; **not** a production-ready claim; B1 still open
+- **Phase 17.4:** public page visual polish (product, blog, docs, about, security) — complete; **not** a production-ready claim; B1 still open
+- **Phase 17.5:** technology motion & interaction polish (energy field, orbit, cursor spotlight, scroll reveal, data flow) — complete; **not** a production-ready claim; B1 still open
+- **Phase 17.6:** public website final design QA — complete; **not** a production-ready claim; B1 still open
 
 Packages already implemented: `@khepree/auth`, `@khepree/catalog`, `@khepree/commerce`, `@khepree/storage`, `@khepree/db`, `@khepree/ui`, `@khepree/config`, `@khepree/security`, `@khepree/entitlement`, `@khepree/licensing`, `@khepree/reseller`, `@khepree/sdk`, `@khepree/events`, `@khepree/platform`.
 

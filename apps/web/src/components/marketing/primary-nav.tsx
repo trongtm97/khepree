@@ -17,7 +17,7 @@ export function PrimaryNav({
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex">
+    <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
       {NAV_KEYS.map((key) => {
         const href = localePath(locale, NAV_PATHS[key]);
         const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -27,8 +27,8 @@ export function PrimaryNav({
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "text-sm transition-colors hover:text-khepree-ink",
-              active ? "font-medium text-khepree-ink" : "text-khepree-slate/80",
+              "rounded-[var(--radius-control)] px-3 py-2 text-sm transition-colors hover:text-foreground",
+              active ? "font-medium text-foreground" : "text-muted",
             )}
           >
             {messages.nav[key]}

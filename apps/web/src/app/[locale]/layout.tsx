@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { JsonLd } from "@/components/seo/json-ld";
+import { getEcosystemFooterSurfaces, getEcosystemNavSurfaces } from "@/lib/ecosystem-nav";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, htmlLang, SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/i18n/config";
 import { organizationJsonLd } from "@/lib/seo/json-ld";
@@ -26,15 +27,22 @@ export default async function LocaleLayout({
 
   const locale: SupportedLocale = raw;
   const messages = getMessages(locale);
+  const ecosystemNav = getEcosystemNavSurfaces(locale);
+  const ecosystemFooter = getEcosystemFooterSurfaces(locale);
 
   return (
     <html lang={htmlLang(locale)} suppressHydrationWarning className={GeistSans.variable}>
       <body>
         <JsonLd data={organizationJsonLd()} />
         <div className="flex min-h-screen flex-col">
-          <SiteHeader locale={locale} messages={messages} accountUrl={accountPublicUrl()} />
+          <SiteHeader
+            locale={locale}
+            messages={messages}
+            accountUrl={accountPublicUrl()}
+            ecosystemSurfaces={ecosystemNav}
+          />
           <main className="flex-1">{children}</main>
-          <SiteFooter locale={locale} messages={messages} />
+          <SiteFooter locale={locale} messages={messages} ecosystemSurfaces={ecosystemFooter} />
         </div>
       </body>
     </html>

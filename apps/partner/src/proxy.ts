@@ -14,7 +14,7 @@ function finish(request: NextRequest, response: NextResponse) {
   return response;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (isMaintenanceMode()) {
     return finish(
       request,
@@ -26,7 +26,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (request.method !== "GET" && request.method !== "HEAD") {
-    const limited = enforceRateLimit(request, RATE_LIMITS.SENSITIVE_MUTATION, "partner");
+    const limited = await enforceRateLimit(request, RATE_LIMITS.SENSITIVE_MUTATION, "partner");
     if (limited) {
       return finish(request, new NextResponse(limited.body, { status: 429, headers: limited.headers }));
     }

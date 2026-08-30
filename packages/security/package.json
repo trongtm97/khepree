@@ -13,7 +13,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@khepree/types": "workspace:*"
+    "@khepree/config": "workspace:*",
+    "@khepree/types": "workspace:*",
+    "redis": "^5.8.2"
   },
   "devDependencies": {
     "@khepree/eslint-config": "workspace:*",

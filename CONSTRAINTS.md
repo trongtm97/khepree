@@ -1,6 +1,6 @@
 # Constraints
 
-Last reviewed: 2026-08-30 — Phase 16 public website consistency
+Last reviewed: 2026-08-30 — Phase 17.1 visual design system
 
 Read this file before writing code. Do not weaken it to make a change pass.
 
@@ -44,7 +44,7 @@ Read this file before writing code. Do not weaken it to make a change pass.
 | Metric | Today | Direction |
 |--------|-------|-----------|
 | Test coverage | minimal (foundation) | must not fall |
-| E2E (Playwright) | `apps/e2e` — skipped unless `E2E=1` | `E2E=1 pnpm test:e2e` against local apps |
+| E2E (Playwright) | `apps/e2e` — PR workflow starts local stack; staging uses base URL env vars | `.github/workflows/e2e.yml` |
 
 ## Exceptions
 

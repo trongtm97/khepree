@@ -27,6 +27,20 @@ export class MemoryOutboxStore implements OutboxStore {
     });
   }
 
+  async reclaimStaleLocks(lockTimeoutMs: number, now: Date): Promise<number> {
+    const cutoff = new Date(now.getTime() - lockTimeoutMs);
+    let reclaimed = 0;
+    for (const row of this.events) {
+      if (row.status !== "PROCESSING" || !row.lockedAt || row.lockedAt > cutoff) continue;
+      row.status = "PENDING";
+      row.lockedAt = null;
+      row.lastError = row.lastError ? `${row.lastError} [stale lock reclaimed]` : "[stale lock reclaimed]";
+      row.updatedAt = now;
+      reclaimed += 1;
+    }
+    return reclaimed;
+  }
+
   async claimBatch(limit: number, now: Date): Promise<OutboxEventRecord[]> {
     const claimed: OutboxEventRecord[] = [];
     for (const row of this.events) {

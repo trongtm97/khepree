@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const requestId = getRequestId(request);
-  const limited = enforceRateLimit(request, RATE_LIMITS.LICENSE, "refresh");
+  const limited = await enforceRateLimit(request, RATE_LIMITS.LICENSE, "refresh");
   if (limited) return limited;
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const licenseKey = readLicenseKey(request, body.licenseKey);

@@ -3,9 +3,10 @@ import {
   COMMERCE_ORDER_REFUNDED_V1,
   COMMERCE_ORDER_VOIDED_V1,
 } from "./contracts";
-import type { DispatcherOptions, DomainEventHandler, OutboxEventRecord } from "./types";
+import type { DispatcherOptions, DomainEventHandler, OutboxEventRecord, OutboxStore } from "./types";
 
 const DEFAULT_MAX_ATTEMPTS = 12;
+const DEFAULT_LOCK_TIMEOUT_MS = 300_000;
 const BACKOFF_CAP_MS = 60 * 60_000;
 
 export const CRITICAL_COMMERCE_EVENT_TYPES = [
@@ -21,12 +22,14 @@ export function retryDelayMs(attempts: number): number {
 
 export class PollingOutboxDispatcher {
   private readonly maxAttempts: number;
+  private readonly lockTimeoutMs: number;
   private readonly now: () => Date;
   private readonly handlers: Map<string, DomainEventHandler[]>;
   private readonly immortal: Set<string>;
 
   constructor(private readonly options: DispatcherOptions) {
     this.maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
+    this.lockTimeoutMs = options.lockTimeoutMs ?? DEFAULT_LOCK_TIMEOUT_MS;
     this.now = options.now ?? (() => new Date());
     this.handlers = new Map();
     for (const handler of options.handlers) {
@@ -39,8 +42,16 @@ export class PollingOutboxDispatcher {
     );
   }
 
+  get store(): OutboxStore {
+    return this.options.store;
+  }
+
   async dispatchPending(limit = 20): Promise<number> {
-    const batch = await this.options.store.claimBatch(limit, this.now());
+    const now = this.now();
+    if (this.lockTimeoutMs > 0) {
+      await this.options.store.reclaimStaleLocks(this.lockTimeoutMs, now);
+    }
+    const batch = await this.options.store.claimBatch(limit, now);
     let processed = 0;
     for (const event of batch) {
       await this.dispatchOne(event);

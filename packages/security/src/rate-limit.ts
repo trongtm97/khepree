@@ -73,6 +73,8 @@ export function createRateLimiter(redis?: RedisCommands): RateLimiter {
   return memoryLimiter;
 }
 
+export { memoryLimiter as memoryRateLimiterForTests };
+
 export const RATE_LIMITS = {
   AUTH_SIGN_IN: { name: "auth.sign-in", windowMs: 15 * 60_000, max: 10 },
   AUTH_SIGN_UP: { name: "auth.sign-up", windowMs: 15 * 60_000, max: 5 },
@@ -116,8 +118,16 @@ export function authRateLimitPolicy(pathname: string): RateLimitPolicy {
 /**
  * Record a hit. Fail closed: any unexpected limiter error is treated as deny.
  */
-export function consumeRateLimit(key: string, policy: RateLimitPolicy): RateLimitDecision {
-  return memoryLimiter.consume(key, policy);
+export async function consumeRateLimit(
+  key: string,
+  policy: RateLimitPolicy,
+): Promise<RateLimitDecision> {
+  const { getRateLimiter } = await import("./rate-limiter-factory");
+  try {
+    return await getRateLimiter().then((limiter) => limiter.consume(key, policy));
+  } catch {
+    return { ok: false, retryAfterSeconds: 60 };
+  }
 }
 
 export function rateLimitedResponse(retryAfterSeconds: number, requestId?: string): Response {
@@ -135,19 +145,20 @@ export function rateLimitedResponse(retryAfterSeconds: number, requestId?: strin
   );
 }
 
-export function enforceRateLimit(
+export async function enforceRateLimit(
   request: Request,
   policy: RateLimitPolicy,
   extraKey = "",
-): Response | null {
+): Promise<Response | null> {
   const key = `${clientIp(request)}:${new URL(request.url).pathname}:${extraKey}`;
-  const decision = consumeRateLimit(key, policy);
+  const decision = await consumeRateLimit(key, policy);
   if (decision.ok) return null;
   const requestId = request.headers.get("x-request-id") ?? undefined;
   return rateLimitedResponse(decision.retryAfterSeconds, requestId);
 }
 
 /** Test-only. */
-export function resetRateLimitStoreForTests(): void {
-  memoryLimiter.reset();
+export async function resetRateLimitStoreForTests(): Promise<void> {
+  const { resetRateLimiterForTests } = await import("./rate-limiter-factory");
+  await resetRateLimiterForTests();
 }

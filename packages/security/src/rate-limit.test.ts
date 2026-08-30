@@ -7,24 +7,24 @@ import {
   resetRateLimitStoreForTests,
 } from "./rate-limit";
 
-afterEach(() => {
-  resetRateLimitStoreForTests();
+afterEach(async () => {
+  await resetRateLimitStoreForTests();
 });
 
 describe("consumeRateLimit", () => {
-  it("allows up to max hits then denies", () => {
+  it("allows up to max hits then denies", async () => {
     const policy = { name: "test", windowMs: 60_000, max: 2 };
-    expect(consumeRateLimit("a", policy).ok).toBe(true);
-    expect(consumeRateLimit("a", policy).ok).toBe(true);
-    const denied = consumeRateLimit("a", policy);
+    expect((await consumeRateLimit("a", policy)).ok).toBe(true);
+    expect((await consumeRateLimit("a", policy)).ok).toBe(true);
+    const denied = await consumeRateLimit("a", policy);
     expect(denied.ok).toBe(false);
     if (!denied.ok) expect(denied.retryAfterSeconds).toBeGreaterThan(0);
   });
 
-  it("isolates keys", () => {
+  it("isolates keys", async () => {
     const policy = RATE_LIMITS.LICENSE;
-    expect(consumeRateLimit("ip-1", policy).ok).toBe(true);
-    expect(consumeRateLimit("ip-2", policy).ok).toBe(true);
+    expect((await consumeRateLimit("ip-1", policy)).ok).toBe(true);
+    expect((await consumeRateLimit("ip-2", policy)).ok).toBe(true);
   });
 });
 

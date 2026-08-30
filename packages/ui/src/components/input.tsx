@@ -13,7 +13,7 @@ export function Input({ className, label, error, hint, id, ...props }: InputProp
   return (
     <div className="flex flex-col gap-1.5">
       {label ? (
-        <label htmlFor={inputId} className="text-sm font-medium text-khepree-ink">
+        <label htmlFor={inputId} className="text-sm font-medium text-foreground">
           {label}
         </label>
       ) : null}
@@ -24,8 +24,9 @@ export function Input({ className, label, error, hint, id, ...props }: InputProp
           error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
         }
         className={cn(
-          "h-11 w-full rounded-[var(--radius-control)] border border-khepree-mist bg-khepree-white px-3.5 text-sm text-khepree-ink placeholder:text-khepree-slate/50",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-khepree-teal",
+          "h-11 w-full rounded-[var(--radius-control)] border border-border bg-surface px-3.5 text-sm text-foreground placeholder:text-muted/70",
+          "transition-[border-color,box-shadow] duration-[var(--motion-fast)]",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal focus-visible:border-teal/40",
           "disabled:cursor-not-allowed disabled:opacity-50",
           error && "border-red-400",
           className,
@@ -33,7 +34,7 @@ export function Input({ className, label, error, hint, id, ...props }: InputProp
         {...props}
       />
       {hint && !error ? (
-        <p id={`${inputId}-hint`} className="text-xs text-khepree-slate/70">
+        <p id={`${inputId}-hint`} className="text-xs text-muted">
           {hint}
         </p>
       ) : null}

@@ -37,7 +37,7 @@ export function Dropdown({ trigger, items, align = "start", className }: Dropdow
         <ul
           role="menu"
           className={cn(
-            "absolute z-50 mt-2 min-w-40 rounded-[var(--radius-control)] border border-khepree-mist bg-khepree-white py-1 shadow-lg",
+            "absolute z-50 mt-2 min-w-44 overflow-hidden rounded-[var(--radius-control)] border border-border bg-surface/95 py-1 shadow-[var(--shadow-elevated)] backdrop-blur-md motion-soft-scale",
             align === "end" ? "right-0" : "left-0",
           )}
         >
@@ -51,7 +51,7 @@ export function Dropdown({ trigger, items, align = "start", className }: Dropdow
                   item.onSelect();
                   setOpen(false);
                 }}
-                className="block w-full px-3 py-2 text-left text-sm text-khepree-ink hover:bg-khepree-mist disabled:opacity-50"
+                className="block w-full px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-border-subtle disabled:opacity-50"
               >
                 {item.label}
               </button>

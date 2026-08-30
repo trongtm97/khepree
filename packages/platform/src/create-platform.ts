@@ -12,6 +12,13 @@ import {
   type CreatePartnerServiceOverrides,
 } from "@khepree/reseller";
 
+export type CreateKhepreePlatformOverrides = {
+  entitlement?: CreateEntitlementServiceOverrides;
+  licensing?: CreateLicensingServiceOverrides;
+  commerce?: CreateCommerceServiceOverrides;
+  partner?: Omit<CreatePartnerServiceOverrides, "entitlement">;
+};
+
 export function marketingReferralBaseUrl(appUrl: string, locale = DEFAULT_LOCALE): string {
   return `${appUrl.replace(/\/$/, "")}/${locale}`;
 }
@@ -22,12 +29,7 @@ export function marketingReferralBaseUrl(appUrl: string, locale = DEFAULT_LOCALE
  * reseller does not import platform (no cycle).
  */
 export function createKhepreePlatform(
-  overrides: {
-    entitlement?: CreateEntitlementServiceOverrides;
-    licensing?: CreateLicensingServiceOverrides;
-    commerce?: CreateCommerceServiceOverrides;
-    partner?: Omit<CreatePartnerServiceOverrides, "entitlement">;
-  } = {},
+  overrides: CreateKhepreePlatformOverrides = {},
 ) {
   const entitlement =
     overrides.licensing?.entitlement ?? createEntitlementService(overrides.entitlement);

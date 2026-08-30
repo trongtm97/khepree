@@ -40,7 +40,8 @@ pnpm dev:web      # Marketing → http://localhost:3000
 | `pnpm typecheck`  | TypeScript strict check        |
 | `pnpm lint`       | ESLint                         |
 | `pnpm test`       | Unit tests (DB-less). Postgres `skipIf` tests run in CI integration. |
-| `pnpm test:e2e`   | Playwright smoke (`E2E=1`). Not in the unit PR job. |
+| `pnpm test:e2e`   | Playwright smoke (`E2E=1`). PR workflow starts apps; staging uses `WEB_BASE_URL` env vars. |
+| `pnpm outbox:run` | Process one outbox worker batch (reclaim + dispatch) |
 | `pnpm db:migrate` | Apply Drizzle migrations       |
 | `pnpm db:seed`    | Idempotent development seed    |
 
@@ -66,8 +67,10 @@ pnpm dev:web      # Marketing → http://localhost:3000
 | **14** | ✅ Platform reliability (outbox, composition root, partner/CMS/CI). **Not production-ready.** |
 | **15** | ✅ Product Studio, software releases, CMS editor. Not production-ready. |
 | **16** | ✅ Public website consistency, Vietnamese copy, product/CMS/SEO polish. **Not production-ready.** |
+| **17.0** | ✅ System consistency & reliability — migrations, outbox worker, Redis rate limits, E2E CI. **Not production-ready.** |
+| **17.1** | ✅ Visual design system — tokens, typography, depth primitives, motion, component polish. Page redesign **not** started. |
 
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), [docs/PRODUCTION-STATUS.md](./docs/PRODUCTION-STATUS.md), and [CONTRIBUTING.md](./CONTRIBUTING.md).
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), [docs/VISUAL-DESIGN-SYSTEM.md](./docs/VISUAL-DESIGN-SYSTEM.md), [docs/PRODUCTION-STATUS.md](./docs/PRODUCTION-STATUS.md), and [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Environment
 

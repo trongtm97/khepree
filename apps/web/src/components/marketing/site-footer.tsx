@@ -1,3 +1,4 @@
+import type { ResolvedKhepreeSurface } from "@khepree/config";
 import Link from "next/link";
 import { BrandLogo, Container } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
@@ -15,16 +16,17 @@ function socialLinks() {
 export interface SiteFooterProps {
   locale: SupportedLocale;
   messages: Messages;
+  ecosystemSurfaces: ResolvedKhepreeSurface[];
 }
 
-export function SiteFooter({ locale, messages }: SiteFooterProps) {
+export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterProps) {
   const social = socialLinks();
   const year = new Date().getFullYear();
 
   return (
     <footer className="border-t border-khepree-mist bg-khepree-white">
       <Container className="py-12">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-2">
             <BrandLogo />
             <p className="mt-3 max-w-xs text-sm text-khepree-slate/70">{messages.hero.headline}</p>
@@ -45,11 +47,31 @@ export function SiteFooter({ locale, messages }: SiteFooterProps) {
               </li>
               <li>
                 <Link href={localePath(locale, "/pricing")} className="hover:text-khepree-ink">
-                  {messages.nav.pricing}
+                  {messages.pages.pricing.title}
                 </Link>
               </li>
             </ul>
           </div>
+
+          {ecosystemSurfaces.length > 0 ? (
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide">{messages.footer.ecosystem}</h2>
+              <ul className="mt-3 space-y-2 text-sm text-khepree-slate/70">
+                {ecosystemSurfaces.map((surface) => (
+                  <li key={surface.id}>
+                    <a
+                      href={surface.url}
+                      target={surface.external ? "_blank" : undefined}
+                      rel={surface.external ? "noopener noreferrer" : undefined}
+                      className="hover:text-khepree-ink"
+                    >
+                      {surface.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div>
             <h2 className="text-sm font-semibold">{messages.footer.resources}</h2>

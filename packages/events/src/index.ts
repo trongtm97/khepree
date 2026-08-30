@@ -17,6 +17,8 @@ export {
 export { PollingOutboxDispatcher, retryDelayMs, CRITICAL_COMMERCE_EVENT_TYPES } from "./dispatcher";
 export { MemoryOutboxStore } from "./memory-store";
 export { DrizzleOutboxStore } from "./drizzle-store";
+export { OutboxWorker } from "./worker";
+export { outboxLockTimeoutMs, outboxMaxAttempts } from "./outbox-config";
 export type {
   DispatcherOptions,
   DomainEventHandler,
@@ -24,4 +26,6 @@ export type {
   OutboxEventRecord,
   OutboxStatus,
   OutboxStore,
+  OutboxWorkerOptions,
+  OutboxWorkerResult,
 } from "./types";

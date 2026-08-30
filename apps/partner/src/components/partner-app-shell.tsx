@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandLogo, Button, cn, Container } from "@khepree/ui";
+import { marketingPublicUrl } from "@khepree/config";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -35,9 +36,19 @@ export function PartnerAppShell({
     <div className="flex min-h-screen flex-col bg-khepree-cloud">
       <header className="border-b border-khepree-mist bg-khepree-white">
         <Container className="flex h-14 items-center justify-between gap-4">
-          <Link href={homeHref}>
-            <BrandLogo size="sm" />
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href={homeHref}>
+              <BrandLogo size="sm" />
+            </Link>
+            <a
+              href={marketingPublicUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden text-sm text-khepree-slate/70 hover:text-khepree-ink sm:inline"
+            >
+              Khepree.com
+            </a>
+          </div>
           <div className="hidden items-center gap-3 text-sm sm:flex">
             {partnerName ? (
               <span className="text-khepree-indigo">{partnerName}</span>

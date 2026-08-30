@@ -17,12 +17,15 @@ export interface TabsProps {
 
 export function Tabs({ items, defaultTab, className }: TabsProps) {
   const [active, setActive] = useState(defaultTab ?? items[0]?.id ?? "");
-
   const activeItem = items.find((item) => item.id === active) ?? items[0];
 
   return (
     <div className={className}>
-      <div role="tablist" aria-label="Tabs" className="flex gap-1 border-b border-khepree-mist">
+      <div
+        role="tablist"
+        aria-label="Tabs"
+        className="inline-flex gap-1 rounded-[var(--radius-control)] border border-border bg-border-subtle/50 p-1"
+      >
         {items.map((item) => (
           <button
             key={item.id}
@@ -33,10 +36,10 @@ export function Tabs({ items, defaultTab, className }: TabsProps) {
             id={`tab-${item.id}`}
             onClick={() => setActive(item.id)}
             className={cn(
-              "rounded-t-[var(--radius-control)] px-4 py-2.5 text-sm font-medium transition-colors",
+              "rounded-[calc(var(--radius-control)-2px)] px-4 py-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-[var(--motion-fast)]",
               active === item.id
-                ? "border-b-2 border-khepree-teal text-khepree-teal"
-                : "text-khepree-slate/70 hover:text-khepree-ink",
+                ? "bg-surface text-foreground shadow-[var(--shadow-soft)]"
+                : "text-muted hover:text-foreground",
             )}
           >
             {item.label}
@@ -48,7 +51,7 @@ export function Tabs({ items, defaultTab, className }: TabsProps) {
           role="tabpanel"
           id={`panel-${activeItem.id}`}
           aria-labelledby={`tab-${activeItem.id}`}
-          className="py-4"
+          className="py-4 motion-fade-up"
         >
           {activeItem.content}
         </div>

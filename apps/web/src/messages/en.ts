@@ -7,9 +7,9 @@ export const en = {
   nav: {
     products: "Products",
     solutions: "Solutions",
-    pricing: "Pricing",
     resources: "Resources",
     company: "Company",
+    ecosystem: "Ecosystem",
     signIn: "Sign in",
     exploreProducts: "Explore products",
     openMenu: "Open menu",
@@ -20,7 +20,7 @@ export const en = {
     supporting:
       "Khepree builds practical, powerful, easy-to-use tools so you can save time, work more effectively, and turn ideas into value.",
     ctaPrimary: "Explore products",
-    ctaSecondary: "Learn about Khepree",
+    ctaSecondary: "Explore the ecosystem",
   },
   valueStrip: {
     saveTime: "Save time",
@@ -111,8 +111,40 @@ export const en = {
     },
   },
   philosophy: {
-    heading: "Technology only matters when it creates value.",
+    heading: "Technology works behind the scenes. Simplicity stays up front.",
     copy: "Khepree does not build software just to add more features. We build tools that make a job faster, simpler, more accurate, or more valuable for the people who use them.",
+    stepIdea: "Idea",
+    stepSoftware: "Khepree Software",
+    stepResult: "Result",
+  },
+  ecosystem: {
+    heading: "One ecosystem. Many ways to go further.",
+    copy: "Account, apps, partners, and developer resources — connected on the Khepree platform.",
+    center: "Khepree",
+    account: {
+      title: "Khepree Account",
+      copy: "Manage sign-in, licenses, and downloads.",
+    },
+    webApps: {
+      title: "Web apps",
+      copy: "Access Khepree applications in your browser.",
+    },
+    partner: {
+      title: "Partners & resellers",
+      copy: "Partner and reseller programs.",
+    },
+    downloads: {
+      title: "Download software",
+      copy: "Install desktop products when you have access.",
+    },
+    developers: {
+      title: "API / Developers",
+      copy: "Documentation and integration guides.",
+    },
+    products: {
+      title: "Products",
+      copy: "Explore Khepree software.",
+    },
   },
   global: {
     heading: "Starting in Vietnam. Ready for the world.",
@@ -141,6 +173,7 @@ export const en = {
     privacy: "Privacy",
     terms: "Terms",
     copyright: "All rights reserved.",
+    ecosystem: "Ecosystem",
   },
   pages: {
     products: {
@@ -206,6 +239,9 @@ export const en = {
       intro: "Published articles appear here. Drafts are not listed.",
       emptyTitle: "No articles published yet",
       emptyDescription: "When we publish an update, it will appear here. This list is not filled with sample posts.",
+      featuredLabel: "Featured",
+      tocLabel: "On this page",
+      relatedHeading: "Related articles",
     },
     docs: {
       title: "Documentation",

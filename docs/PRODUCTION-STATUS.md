@@ -1,4 +1,4 @@
-# Production status (Phase 16)
+# Production status (Phase 17.0)
 
 This is an inventory, not a launch certificate. **Khepree is not production-ready** while any BLOCKER in `docs/TODOS.md` remains open. Compiling Phase 14 does not mean go-live. SePay B1 sandbox proof is **not** resolved. Real email delivery is **not** verified. Production infrastructure and backup/restore drills do not exist in this repo.
 
@@ -25,7 +25,7 @@ packages/
   licensing    keys, devices, Ed25519 leases (only when licensingMode requires)
   reseller     partners, wallet, referrals (domain only)
   sdk          client-neutral types
-  security     RBAC, RateLimiter (memory + Redis interface), trusted-proxy IP
+  security     RBAC, getRateLimiter() (memory dev / Redis prod), trusted-proxy IP
   storage      public/private object storage + upload content classes
   types        money (VND exponent 0) and shared contracts
   ui           design system
@@ -33,14 +33,14 @@ packages/
 
 ## 2. Implemented capabilities
 
-- Transactional outbox: payment/order transition and `outbox_events` insert share one PostgreSQL transaction. Paid-order provisioning is retryable; duplicate webhooks do not lose the event.
+- Transactional outbox: payment/order transition and `outbox_events` insert share one PostgreSQL transaction. Dedicated worker via `pnpm outbox:run` or `POST /api/v1/internal/outbox/run` (Bearer `OUTBOX_WORKER_SECRET`). Stale `PROCESSING` locks are reclaimed after `OUTBOX_LOCK_TIMEOUT_MS`.
 - Apps compose via `@khepree/platform`. `@khepree/reseller` is partner domain behavior.
 - Audit writers can `bind(tx)` so audit rows roll back with the business transaction.
 - Partner: VND wallets, `/vi` referral URLs, `accessTermDays`, explicit partner context, drizzle atomic issue.
 - CMS: version allocation retries unique conflicts; compensating delete after failed metadata write; `media_assets.size_bytes` is BIGINT.
 - Server-side `MarketPolicy` (default VN/VND). Production payment env is provider-extensible; mock is forbidden.
 - Email: `ResendEmailAdapter` behind the existing interface. Production fails closed on `EMAIL_PROVIDER=dev`. Delivery is not proven.
-- CI: unit job (no DB) + Postgres integration job (migrate from empty + tests). E2E is a separate workflow_dispatch workflow. Turbo lint/typecheck/test do not require `^build`.
+- CI: unit job (no DB) + Postgres integration job (migrate from empty + critical-table tests). E2E PR workflow starts Postgres, migrates, builds apps, runs Playwright; staging mode uses configurable base URLs.
 
 ## 3. Missing production credentials
 
@@ -52,7 +52,7 @@ Must be created **outside** the repo (never committed):
 - R2 (or S3-compatible) account, keys, `R2_BUCKET_PUBLIC`, `R2_BUCKET_PRIVATE`, `R2_PUBLIC_BASE_URL`
 - `EMAIL_PROVIDER=resend`, `EMAIL_FROM`, `EMAIL_PROVIDER_API_KEY` **and** a passing live send test
 - SePay production credentials after B1 sandbox proof
-- Optional `REDIS_URL` for multi-instance rate limits
+- Optional `REDIS_URL` for multi-instance rate limits (**required in production** — `validateRuntimeEnv` fails closed without it)
 - OAuth client secrets if Google sign-in is enabled
 
 ## 4. Required external configuration
@@ -71,17 +71,17 @@ Applied set in repo: `0000` … `0013_phase16_url_redirects`. Production is **no
 
 ## 6. Security status
 
-Addressed through Phase 14: same-tx outbox, tx-bound audit, upload content classes, market price gate, request-scoped session memo, Redis rate-limit interface, production email fail-closed, provider-extensible payment env validation.
+Addressed through Phase 17.0: same-tx outbox with stale-lock recovery and dedicated worker, tx-bound audit, upload content classes, market price gate, request-scoped session memo, `getRateLimiter()` wired to Redis in production, production email fail-closed, provider-extensible payment env validation, migrate-from-zero integration tests.
 
-Still open for launch: B1–B6 and P1–P10 in `docs/TODOS.md`. Redis limiter is an interface until `REDIS_URL` is wired at composition. Email adapter is not proven against Resend. CSP allows unsafe-inline. SePay recurring and automated refunds are **not** implemented.
+Still open for launch: B1–B6 and P1–P10 in `docs/TODOS.md`. Email adapter is not proven against Resend. CSP allows unsafe-inline. SePay recurring and automated refunds are **not** implemented.
 
 ## 7. Test status
 
-`pnpm test` is the unit gate (no database). CI `integration` job applies migrations from empty Postgres and re-runs tests so Postgres `skipIf` cases execute (`INTEGRATION` and `DATABASE_URL` are turbo test env so unit and integration caches stay distinct). Playwright: `E2E=1 pnpm test:e2e` or `.github/workflows/e2e.yml` (workflow_dispatch). SePay Sandbox live IPN is **not** proven. B1 remains open.
+`pnpm test` is the unit gate (no database). CI `integration` job applies migrations from empty Postgres and re-runs tests so Postgres `skipIf` cases execute, including critical-table inventory after migrate-from-zero. Playwright: local PR workflow (`.github/workflows/e2e.yml`) or staging dispatch with `WEB_BASE_URL` / `ACCOUNT_BASE_URL` / `ADMIN_BASE_URL` / `PARTNER_BASE_URL`. SePay Sandbox live IPN is **not** proven. B1 remains open.
 
 ## 8. Build status
 
-`pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build` are the Phase 16 quality gate with the unit CI job. Apply migration `0013_phase16_url_redirects` before using Redirect Manager. Local `pnpm db:seed` keeps the catalog fixture (`development-sample`) **hidden** so it does not appear on the public website.
+`pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build` are the Phase 17.0 quality gate with the unit CI job. Apply migrations through `0013_phase16_url_redirects` before using Redirect Manager. Local `pnpm db:seed` keeps the catalog fixture (`development-sample`) **hidden** so it does not appear on the public website.
 
 ## 9. Deployment checklist
 
@@ -95,7 +95,7 @@ Still open for launch: B1–B6 and P1–P10 in `docs/TODOS.md`. Redis limiter is
 - [ ] CI green on the revision (quality + integration)
 - [ ] Smoke: home `/` → `/vi`, product, 404, sign-in, entitled download (if files exist)
 - [ ] `MAINTENANCE_MODE` documented for cutover
-- [ ] Single instance until Redis, or `REDIS_URL` configured
+- [ ] Single instance until Redis, or `REDIS_URL` configured (**required** — production boot fails without it)
 
 ## 10. Remaining BEFORE PRODUCTION items
 

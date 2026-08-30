@@ -7,7 +7,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "test": "vitest run"
+    "test": "vitest run",
+    "outbox:run": "tsx src/run-outbox-cli.ts"
   },
   "dependencies": {
     "@khepree/catalog": "workspace:*",
@@ -23,6 +24,7 @@
     "@khepree/eslint-config": "workspace:*",
     "@khepree/typescript-config": "workspace:*",
     "eslint": "^9.34.0",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }

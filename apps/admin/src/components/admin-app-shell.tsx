@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandLogo, Button, cn, Container } from "@khepree/ui";
+import { marketingPublicUrl } from "@khepree/config";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -65,6 +66,14 @@ export function AdminAppShell({
             <Link href="/dashboard">
               <BrandLogo size="sm" />
             </Link>
+            <a
+              href={marketingPublicUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden text-sm text-khepree-slate/70 hover:text-khepree-ink md:inline"
+            >
+              {adminUi.viewWebsite}
+            </a>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="hidden text-khepree-indigo sm:inline">{role}</span>

@@ -1,22 +1,75 @@
 @import "tailwindcss";
 
 @theme {
-  --color-khepree-ink: #0b1220;
-  --color-khepree-slate: #111827;
-  --color-khepree-teal: #14b8a6;
-  --color-khepree-cyan: #22d3ee;
-  --color-khepree-indigo: #6366f1;
-  --color-khepree-solar: #f5b942;
-  --color-khepree-cloud: #f8fafc;
-  --color-khepree-mist: #eef2f7;
-  --color-khepree-white: #ffffff;
+  /* Semantic surfaces — light mode primary */
+  --color-background: #f6f8fb;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-foreground: #0b1220;
+  --color-muted: #5b6478;
+  --color-border: #e3e8ef;
+  --color-border-subtle: #eef2f7;
 
+  /* Semantic aliases matching token vocabulary */
+  --color-text: var(--color-foreground);
+  --color-text-muted: var(--color-muted);
+
+  /* Brand spectrum */
+  --color-teal: #0d9488;
+  --color-cyan: #06b6d4;
+  --color-indigo: #4f46e5;
+  --color-solar-accent: #f5b942;
+
+  /* Legacy aliases (keep apps stable) */
+  --color-khepree-ink: var(--color-foreground);
+  --color-khepree-slate: #334155;
+  --color-khepree-teal: var(--color-teal);
+  --color-khepree-cyan: var(--color-cyan);
+  --color-khepree-indigo: var(--color-indigo);
+  --color-khepree-solar: var(--color-solar-accent);
+  --color-khepree-cloud: var(--color-background);
+  --color-khepree-mist: var(--color-border-subtle);
+  --color-khepree-white: var(--color-surface);
+
+  /* Typography — Geist via app layout */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
+  --text-display: clamp(2.75rem, 4.5vw + 1rem, 5rem);
+  --text-hero: clamp(2.25rem, 3.5vw + 0.75rem, 3.75rem);
+  --text-title: clamp(1.5rem, 1.5vw + 1rem, 2rem);
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+
+  --leading-display: 1.05;
+  --leading-title: 1.15;
+  --leading-body: 1.65;
+  --leading-small: 1.5;
+
+  /* Slightly open tracking — Vietnamese diacritics need room */
+  --tracking-display: -0.015em;
+  --tracking-title: -0.01em;
+  --tracking-body: 0;
+  --tracking-caps: 0.06em;
+
+  /* Radii */
   --radius-card: 1.25rem;
   --radius-control: 0.75rem;
   --radius-button: 0.875rem;
+  --radius-pill: 9999px;
+
+  /* Depth */
+  --shadow-soft: 0 1px 2px rgb(11 18 32 / 0.04), 0 8px 24px rgb(11 18 32 / 0.06);
+  --shadow-elevated: 0 2px 8px rgb(11 18 32 / 0.06), 0 16px 40px rgb(11 18 32 / 0.08);
+  --shadow-glow-teal: 0 0 0 1px rgb(13 148 136 / 0.08), 0 12px 40px rgb(13 148 136 / 0.14);
+  --shadow-glow-indigo: 0 0 0 1px rgb(79 70 229 / 0.08), 0 12px 40px rgb(79 70 229 / 0.12);
+
+  /* Motion */
+  --motion-fast: 150ms;
+  --motion-base: 220ms;
+  --motion-slow: 420ms;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 @layer base {
@@ -39,10 +92,325 @@
   }
 
   body {
-    @apply bg-khepree-cloud text-khepree-ink antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv01";
+    line-height: var(--leading-body);
+  }
+
+  :lang(vi) h1,
+  :lang(vi) h2,
+  :lang(vi) h3,
+  :lang(vi) .type-display,
+  :lang(vi) .type-hero,
+  :lang(vi) .type-title {
+    letter-spacing: 0;
   }
 
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-khepree-teal;
+    @apply outline-2 outline-offset-2 outline-teal;
+  }
+}
+
+/* Typography utilities */
+@layer components {
+  .type-display {
+    font-size: var(--text-display);
+    line-height: var(--leading-display);
+    letter-spacing: var(--tracking-display);
+    font-weight: 600;
+  }
+
+  .type-hero {
+    font-size: var(--text-hero);
+    line-height: var(--leading-display);
+    letter-spacing: var(--tracking-display);
+    font-weight: 600;
+  }
+
+  .type-title {
+    font-size: var(--text-title);
+    line-height: var(--leading-title);
+    letter-spacing: var(--tracking-title);
+    font-weight: 600;
+  }
+
+  .type-body {
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-body);
+  }
+
+  .type-small {
+    font-size: var(--text-small);
+    line-height: var(--leading-small);
+  }
+
+  .type-caps {
+    font-size: var(--text-small);
+    line-height: var(--leading-small);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Dark technology sections */
+  .tech-section {
+    --color-background: #070b14;
+    --color-surface: rgb(255 255 255 / 0.04);
+    --color-surface-elevated: rgb(255 255 255 / 0.06);
+    --color-foreground: #f8fafc;
+    --color-muted: rgb(248 250 252 / 0.68);
+    --color-border: rgb(255 255 255 / 0.1);
+    --color-border-subtle: rgb(255 255 255 / 0.06);
+    color: var(--color-foreground);
+    background-color: var(--color-background);
+  }
+}
+
+/* Motion keyframes — transform + opacity only */
+@keyframes khepree-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes khepree-soft-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes khepree-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+@keyframes khepree-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes khepree-gradient-drift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes khepree-scan {
+  0% {
+    transform: translate3d(-120%, 0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate3d(120%, 0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes khepree-energy-drift {
+  0%,
+  100% {
+    transform: translate3d(-1.5%, 0, 0) scale(1);
+    opacity: 0.42;
+  }
+  50% {
+    transform: translate3d(1.5%, -1%, 0) scale(1.03);
+    opacity: 0.52;
+  }
+}
+
+@keyframes khepree-orbit-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes khepree-flow-pulse {
+  0%,
+  100% {
+    stroke-dashoffset: 18;
+    opacity: 0.28;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 0.55;
+  }
+}
+
+@keyframes khepree-light-sweep {
+  0%,
+  88%,
+  100% {
+    transform: translate3d(-125%, 0, 0);
+    opacity: 0;
+  }
+  93% {
+    opacity: 0.22;
+  }
+  97% {
+    transform: translate3d(125%, 0, 0);
+    opacity: 0;
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    .motion-fade-up {
+      animation: khepree-fade-up var(--motion-slow) var(--motion-ease-out) both;
+    }
+
+    .motion-soft-scale {
+      animation: khepree-soft-scale-in var(--motion-base) var(--motion-ease-out) both;
+    }
+
+    .motion-float {
+      animation: khepree-float 5s var(--motion-ease-in-out) infinite;
+    }
+
+    .motion-orbit {
+      animation: khepree-orbit 24s linear infinite;
+    }
+
+    .motion-orbit-reverse {
+      animation: khepree-orbit-reverse 32s linear infinite;
+    }
+
+    .motion-energy-field {
+      animation: khepree-energy-drift 28s var(--motion-ease-in-out) infinite;
+      will-change: transform, opacity;
+    }
+
+    .motion-flow-line {
+      stroke-dasharray: 6 10;
+      animation: khepree-flow-pulse 5s var(--motion-ease-in-out) infinite;
+    }
+
+    .motion-light-sweep {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .motion-light-sweep::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 42%,
+        rgb(255 255 255 / 0.1) 50%,
+        transparent 58%
+      );
+      animation: khepree-light-sweep 14s var(--motion-ease-in-out) infinite;
+      pointer-events: none;
+    }
+
+    .motion-gradient-drift {
+      background-size: 200% 200%;
+      animation: khepree-gradient-drift 12s ease infinite;
+    }
+
+    .motion-scan::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgb(255 255 255 / 0.12) 50%,
+        transparent 60%
+      );
+      animation: khepree-scan 4.5s var(--motion-ease-in-out) infinite;
+      pointer-events: none;
+    }
+
+    .motion-stagger > * {
+      animation: khepree-fade-up var(--motion-slow) var(--motion-ease-out) both;
+    }
+
+    .motion-stagger > *:nth-child(1) {
+      animation-delay: 0ms;
+    }
+    .motion-stagger > *:nth-child(2) {
+      animation-delay: 70ms;
+    }
+    .motion-stagger > *:nth-child(3) {
+      animation-delay: 140ms;
+    }
+    .motion-stagger > *:nth-child(4) {
+      animation-delay: 210ms;
+    }
+    .motion-stagger > *:nth-child(5) {
+      animation-delay: 280ms;
+    }
+    .motion-stagger > *:nth-child(6) {
+      animation-delay: 350ms;
+    }
+
+    .motion-parallax-lite {
+      transition: transform var(--motion-slow) var(--motion-ease-out);
+      will-change: transform;
+    }
+
+    .group:hover .motion-parallax-lite,
+    .motion-parallax-lite:hover {
+      transform: translate3d(0, -2px, 0);
+    }
+
+    .product-window-depth {
+      transform-style: preserve-3d;
+      box-shadow:
+        var(--shadow-elevated),
+        0 0 0 1px rgb(13 148 136 / 0.06),
+        0 0 48px rgb(6 182 212 / 0.08);
+      transition: transform var(--motion-slow) var(--motion-ease-out);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .product-window-depth:hover {
+        transform: perspective(1200px) rotateX(0.8deg) rotateY(-1.2deg) translate3d(0, -2px, 0);
+      }
+    }
+
+    [data-motion-paused="true"] .motion-orbit,
+    [data-motion-paused="true"] .motion-orbit-reverse,
+    [data-motion-paused="true"] .motion-float,
+    [data-motion-paused="true"] .motion-energy-field,
+    [data-motion-paused="true"] .motion-flow-line,
+    [data-motion-paused="true"] .motion-gradient-drift,
+    [data-motion-paused="true"] .motion-light-sweep::after,
+    [data-motion-paused="true"] .motion-scan::after {
+      animation-play-state: paused !important;
+    }
   }
 }

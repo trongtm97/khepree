@@ -31,6 +31,13 @@ const envSchema = z.object({
 
   REDIS_URL: z.string().optional(),
 
+  /** Stale PROCESSING outbox rows older than this are reclaimed (ms). Default 5 minutes. */
+  OUTBOX_LOCK_TIMEOUT_MS: z.coerce.number().int().positive().default(300_000),
+  /** Max handler attempts before FAILED (non-immortal event types). */
+  OUTBOX_MAX_ATTEMPTS: z.coerce.number().int().positive().default(12),
+  /** Bearer secret for POST /api/v1/internal/outbox/run (cron / worker trigger). */
+  OUTBOX_WORKER_SECRET: z.string().optional(),
+
   PAYMENT_PROVIDER: z.enum(["mock", "sepay"]).default("mock"),
   MOCK_PAYMENT_WEBHOOK_SECRET: z.string().optional(),
 
@@ -44,10 +51,13 @@ const envSchema = z.object({
   TRUSTED_PROXY: z.enum(["none", "cloudflare"]).default("none"),
 
   APP_URL: optionalUrl,
+  WEB_URL: optionalUrl,
   ACCOUNT_URL: optionalUrl,
   ADMIN_URL: optionalUrl,
   PARTNER_URL: optionalUrl,
   API_URL: optionalUrl,
+  STATUS_URL: optionalUrl,
+  DOWNLOAD_URL: optionalUrl,
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -109,6 +119,10 @@ export function isSePayConfigured(env: Env = getEnv()): boolean {
       env.SEPAY_SECRET_KEY &&
       !env.SEPAY_SECRET_KEY.includes("CHANGE_ME"),
   );
+}
+
+export function isRedisConfigured(env: Env = getEnv()): boolean {
+  return Boolean(env.REDIS_URL && !env.REDIS_URL.includes("CHANGE_ME"));
 }
 
 export function sepayIpnSecret(env: Env = getEnv()): string | undefined {

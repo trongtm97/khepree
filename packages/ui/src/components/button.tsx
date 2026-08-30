@@ -1,7 +1,7 @@
 import { cn } from "../lib/cn";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "accent";
 type Size = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -12,10 +12,12 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-khepree-teal text-khepree-white hover:bg-khepree-teal/90 shadow-sm shadow-khepree-teal/20",
+    "bg-teal text-white shadow-[var(--shadow-glow-teal)] hover:bg-teal/92 active:scale-[0.98]",
   secondary:
-    "bg-khepree-white text-khepree-ink border border-khepree-mist hover:bg-khepree-mist/60",
-  ghost: "text-khepree-ink hover:bg-khepree-mist/80",
+    "border border-border bg-surface text-foreground shadow-[var(--shadow-soft)] hover:border-teal/30 hover:bg-surface-elevated active:scale-[0.98]",
+  ghost: "text-foreground hover:bg-border-subtle/80 active:scale-[0.98]",
+  accent:
+    "bg-gradient-to-r from-teal to-cyan text-white shadow-[var(--shadow-glow-teal)] hover:opacity-95 active:scale-[0.98]",
 };
 
 const sizes: Record<Size, string> = {
@@ -36,7 +38,10 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex items-center justify-center rounded-[var(--radius-button)] font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center rounded-[var(--radius-button)] font-medium",
+        "transition-[transform,background-color,border-color,opacity,box-shadow] duration-[var(--motion-base)] ease-[var(--motion-ease-out)]",
+        "disabled:pointer-events-none disabled:opacity-50",
+        "motion-parallax-lite",
         variants[variant],
         sizes[size],
         className,

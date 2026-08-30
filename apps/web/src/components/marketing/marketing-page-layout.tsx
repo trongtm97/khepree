@@ -9,6 +9,8 @@ export interface MarketingPageLayoutProps {
   description: string;
   breadcrumbs: BreadcrumbItem[];
   children?: ReactNode;
+  /** Skip prose wrapper — for custom article layouts. */
+  plain?: boolean;
 }
 
 export function MarketingPageLayout({
@@ -16,6 +18,7 @@ export function MarketingPageLayout({
   description,
   breadcrumbs,
   children,
+  plain,
 }: MarketingPageLayoutProps) {
   return (
     <>
@@ -23,7 +26,13 @@ export function MarketingPageLayout({
       <Container className="py-12 lg:py-16">
         <Breadcrumbs items={breadcrumbs} />
         <PageHeader title={title} description={description} />
-        {children ? <div className="prose-khepree mt-8 max-w-3xl text-khepree-slate/80">{children}</div> : null}
+        {children ? (
+          plain ? (
+            <div className="mt-8">{children}</div>
+          ) : (
+            <div className="prose-khepree mt-8 max-w-3xl text-khepree-slate/80">{children}</div>
+          )
+        ) : null}
       </Container>
     </>
   );

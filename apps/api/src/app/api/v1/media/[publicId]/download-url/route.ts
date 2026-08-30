@@ -15,7 +15,7 @@ export async function GET(
   context: { params: Promise<{ publicId: string }> },
 ) {
   const requestId = getRequestId(request);
-  const limited = enforceRateLimit(request, RATE_LIMITS.MEDIA, "download");
+  const limited = await enforceRateLimit(request, RATE_LIMITS.MEDIA, "download");
   if (limited) return limited;
 
   const { publicId } = await context.params;

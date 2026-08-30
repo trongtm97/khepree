@@ -1,8 +1,8 @@
-import { DOMAINS, DEFAULT_LOCALE, hreflangCode, type SupportedLocale } from "@khepree/config";
+import { DEFAULT_LOCALE, hreflangCode, marketingPublicUrl, type SupportedLocale } from "@khepree/config";
 import type { Metadata } from "next";
 import { localePath } from "@/lib/i18n/config";
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? `https://${DOMAINS.web}`;
+const SITE_URL = marketingPublicUrl();
 
 export interface PageSeoInput {
   locale: SupportedLocale;

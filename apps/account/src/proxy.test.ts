@@ -12,8 +12,8 @@ function request(path: string, cookie?: string) {
 }
 
 describe("account proxy", () => {
-  it("redirects unauthenticated users from protected routes to sign-in", () => {
-    const res = proxy(request("/dashboard"));
+  it("redirects unauthenticated users from protected routes to sign-in", async () => {
+    const res = await proxy(request("/dashboard"));
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toContain("/sign-in");
     expect(res.headers.get("location")).toContain("next=%2Fdashboard");
@@ -21,13 +21,13 @@ describe("account proxy", () => {
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
   });
 
-  it("redirects authenticated users away from sign-in", () => {
-    const res = proxy(request("/sign-in", "session-token"));
+  it("redirects authenticated users away from sign-in", async () => {
+    const res = await proxy(request("/sign-in", "session-token"));
     expect(res.headers.get("location")).toContain("/dashboard");
   });
 
-  it("redirects unauthenticated checkout with query as a safe return path", () => {
-    const res = proxy(request("/checkout?plan=abc&price=def"));
+  it("redirects unauthenticated checkout with query as a safe return path", async () => {
+    const res = await proxy(request("/checkout?plan=abc&price=def"));
     expect(res.status).toBe(307);
     const location = res.headers.get("location") ?? "";
     expect(location).toContain("/sign-in");
@@ -37,15 +37,15 @@ describe("account proxy", () => {
     );
   });
 
-  it("sends authenticated users on sign-in to the safe next path", () => {
-    const res = proxy(request("/sign-in?next=%2Fcheckout%3Fplan%3Dabc", "session-token"));
+  it("sends authenticated users on sign-in to the safe next path", async () => {
+    const res = await proxy(request("/sign-in?next=%2Fcheckout%3Fplan%3Dabc", "session-token"));
     const location = res.headers.get("location") ?? "";
     expect(location).toContain("/checkout");
     expect(location).toContain("plan=abc");
   });
 
-  it("allows reset-password while authenticated", () => {
-    const res = proxy(request("/reset-password", "session-token"));
+  it("allows reset-password while authenticated", async () => {
+    const res = await proxy(request("/reset-password", "session-token"));
     expect(res.status).not.toBe(307);
   });
 });

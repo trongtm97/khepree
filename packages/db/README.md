@@ -61,13 +61,19 @@ import {
 |--------|--------|
 | Identity | `user`, `session`, `account`, `verification`, `user_profiles`, `organizations`, `memberships` |
 | Catalog | `products`, `plans`, `features`, `plan_features`, `prices` |
-| Content | `content_entries`, `content_versions`, `media_assets` — metadata in Postgres, bodies/binaries in R2 |
+| Content | `content_entries`, `content_versions`, `content_categories`, `media_assets`, `url_redirects` |
+| Release | `software_releases`, `release_translations` |
+| Reliability | `outbox_events` |
 | Commerce | `customers`, `orders`, `order_items`, `payments`, `subscriptions`, `webhook_events` |
 | Entitlement | `entitlements`, `licenses`, `devices`, `activations`, `license_leases`, `license_events` |
 | Partners | `partners`, `partner_tiers`, `partner_prices`, `wallets`, `wallet_transactions`, `referrals`, `referral_attributions`, `commissions`, `partner_memberships`, `partner_customers`, `partner_issues` |
 | System | `audit_logs`, `notifications`, `system_events` |
 
-## Design notes
+## Migration inventory
+
+Applied set: `0000` … `0013_phase16_url_redirects`. Migrations `0000`–`0008` are frozen. Phase 14–16 additions: `0009`–`0013`.
+
+Integration test `src/schema/migrations.from-zero.pg.test.ts` verifies critical tables after migrate-from-zero (runs in CI integration job).
 
 - **Public IDs:** `public_id` columns use prefixed base64url tokens (`createPublicId("prod")`) for customer-facing references.
 - **Money:** stored as `amount_minor` integer + ISO `currency` — never floats.

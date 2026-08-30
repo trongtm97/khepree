@@ -11,6 +11,7 @@ export const adminUi = {
   openMenu: "Mở menu điều hướng",
   closeMenu: "Đóng menu điều hướng",
   navLabel: "Điều hướng quản trị",
+  viewWebsite: "Xem website",
   technicalDetails: "Chi tiết kỹ thuật",
   working: "Đang xử lý…",
   confirmType: "Nhập CONFIRM",

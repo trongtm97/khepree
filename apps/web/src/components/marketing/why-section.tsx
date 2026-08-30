@@ -1,4 +1,4 @@
-import { Container } from "@khepree/ui";
+import { BodyText, Container, GlassPanel, Title } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 
 const ITEMS = [
@@ -8,27 +8,34 @@ const ITEMS = [
   "alwaysMovingForward",
 ] as const;
 
+const VISUALS: Record<(typeof ITEMS)[number], string> = {
+  usefulFirst: "bg-gradient-to-br from-teal/15 via-cyan/10 to-transparent",
+  simpleByDesign: "bg-[radial-gradient(circle_at_top_right,rgb(99_102_241/0.15),transparent_60%)]",
+  createRealValue: "bg-gradient-to-tr from-solar-accent/15 via-teal/10 to-transparent",
+  alwaysMovingForward: "bg-[linear-gradient(135deg,rgb(6_182_212/0.12),rgb(20_184_166/0.08))]",
+};
+
 export function WhySection({ messages }: { messages: Messages }) {
   return (
-    <section id="why-khepree" className="border-y border-khepree-mist bg-khepree-white py-16 lg:py-24">
+    <section id="why-khepree" className="border-y border-border bg-background py-16 lg:py-24">
       <Container>
-        <h2 className="text-3xl font-semibold tracking-tight">{messages.why.heading}</h2>
-        <div className="mt-10 grid gap-4 md:grid-cols-6">
+        <Title>{messages.why.heading}</Title>
+        <div className="mt-10 grid auto-rows-fr gap-4 md:grid-cols-6">
           {ITEMS.map((key, index) => {
             const item = messages.why[key];
             const wide = index === 0 || index === 3;
             return (
-              <article
+              <GlassPanel
                 key={key}
-                className={
-                  wide
-                    ? "rounded-[var(--radius-card)] border border-khepree-mist bg-khepree-cloud/80 p-6 md:col-span-4"
-                    : "rounded-[var(--radius-card)] border border-khepree-mist bg-khepree-white p-6 md:col-span-2"
-                }
+                className={`relative overflow-hidden p-6 ${wide ? "md:col-span-4" : "md:col-span-2"} ${VISUALS[key]}`}
               >
-                <h3 className="text-xl font-semibold">{item.title}</h3>
-                <p className="mt-3 text-khepree-slate/80">{item.copy}</p>
-              </article>
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-teal/10 blur-2xl motion-float"
+                />
+                <h3 className="relative text-xl font-semibold text-foreground">{item.title}</h3>
+                <BodyText className="relative mt-3">{item.copy}</BodyText>
+              </GlassPanel>
             );
           })}
         </div>

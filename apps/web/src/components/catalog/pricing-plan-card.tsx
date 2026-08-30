@@ -1,14 +1,9 @@
-import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION } from "@khepree/config";
 import type { PublicPlan } from "@khepree/catalog";
-import {
-  formatBillingInterval,
-  formatPriceAmount,
-  isPurchasableBillingType,
-  selectDisplayPrice,
-} from "@khepree/catalog";
-import { Badge, Card, CardDescription, CardTitle } from "@khepree/ui";
+import { isPurchasableBillingType } from "@khepree/catalog";
+import { Card, CardDescription, CardTitle, cn } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 import type { SupportedLocale } from "@/lib/i18n/config";
+import { formatPublicPlanPrice, selectPublicDisplayPrice } from "@/lib/catalog-display";
 
 function formatFeatureValue(
   feature: PublicPlan["features"][number],
@@ -16,9 +11,7 @@ function formatFeatureValue(
 ): string {
   switch (feature.value.valueType) {
     case "boolean":
-      return feature.value.booleanValue
-        ? messages.catalog.included
-        : messages.catalog.notIncluded;
+      return feature.value.booleanValue ? messages.catalog.included : messages.catalog.notIncluded;
     case "integer":
       return String(feature.value.integerValue);
     case "string":
@@ -34,56 +27,54 @@ export function PricingPlanCard({
   plan,
   locale,
   messages,
+  accountUrl,
+  featured,
   preferredCurrency,
   preferredRegion,
-  accountUrl,
 }: {
   plan: PublicPlan;
   locale: SupportedLocale;
   messages: Messages;
+  accountUrl?: string;
+  featured?: boolean;
   preferredCurrency?: string;
   preferredRegion?: string | null;
-  accountUrl?: string;
 }) {
-  const price = selectDisplayPrice(plan.prices, {
-    currency: preferredCurrency ?? DEFAULT_CURRENCY,
-    region: preferredRegion ?? DEFAULT_MARKET_REGION,
-    defaultCurrency: DEFAULT_CURRENCY,
-  });
-  const interval = price ? formatBillingInterval(price.interval, locale) : null;
+  const price = selectPublicDisplayPrice(plan, preferredCurrency, preferredRegion);
+  const { amount, period } = formatPublicPlanPrice(plan, locale, preferredCurrency, preferredRegion);
   const checkoutHref =
     accountUrl && price && isPurchasableBillingType(plan.billingType)
       ? `${accountUrl}/checkout?plan=${encodeURIComponent(plan.publicId)}&price=${encodeURIComponent(price.publicId)}`
       : null;
 
   return (
-    <Card className="flex h-full flex-col">
-      <div className="flex items-start justify-between gap-2">
-        <CardTitle className="text-lg">{plan.name}</CardTitle>
-        <Badge variant="outline">{messages.catalog.billing[plan.pricingMode]}</Badge>
-      </div>
+    <Card
+      className={cn(
+        "flex h-full flex-col border-border p-6",
+        featured && "border-teal/40 shadow-[var(--shadow-elevated)] ring-1 ring-teal/20",
+      )}
+    >
+      <CardTitle className="text-xl">{plan.name}</CardTitle>
 
-      <div className="mt-4 text-2xl font-semibold tracking-tight">
-        {plan.pricingMode === "free" ? (
-          messages.catalog.free
-        ) : plan.pricingMode === "contact_sales" ? (
-          messages.catalog.contactSales
-        ) : price ? (
+      <div className="mt-5 min-h-[3.5rem]">
+        {period && !amount ? (
+          <p className="text-3xl font-semibold tracking-tight text-foreground">{period}</p>
+        ) : amount ? (
           <>
-            {formatPriceAmount(price.amountMinor, price.currency, locale)}
-            {interval ? <span className="text-base font-normal text-khepree-slate/70">{interval}</span> : null}
+            <p className="text-3xl font-semibold tracking-tight text-foreground">{amount}</p>
+            {period ? <p className="mt-1 text-sm font-medium text-teal">{period}</p> : null}
           </>
         ) : (
-          messages.catalog.priceUnavailable
+          <p className="text-lg text-muted">{messages.catalog.priceUnavailable}</p>
         )}
       </div>
 
       {plan.features.length > 0 ? (
-        <ul className="mt-6 space-y-2 text-sm text-khepree-slate/80">
+        <ul className="mt-6 space-y-2.5 border-t border-border-subtle pt-6 text-sm text-muted">
           {plan.features.map((feature) => (
             <li key={feature.key} className="flex justify-between gap-3">
               <span>{feature.name}</span>
-              <span className="font-medium">{formatFeatureValue(feature, messages)}</span>
+              <span className="font-medium text-foreground">{formatFeatureValue(feature, messages)}</span>
             </li>
           ))}
         </ul>
@@ -95,13 +86,13 @@ export function PricingPlanCard({
         <div className="mt-auto pt-6">
           <a
             href={checkoutHref}
-            className="inline-flex h-11 w-full items-center justify-center rounded-[var(--radius-button)] bg-khepree-teal px-5 text-sm font-medium text-khepree-white shadow-sm shadow-khepree-teal/20 transition-colors hover:bg-khepree-teal/90"
+            className="inline-flex h-11 w-full items-center justify-center rounded-[var(--radius-button)] bg-teal px-5 text-sm font-medium text-background transition-colors hover:bg-teal/90"
           >
             {messages.catalog.checkout}
           </a>
         </div>
       ) : plan.pricingMode === "contact_sales" ? (
-        <p className="mt-auto pt-6 text-sm font-medium text-khepree-slate/70">{messages.catalog.contactSales}</p>
+        <p className="mt-auto pt-6 text-sm font-medium text-muted">{messages.catalog.contactSales}</p>
       ) : (
         <div className="mt-auto" />
       )}

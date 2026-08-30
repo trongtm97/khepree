@@ -9,9 +9,9 @@ export const vi = {
   nav: {
     products: "Sản phẩm",
     solutions: "Giải pháp",
-    pricing: "Bảng giá",
     resources: "Tài nguyên",
     company: "Công ty",
+    ecosystem: "Hệ sinh thái",
     signIn: "Đăng nhập",
     exploreProducts: "Khám phá sản phẩm",
     openMenu: "Mở menu",
@@ -22,7 +22,7 @@ export const vi = {
     supporting:
       "Khepree tạo ra những công cụ thiết thực, mạnh mẽ và dễ sử dụng để bạn tiết kiệm thời gian, làm việc hiệu quả hơn và biến ý tưởng thành giá trị.",
     ctaPrimary: "Khám phá sản phẩm",
-    ctaSecondary: "Tìm hiểu về Khepree",
+    ctaSecondary: "Khám phá hệ sinh thái",
   },
   valueStrip: {
     saveTime: "Tiết kiệm thời gian",
@@ -113,8 +113,40 @@ export const vi = {
     },
   },
   philosophy: {
-    heading: "Công nghệ chỉ có ý nghĩa khi tạo ra giá trị.",
+    heading: "Công nghệ hoạt động phía sau, sự đơn giản ở phía trước.",
     copy: "Khepree không làm phần mềm chỉ để có thêm tính năng. Chúng tôi xây dựng những công cụ giúp một việc trở nên nhanh hơn, đơn giản hơn, chính xác hơn hoặc tạo ra nhiều giá trị hơn cho người sử dụng.",
+    stepIdea: "Ý tưởng",
+    stepSoftware: "Khepree Software",
+    stepResult: "Kết quả",
+  },
+  ecosystem: {
+    heading: "Một hệ sinh thái. Nhiều cách để tiến xa hơn.",
+    copy: "Tài khoản, ứng dụng, đối tác và tài nguyên dành cho developer — kết nối trong một nền tảng Khepree.",
+    center: "Khepree",
+    account: {
+      title: "Tài khoản Khepree",
+      copy: "Quản lý đăng nhập, giấy phép và tải xuống.",
+    },
+    webApps: {
+      title: "Ứng dụng web",
+      copy: "Truy cập ứng dụng Khepree trên trình duyệt.",
+    },
+    partner: {
+      title: "Đối tác & Đại lý",
+      copy: "Chương trình đối tác và bán lại.",
+    },
+    downloads: {
+      title: "Tải phần mềm",
+      copy: "Cài đặt sản phẩm desktop khi bạn có quyền truy cập.",
+    },
+    developers: {
+      title: "API / Developers",
+      copy: "Tài liệu và hướng dẫn tích hợp.",
+    },
+    products: {
+      title: "Sản phẩm",
+      copy: "Khám phá phần mềm Khepree.",
+    },
   },
   global: {
     heading: "Bắt đầu từ Việt Nam. Sẵn sàng cho thế giới.",
@@ -143,6 +175,7 @@ export const vi = {
     privacy: "Quyền riêng tư",
     terms: "Điều khoản",
     copyright: "Bảo lưu mọi quyền.",
+    ecosystem: "Hệ sinh thái",
   },
   pages: {
     products: {
@@ -208,6 +241,9 @@ export const vi = {
       intro: "Bài đã xuất bản xuất hiện tại đây. Bản nháp không được liệt kê.",
       emptyTitle: "Chưa có bài viết nào được xuất bản",
       emptyDescription: "Khi chúng tôi xuất bản cập nhật, bài sẽ xuất hiện tại đây — danh sách này không được lấp bằng bài mẫu.",
+      featuredLabel: "Bài nổi bật",
+      tocLabel: "Mục lục",
+      relatedHeading: "Bài viết liên quan",
     },
     docs: {
       title: "Tài liệu",

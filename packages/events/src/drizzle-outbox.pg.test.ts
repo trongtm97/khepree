@@ -38,4 +38,29 @@ describe.skipIf(!pg)("Drizzle outbox (Postgres)", () => {
     expect(row?.status).toBe("PENDING");
     await db.delete(outboxEvents).where(eq(outboxEvents.publicId, publicId));
   });
+
+  it("reclaims stale PROCESSING rows", async () => {
+    if (!db) throw new Error("DATABASE_URL required");
+    const store = new DrizzleOutboxStore(db);
+    const publicId = commerceOrderPaidEventId(`ord_${crypto.randomUUID()}`);
+    await store.enqueue({
+      publicId,
+      eventType: COMMERCE_ORDER_PAID_V1,
+      aggregateType: "order",
+      aggregateId: "ord_stale_pg",
+      payload: {},
+    });
+    const staleAt = new Date(Date.now() - 600_000);
+    await db
+      .update(outboxEvents)
+      .set({ status: "PROCESSING", lockedAt: staleAt })
+      .where(eq(outboxEvents.publicId, publicId));
+
+    const reclaimed = await store.reclaimStaleLocks(300_000, new Date());
+    expect(reclaimed).toBe(1);
+    const row = await store.getByPublicId(publicId);
+    expect(row?.status).toBe("PENDING");
+    expect(row?.lockedAt).toBeNull();
+    await db.delete(outboxEvents).where(eq(outboxEvents.publicId, publicId));
+  });
 });

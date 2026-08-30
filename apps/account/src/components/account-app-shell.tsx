@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandLogo, Button, cn, Container } from "@khepree/ui";
+import { marketingPublicUrl } from "@khepree/config";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -49,7 +50,7 @@ export function AccountAppShell({
     <div className="flex min-h-screen flex-col bg-khepree-cloud">
       <header className="border-b border-khepree-mist bg-khepree-white">
         <Container className="flex h-14 items-center justify-between gap-4">
-          <Link href="/dashboard">
+          <Link href={marketingPublicUrl()} target="_blank" rel="noopener noreferrer">
             <BrandLogo size="sm" />
           </Link>
           <div className="flex items-center gap-3 text-sm">

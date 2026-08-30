@@ -58,9 +58,15 @@ Do not reverse these arrows. `@khepree/reseller` must not compose commerce/entit
 
 ## Durable outbox
 
-Payment/order transitions insert `outbox_events` in the **same PostgreSQL transaction** as the commerce row updates. Statuses: `PENDING` → `PROCESSING` → `PROCESSED` (or `FAILED` for non-immortal types). `commerce.order.paid|refunded|voided` never stay `FAILED` — they retry with backoff.
+Payment/order transitions insert `outbox_events` in the **same PostgreSQL transaction** as the commerce row updates. Statuses: `PENDING` → `PROCESSING` → `PROCESSED` (or `FAILED` for non-immortal types). `commerce.order.paid|refunded|voided` never stay `FAILED` — they retry with capped backoff (`OUTBOX_MAX_ATTEMPTS`, exponential delay via `retryDelayMs`).
 
-Handlers (entitlement, licensing, partner) are idempotent. Immediate `dispatchPending()` after commit is a development optimization; durability is the row.
+Stale-lock recovery (Phase 17.0): `PROCESSING` rows with `lockedAt` older than `OUTBOX_LOCK_TIMEOUT_MS` are reclaimed to `PENDING`.
+
+Dedicated worker (not only post-request flush):
+- `pnpm outbox:run` — one batch via `@khepree/platform`
+- `POST /api/v1/internal/outbox/run` — Bearer `OUTBOX_WORKER_SECRET` for cron
+
+Handlers (entitlement, licensing, partner) are idempotent. Immediate `dispatchPending()` after commit remains a dev optimization; durability is the row.
 
 ## Storage consistency (CMS)
 
@@ -122,7 +128,7 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`
 
 ## Production hardening (Phase 11)
 
-- Rate limits: `RateLimiter` interface; `MemoryRateLimiter` (dev) and `RedisRateLimiter` (inject `RedisCommands` when `REDIS_URL` is set). `TRUSTED_PROXY=none|cloudflare`. Do not trust raw `X-Forwarded-For`.
+- Rate limits: `getRateLimiter()` — `MemoryRateLimiter` in dev/test; `RedisRateLimiter` when `REDIS_URL` is set. Production boot requires `REDIS_URL` (`validateRuntimeEnv`). `TRUSTED_PROXY=none|cloudflare`. Do not trust raw `X-Forwarded-For`.
 - `validateRuntimeEnv()` runs from `instrumentation.ts` on Node boot (skipped during `next build`). Production requires license signing keys, `EMAIL_PROVIDER=resend`, R2, and `validatePaymentProviderConfiguration` (mock forbidden; SePay credentials when `PAYMENT_PROVIDER=sepay`).
 - Session: `getSession` is request-scoped via React `cache()`. Roles are not cached across requests.
 - Security headers (CSP `frame-ancestors 'none'`, Referrer-Policy, nosniff, Permissions-Policy, HSTS in production) are applied from each app `proxy.ts`.
@@ -153,6 +159,8 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`
 | **14** | ✅ Complete | Outbox, platform composition root, partner/CMS/auth/email/CI hardening. **Not production-ready** — B1, unverified email delivery, no production infra |
 | **15** | ✅ Complete | Product Studio, software releases, CMS editor. **Not production-ready** |
 | **16** | ✅ Complete | Public website consistency, Vietnamese copy, conversion product pages, CMS/SEO. **Not production-ready** — do not go-live |
+| **17.0** | ✅ Complete | System consistency — migrations, outbox worker/recovery, Redis rate limits, E2E CI. **Not production-ready** |
+| **17.1** | ✅ Complete | Visual design system — tokens, typography, depth, motion, component polish in `@khepree/ui`. **Page redesign not started** |
 
 Each phase inherits project constraints in `CONSTRAINTS.md`. Do not skip phases.
 

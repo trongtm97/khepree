@@ -16,7 +16,7 @@ function finish(request: NextRequest, response: NextResponse) {
 
 /** Optimistic route-level auth redirect — server layouts still validate session.
  * getSessionCookie is not available in our better-auth version; cookie names are stable. */
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (isMaintenanceMode()) {
     return finish(
       request,
@@ -28,7 +28,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (request.method !== "GET" && request.method !== "HEAD") {
-    const limited = enforceRateLimit(request, RATE_LIMITS.SENSITIVE_MUTATION, "account");
+    const limited = await enforceRateLimit(request, RATE_LIMITS.SENSITIVE_MUTATION, "account");
     if (limited) {
       return finish(request, new NextResponse(limited.body, { status: 429, headers: limited.headers }));
     }

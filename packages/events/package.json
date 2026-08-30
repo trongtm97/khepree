@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
     "drizzle-orm": "^0.44.5"
   },

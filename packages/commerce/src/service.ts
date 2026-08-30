@@ -8,7 +8,10 @@ import {
 } from "@khepree/db";
 import {
   DrizzleOutboxStore,
+  OutboxWorker,
   PollingOutboxDispatcher,
+  outboxLockTimeoutMs,
+  outboxMaxAttempts,
   type DomainEventHandler,
   type OutboxStore,
 } from "@khepree/events";
@@ -79,6 +82,17 @@ export class CommerceService {
     } catch {
       // Event remains PENDING for retry. Durability is the outbox row.
     }
+  }
+
+  /** Dedicated worker tick — reclaim stale locks, dispatch pending batch. */
+  getOutboxWorker(): OutboxWorker | null {
+    if (!this.options.dispatcher) return null;
+    return new OutboxWorker({
+      store: this.options.dispatcher.store,
+      dispatcher: this.options.dispatcher,
+      lockTimeoutMs: outboxLockTimeoutMs(),
+      now: this.now,
+    });
   }
 
   async createOrder(input: {
@@ -1039,6 +1053,8 @@ export function createCommerceService(
     new PollingOutboxDispatcher({
       store: outboxStoreFor(store, db),
       handlers,
+      maxAttempts: outboxMaxAttempts(),
+      lockTimeoutMs: outboxLockTimeoutMs(),
       now: overrides.now,
     });
 

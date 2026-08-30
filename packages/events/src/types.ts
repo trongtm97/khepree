@@ -27,6 +27,8 @@ export interface NewOutboxEvent {
 
 export interface OutboxStore {
   enqueue(input: NewOutboxEvent): Promise<void>;
+  /** PROCESSING rows with lockedAt older than lockTimeoutMs become reclaimable PENDING. */
+  reclaimStaleLocks(lockTimeoutMs: number, now: Date): Promise<number>;
   claimBatch(limit: number, now: Date): Promise<OutboxEventRecord[]>;
   markProcessed(id: string, now: Date): Promise<void>;
   markRetry(id: string, input: { attempts: number; availableAt: Date; lastError: string }): Promise<void>;
@@ -43,7 +45,22 @@ export interface DispatcherOptions {
   store: OutboxStore;
   handlers: DomainEventHandler[];
   maxAttempts?: number;
+  /** Reclaim PROCESSING rows with lockedAt older than this (ms). Default 300_000. */
+  lockTimeoutMs?: number;
   now?: () => Date;
   /** Critical event types never stay FAILED; they retry with capped backoff. */
   immortalEventTypes?: string[];
+}
+
+export interface OutboxWorkerResult {
+  reclaimed: number;
+  processed: number;
+}
+
+export interface OutboxWorkerOptions {
+  store: OutboxStore;
+  dispatcher: { dispatchPending(limit?: number): Promise<number> };
+  batchSize?: number;
+  lockTimeoutMs?: number;
+  now?: () => Date;
 }

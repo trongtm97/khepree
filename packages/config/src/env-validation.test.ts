@@ -13,7 +13,8 @@ function productionBase() {
     DATABASE_URL: "postgresql://user:pass@localhost:5432/khepree",
     BETTER_AUTH_SECRET: "prod-secret-with-enough-entropy-here",
     BETTER_AUTH_URL: "https://account.example.com",
-    APP_URL: "https://example.com",
+    WEB_URL: "https://example.com",
+    APP_URL: "https://app.example.com",
     ACCOUNT_URL: "https://account.example.com",
     ADMIN_URL: "https://admin.example.com",
     PARTNER_URL: "https://partner.example.com",
@@ -28,6 +29,7 @@ function productionBase() {
     EMAIL_FROM: "Khepree <no-reply@khepree.com>",
     EMAIL_PROVIDER_API_KEY: "email-key",
     EMAIL_PROVIDER: "resend" as const,
+    REDIS_URL: "redis://localhost:6379",
   };
 }
 
@@ -85,6 +87,22 @@ describe("validateRuntimeEnv", () => {
         }),
       ),
     ).toThrow(/EMAIL_PROVIDER=resend/);
+  });
+
+  it("rejects production without REDIS_URL", () => {
+    process.env.NEXT_PHASE = "";
+    expect(() =>
+      validateRuntimeEnv(
+        getEnv({
+          ...productionBase(),
+          REDIS_URL: undefined,
+          PAYMENT_PROVIDER: "sepay",
+          SEPAY_ENV: "sandbox",
+          SEPAY_MERCHANT_ID: "m",
+          SEPAY_SECRET_KEY: "s",
+        }),
+      ),
+    ).toThrow(/REDIS_URL/);
   });
 });
 

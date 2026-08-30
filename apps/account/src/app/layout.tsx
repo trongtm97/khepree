@@ -6,6 +6,7 @@ import { accountLocaleFromCookies } from "@/lib/locale";
 
 export const metadata: Metadata = {
   title: "Account — Khepree",
+  robots: { index: false, follow: false },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

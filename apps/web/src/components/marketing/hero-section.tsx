@@ -1,4 +1,4 @@
-import { Container } from "@khepree/ui";
+import { BodyText, Container, HeroEnergyField, HeroTitle } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { ButtonLink } from "./button-link";
@@ -9,32 +9,40 @@ export function HeroSection({
   messages,
   screenshotUrl,
   screenshotAlt,
+  productName,
 }: {
   locale: SupportedLocale;
   messages: Messages;
   screenshotUrl?: string | null;
   screenshotAlt?: string;
+  productName?: string;
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-khepree-mist">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--color-khepree-teal)_0%,_transparent_45%)] opacity-[0.12]" />
-      <div className="pointer-events-none absolute -left-24 top-1/4 h-72 w-72 rounded-full border border-khepree-cyan/20 motion-safe:animate-pulse" />
-      <Container className="relative grid gap-12 py-16 lg:grid-cols-2 lg:items-center lg:py-24">
-        <div>
-          <h1 className="text-4xl font-semibold tracking-tight text-khepree-ink sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-            {messages.hero.headline}
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-khepree-slate/80">{messages.hero.supporting}</p>
+    <section className="tech-section relative overflow-hidden border-b border-white/10">
+      <HeroEnergyField intensity="soft" />
+      <Container className="relative grid gap-12 py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:gap-16 lg:py-24 xl:py-28">
+        <div className="max-w-xl motion-fade-up">
+          <HeroTitle className="text-foreground">{messages.hero.headline}</HeroTitle>
+          <BodyText className="mt-6 text-lg text-muted">{messages.hero.supporting}</BodyText>
           <div className="mt-8 flex flex-wrap gap-3">
             <ButtonLink href={localePath(locale, "/products")} size="lg">
               {messages.hero.ctaPrimary}
             </ButtonLink>
-            <ButtonLink href={localePath(locale, "/about")} variant="secondary" size="lg">
+            <ButtonLink
+              href="#ecosystem"
+              variant="secondary"
+              size="lg"
+              className="border-white/15 bg-white/5 text-foreground hover:bg-white/10"
+            >
               {messages.hero.ctaSecondary}
             </ButtonLink>
           </div>
         </div>
-        <HeroVisual screenshotUrl={screenshotUrl} screenshotAlt={screenshotAlt} />
+        <HeroVisual
+          screenshotUrl={screenshotUrl}
+          screenshotAlt={screenshotAlt}
+          productName={productName}
+        />
       </Container>
     </section>
   );

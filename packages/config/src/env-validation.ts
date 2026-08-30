@@ -6,6 +6,7 @@ import {
   isLicenseSigningConfigured,
   isPrivateStorageConfigured,
   isPublicStorageConfigured,
+  isRedisConfigured,
   isSePayConfigured,
 } from "./env";
 
@@ -57,7 +58,7 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
 
   requireValue("BETTER_AUTH_SECRET", env.BETTER_AUTH_SECRET);
   requireValue("BETTER_AUTH_URL", env.BETTER_AUTH_URL);
-  requireValue("APP_URL", env.APP_URL);
+  requireValue("WEB_URL", env.WEB_URL);
   requireValue("ACCOUNT_URL", env.ACCOUNT_URL);
   requireValue("ADMIN_URL", env.ADMIN_URL);
   requireValue("PARTNER_URL", env.PARTNER_URL);
@@ -80,4 +81,7 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
   }
 
   validatePaymentProviderConfiguration(env);
+  if (!isRedisConfigured(env)) {
+    throw new EnvValidationError("REDIS_URL is required in production for shared rate limiting");
+  }
 }

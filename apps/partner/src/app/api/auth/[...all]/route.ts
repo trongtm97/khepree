@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const limited = enforceRateLimit(request, authRateLimitPolicy(new URL(request.url).pathname));
+  const limited = await enforceRateLimit(request, authRateLimitPolicy(new URL(request.url).pathname));
   if (limited) return limited;
   return authHandlers().POST(request);
 }
