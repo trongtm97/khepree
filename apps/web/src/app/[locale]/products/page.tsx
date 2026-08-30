@@ -43,7 +43,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
       {products.length > 0 ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {products.map((product) => (
-            <ProductCard key={product.publicId} product={product} locale={locale} />
+            <ProductCard key={product.publicId} product={product} locale={locale} messages={messages} />
           ))}
         </div>
       ) : (

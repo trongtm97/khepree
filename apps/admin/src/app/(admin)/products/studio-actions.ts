@@ -59,12 +59,14 @@ export async function saveOverviewAction(_s: ActionState, formData: FormData): P
     const session = await actor("catalog.write");
     const productId = String(formData.get("productId") ?? "");
     const platforms = formData.getAll("platforms").map(String) as ProductPlatform[];
+    const operatingSystems = formData.getAll("operatingSystems").map(String);
     await getProductStudio().updateOverview({
       productId,
       slug: String(formData.get("slug") ?? ""),
       licensingMode: String(formData.get("licensingMode") ?? "") as LicensingMode,
       platformCapabilities: platforms,
       iconMediaPublicId: String(formData.get("iconMediaPublicId") ?? "") || null,
+      operatingSystems,
       actorUserId: session.user.id,
     });
     await getProductStudio().upsertTranslation({

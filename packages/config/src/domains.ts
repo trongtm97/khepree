@@ -29,9 +29,9 @@ export function devUrl(app: DevAppKey): string {
 
 export const BRAND = {
   name: "Khepree",
-  tagline: "Software that moves you forward.",
+  tagline: "Software that helps you go further.",
   promise: "Useful software. Real value.",
-  philosophy: "Built to create value.",
+  philosophy: "Technology only matters when it creates value.",
 } as const;
 
 export const SUPPORTED_LOCALES = ["vi", "en"] as const;

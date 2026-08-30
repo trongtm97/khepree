@@ -121,6 +121,37 @@ export function renderMarkdownToHtml(markdown: string): string {
       continue;
     }
 
+    if (/^\|/.test(trimmed) && trimmed.includes("|")) {
+      const tableLines: string[] = [];
+      while (i < lines.length && /^\|/.test(lines[i]!.trim()) && lines[i]!.trim().includes("|")) {
+        tableLines.push(lines[i]!.trim());
+        i += 1;
+      }
+      const rows = tableLines
+        .filter((line) => !/^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(line))
+        .map((line) =>
+          line
+            .replace(/^\|/, "")
+            .replace(/\|$/, "")
+            .split("|")
+            .map((cell) => renderInline(cell.trim())),
+        );
+      if (rows.length > 0) {
+        const [header, ...body] = rows;
+        html.push("<table>");
+        html.push(
+          `<thead><tr>${header!.map((cell) => `<th>${cell}</th>`).join("")}</tr></thead>`,
+        );
+        if (body.length > 0) {
+          html.push(
+            `<tbody>${body.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody>`,
+          );
+        }
+        html.push("</table>");
+      }
+      continue;
+    }
+
     if (/^!\[([^\]]*)\]\(([^)]+)\)$/.test(trimmed)) {
       const match = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(trimmed);
       if (match) {

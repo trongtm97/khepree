@@ -20,6 +20,7 @@ import {
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@khepree/config";
 import { parseMoneyMinor } from "@khepree/types";
 import { formatPriceAmount } from "../pricing";
+import { parseOperatingSystems } from "../metadata";
 import { createProductPreviewToken } from "../preview-token";
 import { suggestProductSlug } from "../slug";
 import { CatalogError } from "../admin";
@@ -307,8 +308,16 @@ export class ProductStudioService {
     licensingMode?: LicensingMode;
     platformCapabilities?: ProductPlatform[];
     iconMediaPublicId?: string | null;
+    operatingSystems?: string[];
     actorUserId?: string | null;
   }) {
+    const [existing] = await this.db
+      .select()
+      .from(products)
+      .where(eq(products.id, input.productId))
+      .limit(1);
+    if (!existing) throw new CatalogError("NOT_FOUND", "Product not found");
+
     let iconMediaId: string | null | undefined;
     if (input.iconMediaPublicId !== undefined) {
       if (input.iconMediaPublicId === null || input.iconMediaPublicId === "") {
@@ -324,6 +333,11 @@ export class ProductStudioService {
       }
     }
 
+    const metadata =
+      input.operatingSystems !== undefined
+        ? { ...existing.metadata, operatingSystems: parseOperatingSystems({ operatingSystems: input.operatingSystems }) }
+        : undefined;
+
     const [row] = await this.db
       .update(products)
       .set({
@@ -331,6 +345,7 @@ export class ProductStudioService {
         ...(input.licensingMode ? { licensingMode: input.licensingMode } : {}),
         ...(input.platformCapabilities ? { platformCapabilities: input.platformCapabilities } : {}),
         ...(iconMediaId !== undefined ? { iconMediaId } : {}),
+        ...(metadata ? { metadata } : {}),
         updatedAt: new Date(),
       })
       .where(eq(products.id, input.productId))

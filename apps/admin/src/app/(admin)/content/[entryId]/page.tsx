@@ -101,7 +101,7 @@ export default async function ContentEditorPage({
             <Input name="title" label="Tiêu đề" defaultValue={draft.title} required />
             <Textarea name="excerpt" label="Tóm tắt" defaultValue={draft.excerpt ?? ""} />
             <ContentMarkdownEditor defaultValue={body ?? ""} />
-            <Input name="featuredMediaPublicId" label="Featured image" defaultValue={draft.featuredMediaPublicId ?? ""} />
+            <Input name="featuredMediaPublicId" label="Ảnh đại diện" defaultValue={draft.featuredMediaPublicId ?? ""} />
             <Select
               name="categoryId"
               label="Danh mục"

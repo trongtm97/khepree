@@ -41,6 +41,7 @@ export function softwareApplicationJsonLd(input: {
   url: string;
   applicationCategory?: string;
   operatingSystem?: string[];
+  image?: string;
 }) {
   const payload: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -54,6 +55,7 @@ export function softwareApplicationJsonLd(input: {
   if (input.operatingSystem?.length) {
     payload.operatingSystem = input.operatingSystem.join(", ");
   }
+  if (input.image) payload.image = input.image;
 
   return payload;
 }
@@ -63,8 +65,10 @@ export function articleJsonLd(input: {
   description: string;
   url: string;
   datePublished?: Date | string | null;
+  dateModified?: Date | string | null;
   inLanguage: string;
   author?: string;
+  image?: string;
 }) {
   const payload: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -82,11 +86,18 @@ export function articleJsonLd(input: {
   if (input.author) {
     payload.author = { "@type": "Person", name: input.author };
   }
+  if (input.image) payload.image = input.image;
   if (input.datePublished) {
     payload.datePublished =
       input.datePublished instanceof Date
         ? input.datePublished.toISOString()
         : input.datePublished;
+  }
+  if (input.dateModified) {
+    payload.dateModified =
+      input.dateModified instanceof Date
+        ? input.dateModified.toISOString()
+        : input.dateModified;
   }
   return payload;
 }

@@ -1,4 +1,4 @@
-# Production status (Phase 14)
+# Production status (Phase 16)
 
 This is an inventory, not a launch certificate. **Khepree is not production-ready** while any BLOCKER in `docs/TODOS.md` remains open. Compiling Phase 14 does not mean go-live. SePay B1 sandbox proof is **not** resolved. Real email delivery is **not** verified. Production infrastructure and backup/restore drills do not exist in this repo.
 
@@ -19,7 +19,7 @@ packages/
   catalog      products, plans, features, CMS, media, market policy
   commerce     orders, payments, refunds ledger, mock + SePay, same-tx outbox
   config       env, domains, logger, validation
-  db           Drizzle schema + migrations 0000–0010
+  db           Drizzle schema + migrations 0000–0013
   email        DevPreview + Resend HTTP adapter + VI/EN templates
   entitlement   feature grants (source of truth for access)
   licensing    keys, devices, Ed25519 leases (only when licensingMode requires)
@@ -67,7 +67,7 @@ Must be created **outside** the repo (never committed):
 
 ## 5. Database migrations status
 
-Applied set in repo: `0000` … `0010_phase14_reliability`. Production is **not** migrated until an operator runs `pnpm db:migrate` against the production URL. Do not `pnpm db:seed` in production.
+Applied set in repo: `0000` … `0013_phase16_url_redirects`. Production is **not** migrated until an operator runs `pnpm db:migrate` against the production URL. Do not `pnpm db:seed` in production.
 
 ## 6. Security status
 
@@ -81,14 +81,14 @@ Still open for launch: B1–B6 and P1–P10 in `docs/TODOS.md`. Redis limiter is
 
 ## 8. Build status
 
-`pnpm typecheck`, `pnpm lint`, and `pnpm build` are the Phase 14 quality gate with the unit CI job.
+`pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build` are the Phase 16 quality gate with the unit CI job. Apply migration `0013_phase16_url_redirects` before using Redirect Manager. Local `pnpm db:seed` keeps the catalog fixture (`development-sample`) **hidden** so it does not appear on the public website.
 
 ## 9. Deployment checklist
 
 - [ ] BLOCKERs B1–B6 closed or explicitly accepted in writing (accepting B1 means no paid production)
 - [ ] SePay Sandbox checklist in `docs/SEPAY-SANDBOX.md` observed end-to-end
 - [ ] Production secrets in secret store; signing key never in git
-- [ ] Production DB migrated through `0010`; backup + restore drill done
+- [ ] Production DB migrated through `0013`; backup + restore drill done
 - [ ] Public + private buckets; CDN and download DNS
 - [ ] App URLs and `BETTER_AUTH_URL` match public hostnames
 - [ ] Live Resend (or chosen provider) send test passed

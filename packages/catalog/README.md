@@ -9,9 +9,9 @@ import { createProductService, PlanFeatureSet } from "@khepree/catalog";
 
 const products = createProductService();
 
-await products.listPublicProducts();
-await products.getPublicProductBySlug("development-sample");
-await products.listPricingGroups();
+await products.listPublicProducts({ locale: "vi" });
+await products.getPublicProductBySlug(slug, { locale: "vi" });
+await products.listPricingGroups({ locale: "vi" });
 await products.getPurchasableOffer(planPublicId, pricePublicId, { locale });
 
 const plan = detail.plans[0];
@@ -20,7 +20,7 @@ features.hasFeature("api_access");
 features.getFeatureLimit("team_members");
 ```
 
-Public listings include `active` products only. Plans, features, and prices load from Postgres — never hard-coded plan names.
+Public listings include `active` products only. The development seed product (`development-sample`) is `hidden` so it does not appear on the public website. Plans, features, and prices load from Postgres — never hard-coded plan names.
 
 ### Product statuses
 

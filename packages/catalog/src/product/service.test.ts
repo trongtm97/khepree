@@ -102,3 +102,14 @@ describe("parseProductMarketingMetadata", () => {
     expect(marketing.faq?.[0]?.question).toBe("Is this real?");
   });
 });
+
+describe("product public extras", () => {
+  it("does not invent operating systems from a desktop platform flag", async () => {
+    const { parseOperatingSystems } = await import("./metadata");
+    expect(parseOperatingSystems({ platform: "desktop" })).toEqual([]);
+    expect(parseOperatingSystems({ operatingSystems: ["Windows", "macOS"] })).toEqual([
+      "Windows",
+      "macOS",
+    ]);
+  });
+});

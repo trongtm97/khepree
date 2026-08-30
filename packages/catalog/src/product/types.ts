@@ -54,6 +54,17 @@ export interface ProductMarketingMetadata {
   };
 }
 
+export interface PublicStartingPrice {
+  amountMinor: string;
+  currency: string;
+  interval: string | null;
+}
+
+export interface PublicProductMedia {
+  url: string;
+  altText: string;
+}
+
 export interface PublicProductSummary {
   publicId: string;
   slug: string;
@@ -61,10 +72,16 @@ export interface PublicProductSummary {
   shortDescription: string | null;
   description: string | null;
   platforms: ProductPlatform[];
+  /** Precise OS labels from Product Studio. Empty when unknown — do not infer from platform. */
+  operatingSystems: string[];
   status: ProductStatus;
   seoTitle: string | null;
   seoDescription: string | null;
   locale: string;
+  availableLocales: string[];
+  icon: PublicProductMedia | null;
+  gallery: PublicProductMedia[];
+  startingPrice: PublicStartingPrice | null;
   updatedAt: Date;
 }
 

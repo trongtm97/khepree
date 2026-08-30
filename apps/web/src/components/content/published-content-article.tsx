@@ -5,7 +5,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import {
   buildProductBlocks,
   getContentPreview,
-  getFeaturedImageUrl,
+  getFeaturedImage,
   getPublishedBody,
   getPublishedContent,
   renderArticleHtml,
@@ -44,12 +44,16 @@ export async function publishedContentMetadata({
   const entry = await getPublishedContent(contentType, slug, raw);
   if (!entry) return { robots: { index: false, follow: false } };
   const hreflangLocales = await publishedLocales(contentType, slug);
+  const featured = entry.featuredMediaPublicId
+    ? await getFeaturedImage(entry.featuredMediaPublicId)
+    : null;
   return createPageMetadata({
     locale: raw,
     title: entry.seoTitle ?? entry.title,
     description: entry.seoDescription ?? entry.excerpt ?? entry.title,
     path: `${pathPrefix}/${slug}`,
     hreflangLocales,
+    image: featured?.url,
   });
 }
 
@@ -88,7 +92,7 @@ export async function PublishedContentArticle({
   const body = await getPublishedBody(entry.bodyObjectKey);
   const productBlocks = body ? await buildProductBlocks(body, locale) : {};
   const html = body ? renderArticleHtml(body, productBlocks) : "";
-  const featuredImageUrl = await getFeaturedImageUrl(entry.featuredMediaPublicId);
+  const featuredImage = await getFeaturedImage(entry.featuredMediaPublicId);
   const path = localePath(locale, `${pathPrefix}/${slug}`);
 
   return (
@@ -99,8 +103,10 @@ export async function PublishedContentArticle({
           description: entry.seoDescription ?? entry.excerpt ?? entry.title,
           url: siteUrl(path),
           datePublished: entry.publishedAt,
+          dateModified: entry.updatedAt,
           inLanguage: locale === "vi" ? "vi" : "en",
           author: entry.authorName ?? undefined,
+          image: featuredImage?.url,
         })}
       />
       <MarketingPageLayout
@@ -119,9 +125,13 @@ export async function PublishedContentArticle({
         ) : null}
         {entry.authorName ? <p className="mb-4 text-sm text-khepree-slate/70">Tác giả: {entry.authorName}</p> : null}
         {entry.categoryName ? <p className="mb-4 text-sm text-khepree-slate/70">Danh mục: {entry.categoryName}</p> : null}
-        {featuredImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- CMS featured hero from public R2 URL
-          <img src={featuredImageUrl} alt="" className="mb-6 w-full rounded-lg object-cover" />
+        {featuredImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- CMS featured hero from public media URL
+          <img
+            src={featuredImage.url}
+            alt={featuredImage.altText || entry.title}
+            className="mb-6 w-full rounded-lg object-cover"
+          />
         ) : null}
         {html ? (
           <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: html }} />

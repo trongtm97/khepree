@@ -5,10 +5,13 @@ const KEYS = ["saveTime", "workSmarter", "createMore", "unlockOpportunities"] as
 
 export function ValueStrip({ messages }: { messages: Messages }) {
   return (
-    <section aria-label="Value highlights" className="border-b border-khepree-mist bg-khepree-white">
-      <Container className="grid grid-cols-2 gap-4 py-8 sm:grid-cols-4 sm:gap-6">
+    <section aria-label={messages.valueStrip.saveTime} className="border-b border-khepree-mist bg-khepree-white">
+      <Container className="grid grid-cols-2 gap-px bg-khepree-mist sm:grid-cols-4">
         {KEYS.map((key) => (
-          <p key={key} className="text-center text-sm font-semibold text-khepree-ink sm:text-base">
+          <p
+            key={key}
+            className="bg-khepree-white px-4 py-6 text-center text-sm font-semibold text-khepree-ink sm:text-base"
+          >
             {messages.valueStrip[key]}
           </p>
         ))}

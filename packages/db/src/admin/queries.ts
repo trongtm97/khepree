@@ -1,5 +1,5 @@
 import { and, count, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
-import { requireDb, type Database } from "../client";
+import { requireDb, getDb, type Database } from "../client";
 import {
   activations,
   auditLogs,
@@ -26,9 +26,11 @@ import {
   products,
   productTranslations,
   session,
+  refunds,
   softwareReleases,
   subscriptions,
   systemEvents,
+  urlRedirects,
   user,
   userProfiles,
   wallets,
@@ -783,4 +785,146 @@ export async function countFinancialRefs(
     return asCount(row?.n);
   }
   return 0;
+}
+
+export async function listAdminRefunds(
+  input: { q?: string; page?: number } = {},
+  db: Database = requireDb(),
+) {
+  const offset = adminOffset(input.page ?? 1);
+  const filters: SQL[] = [];
+  if (input.q?.trim()) {
+    const term = `%${input.q.trim()}%`;
+    const match = or(ilike(refunds.publicId, term), ilike(payments.publicId, term));
+    if (match) filters.push(match);
+  }
+  const where = filters.length ? and(...filters) : undefined;
+  return db
+    .select({
+      id: refunds.id,
+      publicId: refunds.publicId,
+      status: refunds.status,
+      amountMinor: refunds.amountMinor,
+      currency: refunds.currency,
+      provider: refunds.provider,
+      reason: refunds.reason,
+      createdAt: refunds.createdAt,
+      paymentPublicId: payments.publicId,
+    })
+    .from(refunds)
+    .innerJoin(payments, eq(refunds.paymentId, payments.id))
+    .where(where)
+    .orderBy(desc(refunds.createdAt))
+    .limit(ADMIN_PAGE_SIZE)
+    .offset(offset);
+}
+
+export async function findActiveUrlRedirect(fromPath: string, db: Database | null = getDb()) {
+  if (!db) return null;
+  const [row] = await db
+    .select({ toPath: urlRedirects.toPath, status: urlRedirects.status })
+    .from(urlRedirects)
+    .where(and(eq(urlRedirects.fromPath, fromPath), eq(urlRedirects.isActive, true)))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function listAdminUrlRedirects(db: Database = requireDb()) {
+  return db.select().from(urlRedirects).orderBy(desc(urlRedirects.updatedAt)).limit(200);
+}
+
+export async function insertUrlRedirect(
+  input: { fromPath: string; toPath: string; status: number; note?: string | null },
+  db: Database = requireDb(),
+) {
+  const [row] = await db
+    .insert(urlRedirects)
+    .values({
+      fromPath: input.fromPath,
+      toPath: input.toPath,
+      status: input.status,
+      note: input.note ?? null,
+    })
+    .returning();
+  return row;
+}
+
+export async function deleteUrlRedirect(id: string, db: Database = requireDb()) {
+  await db.delete(urlRedirects).where(eq(urlRedirects.id, id));
+}
+
+export async function listAdminActionQueue(db: Database = requireDb()) {
+  const [draftProducts, draftContent, draftReleases, manualRefunds, missingSeo] = await Promise.all([
+    db
+      .select({
+        id: products.id,
+        slug: products.slug,
+        nameVi: productTranslations.name,
+        updatedAt: products.updatedAt,
+      })
+      .from(products)
+      .leftJoin(
+        productTranslations,
+        and(eq(productTranslations.productId, products.id), eq(productTranslations.locale, "vi")),
+      )
+      .where(eq(products.status, "draft"))
+      .orderBy(desc(products.updatedAt))
+      .limit(20),
+    db
+      .select({
+        versionId: contentVersions.id,
+        entryId: contentEntries.id,
+        slug: contentEntries.slug,
+        contentType: contentEntries.contentType,
+        locale: contentVersions.locale,
+        title: contentVersions.title,
+        updatedAt: contentVersions.updatedAt,
+      })
+      .from(contentVersions)
+      .innerJoin(contentEntries, eq(contentVersions.entryId, contentEntries.id))
+      .where(and(eq(contentVersions.status, "DRAFT"), isNull(contentEntries.deletedAt)))
+      .orderBy(desc(contentVersions.updatedAt))
+      .limit(20),
+    db
+      .select({
+        id: softwareReleases.id,
+        version: softwareReleases.version,
+        productId: softwareReleases.productId,
+        status: softwareReleases.status,
+        updatedAt: softwareReleases.updatedAt,
+      })
+      .from(softwareReleases)
+      .where(eq(softwareReleases.status, "draft"))
+      .orderBy(desc(softwareReleases.updatedAt))
+      .limit(20),
+    db
+      .select({
+        id: refunds.id,
+        publicId: refunds.publicId,
+        status: refunds.status,
+        createdAt: refunds.createdAt,
+      })
+      .from(refunds)
+      .where(eq(refunds.status, "manual_required"))
+      .orderBy(desc(refunds.createdAt))
+      .limit(20),
+    db
+      .select({
+        id: products.id,
+        slug: products.slug,
+        locale: productTranslations.locale,
+        name: productTranslations.name,
+      })
+      .from(productTranslations)
+      .innerJoin(products, eq(productTranslations.productId, products.id))
+      .where(
+        and(
+          eq(products.status, "active"),
+          or(isNull(productTranslations.seoTitle), eq(productTranslations.seoTitle, "")),
+        ),
+      )
+      .limit(20),
+  ]);
+
+  return { draftProducts, draftContent, draftReleases, manualRefunds, missingSeo };
 }

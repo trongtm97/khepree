@@ -1,4 +1,4 @@
-import { bigint, index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { softDelete, timestamps } from "./_shared";
 import { user } from "./identity";
@@ -129,4 +129,18 @@ export const mediaAssets = pgTable(
     index("media_assets_visibility_idx").on(table.visibility),
     index("media_assets_context_idx").on(table.context),
   ],
+);
+
+export const urlRedirects = pgTable(
+  "url_redirects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    fromPath: text("from_path").notNull().unique(),
+    toPath: text("to_path").notNull(),
+    status: integer("status").notNull().default(308),
+    isActive: boolean("is_active").notNull().default(true),
+    note: text("note"),
+    ...timestamps,
+  },
+  (table) => [index("url_redirects_active_idx").on(table.isActive)],
 );

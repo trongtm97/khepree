@@ -10,6 +10,7 @@ export interface PageSeoInput {
   description: string;
   path: string;
   noIndex?: boolean;
+  image?: string;
   /** When omitted, both en and vi are advertised. Pass only locales that actually resolve. */
   hreflangLocales?: readonly SupportedLocale[];
 }
@@ -27,6 +28,7 @@ export function createPageMetadata({
   path,
   noIndex = false,
   hreflangLocales,
+  image,
 }: PageSeoInput): Metadata {
   const canonicalPath = localePath(locale, path);
   const url = siteUrl(canonicalPath);
@@ -42,6 +44,10 @@ export function createPageMetadata({
     : (locales[0] ?? locale);
   languages["x-default"] = siteUrl(localePath(defaultLocale, path));
 
+  const alternateLocale = locales
+    .filter((loc) => loc !== locale)
+    .map((loc) => (loc === "vi" ? "vi_VN" : "en_US"));
+
   return {
     title: fullTitle,
     description,
@@ -52,16 +58,18 @@ export function createPageMetadata({
     openGraph: {
       type: "website",
       locale: locale === "vi" ? "vi_VN" : "en_US",
-      alternateLocale: locale === "vi" ? ["en_US"] : ["vi_VN"],
+      alternateLocale,
       url,
       siteName: "Khepree",
       title: fullTitle,
       description,
+      ...(image ? { images: [{ url: image }] } : {}),
     },
     twitter: {
-      card: "summary_large_image",
+      card: image ? "summary_large_image" : "summary",
       title: fullTitle,
       description,
+      ...(image ? { images: [image] } : {}),
     },
     robots: noIndex ? { index: false, follow: false } : { index: true, follow: true },
   };

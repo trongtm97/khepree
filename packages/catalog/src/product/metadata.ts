@@ -1,4 +1,35 @@
-import type { ProductMarketingMetadata } from "./types";
+import type { ProductMarketingMetadata, PublicProductMedia } from "./types";
+
+export const KNOWN_OPERATING_SYSTEMS = [
+  "Windows",
+  "macOS",
+  "Linux",
+  "iOS",
+  "Android",
+  "Web",
+] as const;
+export type KnownOperatingSystem = (typeof KNOWN_OPERATING_SYSTEMS)[number];
+
+export function parseOperatingSystems(metadata: Record<string, unknown>): string[] {
+  const raw = metadata.operatingSystems;
+  if (!Array.isArray(raw)) return [];
+  const allowed = new Set<string>(KNOWN_OPERATING_SYSTEMS);
+  return [...new Set(raw.filter((item): item is string => typeof item === "string" && allowed.has(item)))];
+}
+
+export function parseGalleryMediaPublicIds(metadata: Record<string, unknown>): string[] {
+  const raw = metadata.galleryMediaPublicIds;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+export function toPublicMedia(
+  url: string | null | undefined,
+  altText: string | null | undefined,
+): PublicProductMedia | null {
+  if (!url) return null;
+  return { url, altText: altText?.trim() || "" };
+}
 
 export function parseProductMarketingMetadata(
   metadata: Record<string, unknown>,

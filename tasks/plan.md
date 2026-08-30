@@ -1,16 +1,9 @@
-# Implementation Plan: Phase 14 Architecture Hardening
+# Implementation Plan: Phase 16 Public website consistency
 
 ## Overview
 
-Replace post-commit commerce hooks with a PostgreSQL transactional outbox, add `@khepree/events` + `@khepree/platform`, then apply partner/CMS/auth/email/CI hardening. Stay a modular monolith.
+Source-consistency for locale-aware catalog/CMS, then public website visual + Vietnamese copy, conversion product pages, SEO, and the remaining Admin website/content operations (Release Manager, SEO, redirects, action queue).
 
 ## Status
 
-Implemented in source (Phase 14). Docs synchronized. Not production-ready.
-
-## Remaining (not this phase)
-
-- B1 SePay sandbox proof
-- Live email delivery proof
-- Production infra / backup drill
-- Optional further CommerceService/PartnerService file splits (M13)
+Implemented in source. Not production-ready. Do not go-live. B1 still open.

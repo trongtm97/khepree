@@ -47,6 +47,23 @@ describe("renderContentMarkdown", () => {
     const html = renderContentMarkdown("<script>alert(1)</script>");
     expect(html).not.toContain("<script");
   });
+
+  it("renders tables in the supported subset", () => {
+    const html = renderContentMarkdown("| A | B |\n| --- | --- |\n| 1 | 2 |");
+    expect(html).toContain("<table>");
+    expect(html).toContain("<th>A</th>");
+    expect(html).toContain("<td>1</td>");
+  });
+
+  it("drops javascript urls in links and images", () => {
+    const html = renderContentMarkdown("[x](javascript:alert(1))\n\n![x](javascript:alert(1))");
+    expect(html).not.toContain("javascript:");
+  });
+
+  it("drops malformed and protocol-relative links", () => {
+    expect(renderContentMarkdown("[x](//evil.example)")).not.toContain("href=\"//");
+    expect(renderContentMarkdown("[x](data:text/html,hi)")).not.toContain("data:");
+  });
 });
 
 describe("sanitizeContentHtml", () => {
@@ -56,6 +73,11 @@ describe("sanitizeContentHtml", () => {
 
   it("strips inline event handlers", () => {
     expect(sanitizeContentHtml('<a href="/x" onclick="alert(1)">x</a>')).not.toContain("onclick");
+  });
+
+  it("rejects javascript and data image sources", () => {
+    expect(sanitizeContentHtml('<img src="javascript:alert(1)" alt="x" />')).not.toContain("javascript:");
+    expect(sanitizeContentHtml('<img src="data:text/html,hi" alt="x" />')).not.toContain("src=");
   });
 });
 

@@ -151,6 +151,8 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`
 | **13** | ✅ Complete | Vietnam-first locale, VND, SePay adapter, commerce hardening. **Not production-ready** — B1 sandbox proof still open |
 | **13.1** | ✅ Complete | SePay form field order, manual refund commit, `payment_voided`. **Not production-ready** — B1 still open; do not go-live |
 | **14** | ✅ Complete | Outbox, platform composition root, partner/CMS/auth/email/CI hardening. **Not production-ready** — B1, unverified email delivery, no production infra |
+| **15** | ✅ Complete | Product Studio, software releases, CMS editor. **Not production-ready** |
+| **16** | ✅ Complete | Public website consistency, Vietnamese copy, conversion product pages, CMS/SEO. **Not production-ready** — do not go-live |
 
 Each phase inherits project constraints in `CONSTRAINTS.md`. Do not skip phases.
 

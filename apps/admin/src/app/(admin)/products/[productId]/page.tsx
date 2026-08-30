@@ -1,4 +1,4 @@
-import { computeProductReadiness } from "@khepree/catalog";
+import { computeProductReadiness, parseOperatingSystems } from "@khepree/catalog";
 import type { ProductPlatform } from "@khepree/db";
 import { hasPermission } from "@khepree/security";
 import { Input, Select, Textarea } from "@khepree/ui";
@@ -85,7 +85,7 @@ export default async function ProductStudioPage({
               {(
                 [
                   { value: "web", label: "Web" },
-                  { value: "desktop", label: "Windows / macOS / Linux" },
+                  { value: "desktop", label: "Desktop" },
                   { value: "mobile", label: "Android / iOS" },
                 ] as const
               ).map((p) => (
@@ -100,9 +100,23 @@ export default async function ProductStudioPage({
                 </label>
               ))}
             </fieldset>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Hệ điều hành (khi biết chính xác)</legend>
+              {(["Windows", "macOS", "Linux", "iOS", "Android", "Web"] as const).map((os) => (
+                <label key={os} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="operatingSystems"
+                    value={os}
+                    defaultChecked={parseOperatingSystems(snapshot.metadata).includes(os)}
+                  />
+                  {os}
+                </label>
+              ))}
+            </fieldset>
             <Input
               name="iconMediaPublicId"
-              label="Icon media (public ID)"
+              label="Icon (media public ID)"
               defaultValue={snapshot.iconMediaPublicId ?? ""}
             />
           </ActionForm>

@@ -1,6 +1,6 @@
 # Constraints
 
-Last reviewed: 2026-08-30 — Phase 14 architecture & reliability hardening
+Last reviewed: 2026-08-30 — Phase 16 public website consistency
 
 Read this file before writing code. Do not weaken it to make a change pass.
 

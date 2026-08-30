@@ -12,7 +12,6 @@ import {
   withTransaction,
   type Database,
 } from "@khepree/db";
-import { DEFAULT_LOCALE } from "@khepree/config";
 import {
   getPrivateObjectStorage,
   type ObjectStorage,
@@ -87,6 +86,7 @@ function toPublishedContent(
     authorName: null,
     categoryName: null,
     publishedAt: version.publishedAt,
+    updatedAt: version.updatedAt,
   };
 }
 
@@ -626,11 +626,7 @@ export class ContentService {
 
     if (!entry) return null;
 
-    const version =
-      (await this.findPublishedVersion(entry.id, input.locale)) ??
-      (input.locale === DEFAULT_LOCALE
-        ? null
-        : await this.findPublishedVersion(entry.id, DEFAULT_LOCALE));
+    const version = await this.findPublishedVersion(entry.id, input.locale);
 
     if (!version) return null;
 
@@ -663,6 +659,7 @@ export class ContentService {
       authorName: version.authorName,
       categoryName: version.categoryName,
       publishedAt: version.publishedAt,
+      updatedAt: version.updatedAt,
       versionId: version.id,
     };
   }

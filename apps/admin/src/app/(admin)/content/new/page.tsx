@@ -33,7 +33,7 @@ export default async function NewContentPage({
           <Input name="slug" label="Slug (tự gợi ý nếu trống)" placeholder="huong-dan-khepree" />
           <Textarea name="excerpt" label="Tóm tắt" />
           <ContentMarkdownEditor />
-          <Input name="featuredMediaPublicId" label="Featured image (media public ID)" />
+          <Input name="featuredMediaPublicId" label="Ảnh đại diện (media public ID)" />
           <Select
             name="categoryId"
             label="Danh mục"

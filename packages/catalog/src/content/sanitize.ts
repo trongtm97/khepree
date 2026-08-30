@@ -39,8 +39,17 @@ const GLOBAL_ATTRS = new Set(["class", "data-product-slug"]);
 function sanitizeHref(href: string): string | null {
   const trimmed = href.trim();
   if (!trimmed) return null;
-  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return trimmed;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
+  if (trimmed.startsWith("#")) return trimmed;
   if (/^https?:\/\//i.test(trimmed) || /^mailto:/i.test(trimmed)) return trimmed;
+  return null;
+}
+
+function sanitizeSrc(src: string): string | null {
+  const trimmed = src.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return null;
 }
 
@@ -70,7 +79,7 @@ export function sanitizeContentHtml(html: string): string {
         continue;
       }
       if (name === "src") {
-        const safe = sanitizeHref(value);
+        const safe = sanitizeSrc(value);
         if (safe) attrs.push(`src="${escapeHtml(safe)}"`);
         continue;
       }

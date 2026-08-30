@@ -87,6 +87,7 @@ export interface PublishedContent {
   authorName: string | null;
   categoryName: string | null;
   publishedAt: Date | null;
+  updatedAt: Date;
 }
 
 export interface MediaRecord {

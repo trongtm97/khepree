@@ -8,6 +8,7 @@ const { generateMetadata, default: Page } = createMarketingPage({
       <p>{messages.pages.about.story1}</p>
       <p>{messages.pages.about.story2}</p>
       <p>{messages.pages.about.story3}</p>
+      <p className="mt-8 font-medium text-khepree-ink">{messages.pages.about.tagline}</p>
     </div>
   ),
 });

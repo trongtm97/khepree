@@ -83,7 +83,7 @@ export function ReleaseUploadForm({ productId }: { productId: string }) {
     <form onSubmit={onSubmit} className="space-y-3">
       {error ? <Alert variant="error">{error}</Alert> : null}
       {notice ? <Alert variant="success">{notice}</Alert> : null}
-      <Input name="version" label="Version" placeholder="1.0.0" required />
+      <Input name="version" label="Phiên bản" placeholder="1.0.0" required />
       <Select
         name="platform"
         label="Nền tảng"
@@ -123,8 +123,8 @@ export function ReleaseUploadForm({ productId }: { productId: string }) {
           className="block w-full text-sm"
         />
       </label>
-      <Textarea name="releaseNotesVi" label="Release notes (VI)" />
-      <Textarea name="releaseNotesEn" label="Release notes (EN)" />
+      <Textarea name="releaseNotesVi" label="Ghi chú phát hành (VI)" />
+      <Textarea name="releaseNotesEn" label="Ghi chú phát hành (EN, tùy chọn)" />
       <Input name="minimumSupportedVersion" label="Phiên bản tối thiểu (tùy chọn)" placeholder="1.0.0" />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="mandatoryUpdate" /> Bắt buộc cập nhật

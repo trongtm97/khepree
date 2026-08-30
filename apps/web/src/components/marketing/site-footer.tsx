@@ -27,7 +27,7 @@ export function SiteFooter({ locale, messages }: SiteFooterProps) {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <BrandLogo />
-            <p className="mt-3 max-w-xs text-sm text-khepree-slate/70">{messages.meta.defaultDescription}</p>
+            <p className="mt-3 max-w-xs text-sm text-khepree-slate/70">{messages.hero.headline}</p>
           </div>
 
           <div>

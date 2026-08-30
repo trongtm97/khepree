@@ -13,7 +13,7 @@ const TABS = [
   { id: "licensing", label: "Bản quyền" },
   { id: "releases", label: "Phiên bản" },
   { id: "seo", label: "SEO" },
-  { id: "publish", label: "Publish" },
+  { id: "publish", label: "Xuất bản" },
 ] as const;
 
 export function ProductStudioTabs({ productId: _productId }: { productId: string }) {

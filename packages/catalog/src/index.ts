@@ -18,6 +18,7 @@ export {
   contentPreviewUrl,
 } from "./content/preview-token";
 export { suggestContentSlug } from "./content/slug";
+export { isSafeRedirectPath, normalizeRedirectPath } from "./content/redirect-path";
 export {
   buildContentRevalidationPlan,
   contentRevalidationPaths,
@@ -99,7 +100,11 @@ export {
   currencyMinorUnits,
 } from "./product/pricing";
 export { defaultMarket, isPriceAllowedForMarket, type MarketContext } from "./product/market";
-export { parseProductMarketingMetadata } from "./product/metadata";
+export {
+  parseProductMarketingMetadata,
+  parseOperatingSystems,
+  KNOWN_OPERATING_SYSTEMS,
+} from "./product/metadata";
 export type {
   LicensingMode,
   PlanBillingType,
@@ -111,7 +116,9 @@ export type {
   PublicPlanFeature,
   PublicPrice,
   PublicProductDetail,
+  PublicProductMedia,
   PublicProductSummary,
+  PublicStartingPrice,
   PurchasableOffer,
 } from "./product/types";
 export { isPurchasableBillingType } from "./product/types";

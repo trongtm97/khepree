@@ -267,7 +267,7 @@ async function seed() {
     .values({
       publicId: createPublicId("prod"),
       slug: DEV_SAMPLE_SLUG,
-      status: "active",
+      status: "hidden",
       platformCapabilities: ["web", "desktop", "mobile"],
       licensingMode: "LICENSE_KEY_DEVICE",
       metadata: MARKETING_METADATA,
@@ -280,6 +280,11 @@ async function seed() {
     (await db.select().from(products).where(eq(products.slug, DEV_SAMPLE_SLUG)).limit(1))[0];
 
   if (!product) throw new Error("Failed to seed development sample product");
+
+  await db
+    .update(products)
+    .set({ status: "hidden", metadata: MARKETING_METADATA, updatedAt: new Date() })
+    .where(eq(products.slug, DEV_SAMPLE_SLUG));
 
   for (const locale of ["en", "vi"] as const) {
     const copy = PRODUCT_COPY[locale];

@@ -5,7 +5,7 @@ import { localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { ButtonLink } from "./button-link";
 import { LanguageSwitcher } from "./language-switcher";
 import { MobileNav } from "./mobile-nav";
-import { NAV_KEYS, NAV_PATHS } from "./nav";
+import { PrimaryNav } from "./primary-nav";
 
 export interface SiteHeaderProps {
   locale: SupportedLocale;
@@ -21,17 +21,7 @@ export function SiteHeader({ locale, messages, accountUrl }: SiteHeaderProps) {
           <BrandLogo />
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex">
-          {NAV_KEYS.map((key) => (
-            <Link
-              key={key}
-              href={localePath(locale, NAV_PATHS[key])}
-              className="text-sm text-khepree-slate/80 transition-colors hover:text-khepree-ink"
-            >
-              {messages.nav[key]}
-            </Link>
-          ))}
-        </nav>
+        <PrimaryNav locale={locale} messages={messages} />
 
         <div className="hidden items-center gap-3 lg:flex">
           <LanguageSwitcher locale={locale} />

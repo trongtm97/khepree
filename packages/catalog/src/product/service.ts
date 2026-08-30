@@ -1,8 +1,10 @@
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { DEFAULT_CURRENCY } from "@khepree/config";
 import {
   featureTranslations,
   features,
   getDb,
+  mediaAssets,
   planFeatures,
   planTranslations,
   plans,
@@ -12,18 +14,26 @@ import {
   type Database,
   type ProductPlatform,
 } from "@khepree/db";
+import { getPublicObjectStorage } from "@khepree/storage";
 import { moneyMinorToSafeNumber } from "@khepree/types";
 import { mapPlanFeatureRow } from "./features";
-import { resolveLocalizedRow } from "./i18n";
-import { parseProductMarketingMetadata } from "./metadata";
-import { resolvePricingDisplayMode } from "./pricing";
+import { availableLocalesOf, requireLocaleRow, resolveLocalizedRow } from "./i18n";
+import {
+  parseGalleryMediaPublicIds,
+  parseOperatingSystems,
+  parseProductMarketingMetadata,
+  toPublicMedia,
+} from "./metadata";
+import { resolvePricingDisplayMode, selectDisplayPrice } from "./pricing";
 import { isPriceAllowedForMarket, type MarketContext } from "./market";
 import { isPurchasableBillingType } from "./types";
 import type {
   PricingProductGroup,
   PublicPlan,
   PublicProductDetail,
+  PublicProductMedia,
   PublicProductSummary,
+  PublicStartingPrice,
   PurchasableOffer,
 } from "./types";
 
@@ -36,6 +46,12 @@ export interface ProductLocaleOptions {
 function mapProductSummary(
   product: typeof products.$inferSelect,
   translation: typeof productTranslations.$inferSelect,
+  extras: {
+    availableLocales: string[];
+    icon: PublicProductMedia | null;
+    gallery: PublicProductMedia[];
+    startingPrice: PublicStartingPrice | null;
+  },
 ): PublicProductSummary {
   return {
     publicId: product.publicId,
@@ -44,10 +60,15 @@ function mapProductSummary(
     shortDescription: translation.shortDescription,
     description: translation.description,
     platforms: product.platformCapabilities as ProductPlatform[],
+    operatingSystems: parseOperatingSystems(product.metadata),
     status: product.status,
     seoTitle: translation.seoTitle,
     seoDescription: translation.seoDescription,
     locale: translation.locale,
+    availableLocales: extras.availableLocales,
+    icon: extras.icon,
+    gallery: extras.gallery ?? [],
+    startingPrice: extras.startingPrice,
     updatedAt: product.updatedAt,
   };
 }
@@ -66,6 +87,143 @@ function mapPrice(row: typeof prices.$inferSelect) {
 
 export class ProductService {
   constructor(private readonly db: Database | null = getDb()) {}
+
+  private publicUrl(objectKey: string): string | null {
+    try {
+      return getPublicObjectStorage().publicUrl(objectKey);
+    } catch {
+      return null;
+    }
+  }
+
+  private async loadPublicMediaByIds(ids: string[]): Promise<Map<string, PublicProductMedia>> {
+    if (!this.db || ids.length === 0) return new Map();
+    const rows = await this.db
+      .select()
+      .from(mediaAssets)
+      .where(and(inArray(mediaAssets.id, ids), eq(mediaAssets.visibility, "public")));
+    const byId = new Map<string, PublicProductMedia>();
+    for (const row of rows) {
+      const media = toPublicMedia(this.publicUrl(row.objectKey), row.altText);
+      if (media) byId.set(row.id, media);
+    }
+    return byId;
+  }
+
+  private async loadPublicMediaByPublicIds(
+    publicIds: string[],
+  ): Promise<Map<string, PublicProductMedia>> {
+    if (!this.db || publicIds.length === 0) return new Map();
+    const rows = await this.db
+      .select()
+      .from(mediaAssets)
+      .where(and(inArray(mediaAssets.publicId, publicIds), eq(mediaAssets.visibility, "public")));
+    const byPublicId = new Map<string, PublicProductMedia>();
+    for (const row of rows) {
+      const media = toPublicMedia(this.publicUrl(row.objectKey), row.altText);
+      if (media) byPublicId.set(row.publicId, media);
+    }
+    return byPublicId;
+  }
+
+  private async loadStartingPrices(
+    productIds: string[],
+    options: ProductLocaleOptions,
+  ): Promise<Map<string, PublicStartingPrice | null>> {
+    const result = new Map<string, PublicStartingPrice | null>();
+    if (!this.db || productIds.length === 0) return result;
+
+    const planRows = await this.db
+      .select()
+      .from(plans)
+      .where(and(inArray(plans.productId, productIds), eq(plans.status, "active")));
+    if (planRows.length === 0) {
+      for (const id of productIds) result.set(id, null);
+      return result;
+    }
+
+    const priceRows = await this.db
+      .select()
+      .from(prices)
+      .where(
+        and(
+          inArray(
+            prices.planId,
+            planRows.map((row) => row.id),
+          ),
+          eq(prices.isActive, true),
+        ),
+      );
+
+    const pricesByProduct = new Map<string, ReturnType<typeof mapPrice>[]>();
+    for (const plan of planRows) {
+      const list = pricesByProduct.get(plan.productId) ?? [];
+      for (const price of priceRows) {
+        if (price.planId === plan.id) list.push(mapPrice(price));
+      }
+      pricesByProduct.set(plan.productId, list);
+    }
+
+    for (const productId of productIds) {
+      const selected = selectDisplayPrice(pricesByProduct.get(productId) ?? [], {
+        currency: options.market?.currency,
+        region: options.market?.region,
+        defaultCurrency: DEFAULT_CURRENCY,
+      });
+      result.set(
+        productId,
+        selected
+          ? {
+              amountMinor: selected.amountMinor,
+              currency: selected.currency,
+              interval: selected.interval,
+            }
+          : null,
+      );
+    }
+    return result;
+  }
+
+  private async extrasForProducts(
+    rows: Array<typeof products.$inferSelect>,
+    translations: Array<typeof productTranslations.$inferSelect>,
+    options: ProductLocaleOptions,
+  ) {
+    const iconIds = rows.map((row) => row.iconMediaId).filter((id): id is string => Boolean(id));
+    const galleryIds = rows.flatMap((row) => parseGalleryMediaPublicIds(row.metadata));
+    const [icons, gallery, starting] = await Promise.all([
+      this.loadPublicMediaByIds(iconIds),
+      this.loadPublicMediaByPublicIds(galleryIds),
+      this.loadStartingPrices(
+        rows.map((row) => row.id),
+        options,
+      ),
+    ]);
+
+    const extras = new Map<
+      string,
+      {
+        availableLocales: string[];
+        icon: PublicProductMedia | null;
+        gallery: PublicProductMedia[];
+        startingPrice: PublicStartingPrice | null;
+      }
+    >();
+    for (const product of rows) {
+      const galleryPublicIds = parseGalleryMediaPublicIds(product.metadata);
+      extras.set(product.id, {
+        availableLocales: availableLocalesOf(
+          translations.filter((t) => t.productId === product.id),
+        ),
+        icon: product.iconMediaId ? (icons.get(product.iconMediaId) ?? null) : null,
+        gallery: galleryPublicIds
+          .map((id) => gallery.get(id))
+          .filter((item): item is PublicProductMedia => Boolean(item)),
+        startingPrice: starting.get(product.id) ?? null,
+      });
+    }
+    return extras;
+  }
 
   async listPublicProducts(options: ProductLocaleOptions): Promise<PublicProductSummary[]> {
     if (!this.db) return [];
@@ -88,15 +246,14 @@ export class ProductService {
         ),
       );
 
+    const extras = await this.extrasForProducts(rows, translations, options);
+
     return rows
       .map((product) => {
         const productTranslationsForRow = translations.filter((t) => t.productId === product.id);
-        const translation = resolveLocalizedRow(
-          productTranslationsForRow,
-          options.locale,
-          options.fallbackLocale,
-        );
-        return translation ? mapProductSummary(product, translation) : null;
+        const translation = requireLocaleRow(productTranslationsForRow, options.locale);
+        if (!translation) return null;
+        return mapProductSummary(product, translation, extras.get(product.id)!);
       })
       .filter((row): row is PublicProductSummary => row !== null);
   }
@@ -152,14 +309,15 @@ export class ProductService {
       .from(productTranslations)
       .where(eq(productTranslations.productId, product.id));
 
-    const translation = resolveLocalizedRow(translations, options.locale, options.fallbackLocale);
+    const translation = requireLocaleRow(translations, options.locale);
     if (!translation) return null;
 
     const productPlans = await this.loadPlansForProduct([product.id], options, mode.activeOnly);
     const planBundle = productPlans.get(product.id) ?? [];
+    const extras = await this.extrasForProducts([product], translations, options);
 
     return {
-      ...mapProductSummary(product, translation),
+      ...mapProductSummary(product, translation, extras.get(product.id)!),
       content: translation.content,
       marketing: parseProductMarketingMetadata(product.metadata),
       plans: planBundle,

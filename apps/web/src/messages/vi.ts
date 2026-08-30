@@ -4,7 +4,7 @@ export const vi = {
   meta: {
     siteName: "Khepree",
     defaultDescription:
-      "Phần mềm thực dụng giúp bạn làm việc thông minh hơn, sáng tạo nhiều hơn và biến cơ hội thành giá trị thật.",
+      "Khepree tạo ra những công cụ thiết thực, mạnh mẽ và dễ sử dụng để bạn tiết kiệm thời gian, làm việc hiệu quả hơn và biến ý tưởng thành giá trị.",
   },
   nav: {
     products: "Sản phẩm",
@@ -18,25 +18,25 @@ export const vi = {
     closeMenu: "Đóng menu",
   },
   hero: {
-    headline: "Phần mềm đưa bạn tiến lên phía trước.",
+    headline: "Phần mềm giúp bạn tiến xa hơn.",
     supporting:
-      "Phần mềm thực dụng, mạnh mẽ — giúp bạn làm việc thông minh hơn, sáng tạo nhiều hơn và biến cơ hội thành giá trị thật.",
+      "Khepree tạo ra những công cụ thiết thực, mạnh mẽ và dễ sử dụng để bạn tiết kiệm thời gian, làm việc hiệu quả hơn và biến ý tưởng thành giá trị.",
     ctaPrimary: "Khám phá sản phẩm",
-    ctaSecondary: "Vì sao chọn Khepree",
+    ctaSecondary: "Tìm hiểu về Khepree",
   },
   valueStrip: {
     saveTime: "Tiết kiệm thời gian",
-    workSmarter: "Làm việc thông minh",
-    createMore: "Sáng tạo nhiều hơn",
-    unlockOpportunities: "Mở khóa cơ hội",
+    workSmarter: "Làm việc hiệu quả hơn",
+    createMore: "Tạo nhiều giá trị hơn",
+    unlockOpportunities: "Mở rộng cơ hội",
   },
   products: {
-    heading: "Phần mềm xây dựng cho tiến bộ thực sự.",
-    copy: "Khám phá công cụ thực dụng — thiết kế quanh vấn đề, quy trình và kết quả thực tế.",
+    heading: "Công cụ thiết thực. Giá trị rõ ràng.",
+    copy: "Mỗi sản phẩm Khepree được xây dựng để giải quyết một vấn đề thực tế — giúp công việc đơn giản hơn, nhanh hơn và hiệu quả hơn.",
     comingSoon: "Sắp ra mắt",
-    emptyTitle: "Thêm sản phẩm đang được phát triển",
+    emptyTitle: "Sản phẩm mới sẽ xuất hiện tại đây",
     emptyDescription:
-      "Chúng tôi chỉ ra mắt khi thực sự hữu ích — không để lấp đầy danh mục. Sản phẩm mới sẽ xuất hiện tại đây khi sẵn sàng.",
+      "Chúng tôi chỉ ra mắt khi sản phẩm thực sự hữu ích. Công cụ mới sẽ xuất hiện khi sẵn sàng.",
   },
   catalog: {
     free: "Miễn phí",
@@ -46,6 +46,9 @@ export const vi = {
     notIncluded: "Không",
     noFeaturesListed: "Chưa có tính năng được liệt kê.",
     checkout: "Thanh toán",
+    startingFrom: "Từ",
+    viewProduct: "Xem sản phẩm",
+    seePricing: "Xem bảng giá",
     platforms: {
       desktop: "Desktop",
       web: "Web",
@@ -59,80 +62,71 @@ export const vi = {
       contact_sales: "Tùy chỉnh",
     },
     sections: {
-      benefits: "Lợi ích",
-      features: "Tính năng",
+      benefits: "Kết quả bạn nhận được",
+      features: "Bạn có thể làm gì",
+      gallery: "Hình ảnh sản phẩm",
       platforms: "Nền tảng",
+      requirements: "Yêu cầu",
       howItWorks: "Cách hoạt động",
       pricing: "Bảng giá",
       faq: "Câu hỏi thường gặp",
-      related: "Nội dung liên quan",
+      related: "Tài nguyên liên quan",
       cta: "Bắt đầu",
     },
   },
   why: {
-    heading: "Vì sao chọn Khepree",
+    heading: "Vì sao chọn Khepree?",
     usefulFirst: {
       title: "Hữu ích trước tiên",
-      copy: "Mỗi tính năng phải xứng đáng. Nếu không tiết kiệm thời gian hay tạo giá trị, nó sẽ không được phát hành.",
+      copy: "Mỗi tính năng đều phải có lý do để tồn tại. Nếu không giúp bạn tiết kiệm thời gian, giảm bớt công việc hoặc tạo thêm giá trị, chúng tôi không cần đưa nó vào sản phẩm.",
     },
     simpleByDesign: {
-      title: "Đơn giản trong thiết kế",
-      copy: "Luồng rõ ràng, mặc định hợp lý và giao diện không cản trở bạn.",
+      title: "Đơn giản để sử dụng",
+      copy: "Công nghệ mạnh không nên khiến mọi thứ phức tạp hơn. Khepree ưu tiên trải nghiệm rõ ràng để bạn có thể bắt đầu nhanh và tập trung vào việc cần làm.",
     },
     createRealValue: {
-      title: "Tạo giá trị thật",
-      copy: "Chúng tôi đo thành công bằng những gì bạn hoàn thành — không phải bằng thủ thuật giữ chân.",
+      title: "Giá trị thực",
+      copy: "Chúng tôi quan tâm đến kết quả bạn đạt được: công việc nhanh hơn, quy trình gọn hơn, sản phẩm tốt hơn và nhiều cơ hội hơn.",
     },
     alwaysMovingForward: {
-      title: "Luôn tiến lên",
-      copy: "Cải tiến liên tục được tích hợp sẵn. Phần mềm nên tốt hơn khi bạn phát triển.",
+      title: "Không ngừng cải tiến",
+      copy: "Khepree liên tục hoàn thiện sản phẩm dựa trên nhu cầu thực tế và cách người dùng làm việc.",
     },
   },
   audience: {
-    heading: "Dành cho những người đang xây dựng",
+    heading: "Được tạo cho cách bạn làm việc.",
     creators: {
-      title: "Dành cho người sáng tạo",
-      copy: "Công cụ giúp bạn tập trung sáng tạo — không phải đánh vật với phần mềm.",
+      title: "Người sáng tạo",
+      copy: "Dành nhiều thời gian hơn cho việc sáng tạo và xuất bản — ít lặp lại những bước thủ công.",
     },
     professionals: {
-      title: "Dành cho chuyên gia",
-      copy: "Quy trình đáng tin cậy cho công việc quan trọng, không phức tạp không cần thiết.",
+      title: "Chuyên gia",
+      copy: "Công cụ đáng tin cậy, giúp công việc nhất quán để bạn tập trung vào chất lượng.",
     },
     entrepreneurs: {
-      title: "Dành cho doanh nhân",
-      copy: "Từ ý tưởng đến thực thi với phần mềm tôn trọng thời gian và ngân sách của bạn.",
+      title: "Người kinh doanh",
+      copy: "Tự động hóa phần việc lặp lại trong vận hành tinh gọn để tạo ra nhiều giá trị hơn.",
     },
     businesses: {
-      title: "Dành cho doanh nghiệp",
-      copy: "Nền tảng có thể mở rộng khi đội ngũ và khách hàng phụ thuộc vào bạn.",
+      title: "Doanh nghiệp",
+      copy: "Giúp nhóm làm việc hiệu quả, dễ quản lý và mở rộng mà không thêm ma sát.",
     },
   },
   philosophy: {
-    heading: "Công nghệ phải tạo ra giá trị.",
-    copy: "Khepree không xây phần mềm chỉ vì công nghệ cho phép. Mỗi sản phẩm phải làm một thứ gì đó thực sự tốt hơn — nhanh hơn, đơn giản hơn, thông minh hơn hoặc có giá trị hơn.",
+    heading: "Công nghệ chỉ có ý nghĩa khi tạo ra giá trị.",
+    copy: "Khepree không làm phần mềm chỉ để có thêm tính năng. Chúng tôi xây dựng những công cụ giúp một việc trở nên nhanh hơn, đơn giản hơn, chính xác hơn hoặc tạo ra nhiều giá trị hơn cho người sử dụng.",
   },
   global: {
-    heading: "Xây dựng cho thế giới toàn cầu.",
-    multilingual: {
-      title: "Tư duy đa ngôn ngữ",
-      copy: "Sản phẩm và nội dung được thiết kế từ đầu cho khán giả quốc tế.",
-    },
-    availability: {
-      title: "Sẵn sàng toàn cầu",
-      copy: "Kiến trúc cloud-first với lộ trình phục vụ người dùng ở mọi nơi.",
-    },
-    crossPlatform: {
-      title: "Hướng đa nền tảng",
-      copy: "Web hôm nay, với lộ trình rõ ràng hướng tới desktop và mobile.",
-    },
-    international: {
-      title: "Khách hàng quốc tế",
-      copy: "Dành cho đội ngũ và cá nhân làm việc xuyên biên giới và múi giờ.",
-    },
+    heading: "Bắt đầu từ Việt Nam. Sẵn sàng cho thế giới.",
+    copy: "Khepree được xây dựng trước hết để phục vụ tốt người dùng Việt Nam — từ ngôn ngữ, thanh toán đến trải nghiệm sử dụng. Đồng thời, nền tảng được thiết kế ngay từ đầu để hỗ trợ nhiều ngôn ngữ, nhiều thị trường và nhiều nền tảng khi Khepree mở rộng ra toàn cầu.",
+  },
+  resources: {
+    heading: "Bài viết và tài liệu mới",
+    copy: "Chỉ hiện bài và hướng dẫn đã xuất bản. Bản nháp không được liệt kê.",
   },
   cta: {
-    heading: "Tiến lên với phần mềm tốt hơn.",
-    button: "Khám phá sản phẩm Khepree",
+    heading: "Làm được nhiều hơn với công cụ phù hợp.",
+    button: "Khám phá sản phẩm",
   },
   footer: {
     products: "Sản phẩm",
@@ -153,56 +147,53 @@ export const vi = {
   pages: {
     products: {
       title: "Sản phẩm",
-      description: "Phần mềm thực dụng xây dựng cho tiến bộ thực sự.",
-      intro:
-        "Khepree xây công cụ quanh quy trình thực tế — không phải danh sách tính năng. Khám phá những gì đang có và sắp ra mắt.",
+      description: "Công cụ thiết thực, giá trị rõ ràng.",
+      intro: "Mỗi sản phẩm được xây để giải quyết một việc cụ thể. Nếu sản phẩm xuất hiện tại đây, sản phẩm đó đang được cung cấp.",
     },
     solutions: {
       title: "Giải pháp",
-      description: "Phần mềm cho người sáng tạo, chuyên gia, doanh nhân và doanh nghiệp.",
-      intro:
-        "Dù bạn đang phát hành sản phẩm, vận hành công việc hay mở rộng đội ngũ — Khepree tập trung vào kết quả quan trọng.",
+      description: "Phần mềm cho người sáng tạo, chuyên gia, người kinh doanh và doanh nghiệp.",
+      intro: "Công việc khác nhau, cùng một hướng: tiết kiệm thời gian, tập trung hơn và tạo ra nhiều giá trị hơn.",
       audiences: {
         creators: {
-          seoDescription: "Phần mềm không cản trở bạn — để sáng tạo, xuất bản và tiến lên.",
-          body: "Người sáng tạo cần công cụ tôn trọng sự tập trung. Sản phẩm Khepree giảm ma sát trong công việc thật — soạn, tổ chức, phát hành — thay vì thêm bảng điều khiển phải quản lý. Xem danh mục cho những gì đang có; công cụ mới chỉ xuất hiện khi thực sự hữu ích.",
+          seoDescription: "Công cụ giúp bạn sáng tạo, xuất bản và giảm việc lặp lại.",
+          body: "Nếu bạn sáng tạo và xuất bản, bạn cần công cụ không cản trở. Sản phẩm Khepree giúp rút ngắn những bước lặp lại — soạn, sắp xếp, phát hành — để bạn dành nhiều thời gian hơn cho việc đang làm.",
         },
         professionals: {
-          seoDescription: "Phần mềm đáng tin cậy cho công việc chuyên môn, không phức tạp thừa.",
-          body: "Công việc chuyên môn cần phần mềm có thể đoán trước. Khepree tập trung vào quy trình rõ, giá trung thực và tính năng phải xứng đáng. Nếu sản phẩm được liệt kê, khả năng và giá đến từ danh mục thật — không phải tuyên bố giữ chỗ.",
+          seoDescription: "Công cụ đáng tin cậy cho công việc chuyên môn nhất quán.",
+          body: "Công việc chuyên môn cần công cụ dùng được mỗi ngày. Khepree tập trung vào quy trình rõ ràng, giá trung thực và tính năng đứng vững khi dùng thật — để bạn giữ được sự nhất quán mà không thêm phức tạp.",
         },
         entrepreneurs: {
-          seoDescription: "Phần mềm thực dụng cho người sáng lập, từ ý tưởng đến thực thi.",
-          body: "Giai đoạn đầu không có chỗ cho hình thức. Khepree dành cho người cần phát hành, thanh toán, cấp phép và vận hành mà không cần đội IT lớn. Bắt đầu từ danh mục và bảng giá; tài khoản và giấy phép nằm trên domain tài khoản khi bạn sẵn sàng mua hoặc kích hoạt.",
+          seoDescription: "Công cụ thiết thực cho vận hành tinh gọn, tự động hóa và tạo giá trị.",
+          body: "Khi bạn đang xây dựng công việc kinh doanh, thời gian là thứ khan hiếm. Khepree dành cho người cần tự động hóa việc lặp lại, giữ vận hành tinh gọn và biến ý tưởng thành thứ khách hàng dùng được.",
         },
         business: {
-          seoDescription: "Nền tảng phần mềm khi đội ngũ và khách hàng phụ thuộc vào bạn.",
-          body: "Khi đội ngũ và khách hàng dựa vào bạn, kiểm soát truy cập, giấy phép và thanh toán phải là hệ thống thật. Khepree tách định danh, quyền lợi và giấy phép để cấp tính năng — không phải tên gói. Liên hệ hello@khepree.com nếu cần đối tác hoặc mua số lượng lớn.",
+          seoDescription: "Công cụ giúp nhóm làm việc tốt hơn và mở rộng với ít ma sát hơn.",
+          body: "Nhóm cần công cụ dùng chung và đáng tin. Khepree giúp mọi người làm việc hiệu quả, kiểm soát quyền truy cập và mở rộng mà không biến mỗi quy trình thành gánh nặng. Liên hệ hello@khepree.com nếu cần mua số lượng lớn hoặc hợp tác.",
         },
       },
     },
     pricing: {
       title: "Bảng giá",
-      description: "Giá rõ ràng khi sản phẩm ra mắt.",
-      intro:
-        "Mỗi sản phẩm trong danh mục hiện giá thật. Không gói ẩn. Nếu sản phẩm không được liệt kê, sản phẩm đó không được bán.",
+      description: "Giá rõ ràng cho sản phẩm đang được bán.",
+      intro: "Mỗi sản phẩm hiện giá thật. Không có gói ẩn. Nếu sản phẩm không được liệt kê, sản phẩm đó không được bán.",
     },
     resources: {
       title: "Tài nguyên",
       description: "Hướng dẫn, cập nhật và tài liệu từ Khepree.",
-      intro: "Tài liệu, bài viết và ghi chú phát hành sẽ có tại đây khi hệ sinh thái phát triển.",
+      intro: "Tài liệu và bài viết đã xuất bản sẽ xuất hiện tại đây khi sẵn sàng.",
     },
     about: {
-      title: "Về Khepree",
-      description: "Lấy cảm hứng từ sự đổi mới. Xây dựng cho tiến bộ.",
-      intro: "Lấy cảm hứng từ sự đổi mới. Xây dựng cho tiến bộ.",
-      tagline: "Lấy cảm hứng từ sự đổi mới. Xây dựng cho tiến bộ.",
+      title: "Từ tinh thần Khepri đến Khepree.",
+      description: "Lấy cảm hứng từ sự đổi mới. Phần mềm giúp bạn tiến xa hơn.",
+      intro: "Từ tinh thần Khepri đến Khepree.",
+      tagline: "Khepree — Phần mềm giúp bạn tiến xa hơn.",
       story1:
-        "Khepree lấy cảm hứng từ Khepri — không phải hình ảnh cổ xưa, mà là biểu tượng của sự đổi mới: mặt trời mọc, khởi đầu mới và chuyển động tiến lên liên tục.",
+        "Khepree được lấy cảm hứng từ Khepri — biểu tượng gắn với mặt trời mọc, sự đổi mới và những khởi đầu mới trong văn hóa Ai Cập cổ đại.",
       story2:
-        "Chúng tôi xây phần mềm với tinh thần đó. Mỗi bản phát hành nên cảm giác như tiến bộ — quy trình nhanh hơn, công cụ rõ ràng hơn và nhiều giá trị hơn từ thời gian bạn bỏ ra.",
+        "Chúng tôi mang tinh thần ấy vào công nghệ. Với Khepree, một phần mềm tốt không chỉ cần nhiều tính năng. Nó phải giúp người sử dụng tiết kiệm thời gian, đơn giản hóa những việc phức tạp, mở rộng khả năng và tạo ra nhiều giá trị hơn từ công việc của mình.",
       story3:
-        "Chúng tôi tập trung vào thực tế: sản phẩm hữu ích, giao tiếp trung thực và công nghệ giúp con người tiến lên.",
+        "Đó là lý do mỗi sản phẩm Khepree đều bắt đầu bằng một câu hỏi đơn giản: Sản phẩm này thực sự giúp người dùng làm được điều gì tốt hơn? Chúng tôi bắt đầu từ Việt Nam, xây dựng cho người dùng Việt Nam và từng bước đưa Khepree đến với người dùng trên toàn thế giới.",
     },
     contact: {
       title: "Liên hệ",
@@ -220,47 +211,75 @@ export const vi = {
     },
     docs: {
       title: "Tài liệu",
-      description: "Tài liệu kỹ thuật cho sản phẩm Khepree.",
+      description: "Tài liệu cho sản phẩm Khepree.",
       intro: "Hướng dẫn đã xuất bản xuất hiện tại đây. Bản nháp không được liệt kê.",
       emptyTitle: "Chưa có tài liệu được xuất bản",
       emptyDescription: "Hướng dẫn sẽ xuất hiện khi sẵn sàng sử dụng. Trang này để trống thay vì hiện tài liệu giữ chỗ.",
     },
     security: {
       title: "Bảo mật",
-      description: "Cách Khepree tiếp cận bảo mật.",
-      intro: "Bảo mật là nền tảng cho mọi bề mặt — không phải tính năng marketing.",
-      paragraphs: [
-        "Tài khoản dùng Better Auth cho định danh (email, phiên, Google tùy chọn). Quyền lợi sản phẩm và khóa giấy phép là hệ thống tách biệt: đăng nhập không tự cấp tính năng.",
-        "Khóa giấy phép là định danh ngẫu nhiên. Chỉ lưu hash SHA-256. Lease ngoại tuyến ký bằng Ed25519; khóa ký riêng thuộc hạ tầng bí mật production, không bao giờ gửi ra trình duyệt.",
-        "Tệp sản phẩm và nội dung CMS nằm trong bucket đối tượng riêng. Tài sản marketing công khai dùng bucket public tách biệt. Storage riêng không bao giờ fallback sang public. Tải xuống thuộc sản phẩm cần entitlement trước khi cấp URL ký.",
-        "Ứng dụng công khai gửi security headers (kể cả frame-ancestors none). Các route nhạy cảm bị giới hạn tốc độ. Cấu hình production được kiểm tra khi process khởi động: database, auth secret, cả hai bucket, khóa giấy phép và email phải có.",
-        "Báo cáo lỗ hổng tới hello@khepree.com. Không mở issue công khai kèm chi tiết khai thác.",
+      description: "Cách Khepree bảo vệ tài khoản, quyền truy cập, tải xuống và thanh toán.",
+      intro: "Bảo mật nên là sự bảo vệ bạn có thể tin — không phải danh sách hệ thống nội bộ.",
+      legalReview:
+        "Trang này mô tả hành vi sản phẩm hiện tại. Đây không thay thế đánh giá bảo mật chuyên nghiệp trước khi ra mắt thương mại công khai.",
+      benefits: [
+        {
+          title: "Bảo vệ tài khoản",
+          copy: "Đăng nhập bảo vệ tài khoản bằng email, phiên riêng và xác minh bổ sung khi được bật. Đăng nhập không tự cấp quyền dùng sản phẩm.",
+        },
+        {
+          title: "Kiểm soát truy cập",
+          copy: "Bạn dùng được những gì mình thực sự được cấp — sau khi mua hoặc được cấp quyền — không phải theo tên gói.",
+        },
+        {
+          title: "Tải xuống được bảo vệ",
+          copy: "Bộ cài và tệp riêng không được liệt kê trên website công khai. Liên kết tải chỉ được cấp khi tài khoản được phép nhận tệp đó.",
+        },
+        {
+          title: "An toàn thanh toán",
+          copy: "Thông tin thẻ do dịch vụ thanh toán đang dùng xử lý. Khepree không lưu số thẻ đầy đủ. Trang thanh toán thành công không phải bằng chứng đã có quyền truy cập.",
+        },
+        {
+          title: "Báo cáo bảo mật",
+          copy: "Nếu bạn tìm thấy lỗ hổng, gửi email hello@khepree.com. Vui lòng không đăng chi tiết khai thác trên issue công khai.",
+        },
+      ],
+      technicalHeading: "Chi tiết kỹ thuật",
+      technical: [
+        "Định danh (đăng nhập, phiên, Google tùy chọn) tách khỏi quyền dùng sản phẩm và khóa giấy phép.",
+        "Định danh giấy phép được lưu dưới dạng hash. Lease ngoại tuyến được ký bằng khóa riêng, không bao giờ gửi ra trình duyệt.",
+        "Tệp marketing công khai và tệp sản phẩm riêng dùng kho lưu trữ tách biệt. Tệp riêng không bao giờ fallback sang kho công khai.",
+        "Ứng dụng công khai gửi security headers. Các route nhạy cảm bị giới hạn tốc độ. Cấu hình production được kiểm tra khi process khởi động.",
       ],
     },
     privacy: {
       title: "Chính sách quyền riêng tư",
       description: "Cách Khepree xử lý dữ liệu của bạn.",
-      intro: "Mô tả website công khai và dịch vụ tài khoản hiện tại. Đây không thay thế chính sách do luật sư rà soát nếu sản phẩm mở rộng sau này.",
+      intro: "Mô tả website công khai và dịch vụ tài khoản hiện tại.",
+      legalReview:
+        "Đây là tóm tắt hướng tới người dùng về hành vi hiện tại. Đây không thay thế chính sách quyền riêng tư do luật sư rà soát trước khi ra mắt thương mại công khai.",
       paragraphs: [
-        "Site marketing công khai không đặt cookie marketing hay analytics. Ngôn ngữ nằm trong URL (ví dụ /en hoặc /vi). Mô hình này không cần trang /cookies.",
-        "Nếu bạn tạo tài khoản, chúng tôi lưu dữ liệu định danh Better Auth cần: email, phiên và bản ghi xác thực liên quan. Đăng nhập Google chỉ dùng khi đã cấu hình.",
-        "Đơn hàng, thanh toán và entitlement được lưu để cấp quyền. Khi kết nối nhà cung cấp thanh toán thật, dữ liệu thẻ do nhà cung cấp đó xử lý — Khepree không lưu số thẻ đầy đủ. Mock checkout chỉ có trong development.",
-        "Định danh giấy phép được hash khi lưu. Kích hoạt thiết bị lưu hash cài đặt, không phải serial phần cứng. Click giới thiệu đối tác lưu hash của visitor id, không phải dấu vân tay thô.",
-        "Tệp riêng (bộ cài, nội dung) nằm trong bucket private và không được liệt kê trên site công khai. Chúng tôi không bán dữ liệu cá nhân.",
-        "Liên hệ hello@khepree.com để hỏi về truy cập hoặc xóa dữ liệu tài khoản. Trang CMS công khai, copy sản phẩm và trang pháp lý có thể được crawl như website công khai khác.",
+        "Website marketing công khai không đặt cookie marketing hay analytics. Ngôn ngữ nằm trong URL (ví dụ /vi hoặc /en).",
+        "Nếu bạn tạo tài khoản, chúng tôi lưu dữ liệu định danh cần để đăng nhập: email, phiên và bản ghi xác thực liên quan. Đăng nhập Google chỉ dùng khi đã được cấu hình.",
+        "Đơn hàng, thanh toán và bản ghi quyền truy cập được lưu để cấp những gì bạn đã mua. Khi kết nối dịch vụ thanh toán thật, dữ liệu thẻ do dịch vụ đó xử lý — Khepree không lưu số thẻ đầy đủ.",
+        "Định danh giấy phép và kích hoạt thiết bị được lưu dưới dạng hash, không phải serial phần cứng thô. Click giới thiệu đối tác lưu hash của mã khách truy cập.",
+        "Tệp riêng (bộ cài, nội dung bài) được lưu riêng và không được liệt kê trên website công khai. Chúng tôi không bán dữ liệu cá nhân.",
+        "Gửi email hello@khepree.com để hỏi về truy cập hoặc xóa dữ liệu tài khoản. Trang công khai, nội dung sản phẩm và trang pháp lý có thể được crawl như website công khai khác.",
       ],
     },
     terms: {
       title: "Điều khoản dịch vụ",
       description: "Điều khoản sử dụng sản phẩm và dịch vụ Khepree.",
-      intro: "Các điều khoản này áp dụng cho website công khai và, khi bạn tạo tài khoản, cho các bề mặt tài khoản, giấy phép và đối tác.",
+      intro: "Các điều khoản này áp dụng cho website công khai và, khi bạn tạo tài khoản, cho tài khoản, giấy phép và bề mặt đối tác.",
+      legalReview:
+        "Điều khoản này mô tả quy tắc truy cập sản phẩm bằng ngôn ngữ đời thường. Đây không thay thế điều khoản do luật sư rà soát trước khi ra mắt thương mại công khai.",
       paragraphs: [
-        "Khepree cung cấp phần mềm và dịch vụ liên quan như mô tả trên trang sản phẩm. Giá, gói và tính năng đến từ danh mục thật. Nếu sản phẩm không được liệt kê, sản phẩm đó không được chào bán.",
-        "Bạn chịu trách nhiệm bảo mật thông tin đăng nhập và hoạt động trên tài khoản. Quyền truy cập tính năng do bản ghi entitlement quyết định, không phải tên gói.",
-        "Khóa giấy phép định danh một license; chúng không mã hóa thêm quyền. Vượt giới hạn thiết bị, chia sẻ khóa trái điều khoản sản phẩm, hoặc tấn công dịch vụ đều không được phép.",
-        "Website công khai, tài liệu và blog được cung cấp nguyên trạng. Chúng tôi có thể thay đổi, tạm dừng hoặc gỡ sản phẩm chưa phát hành. Mục danh mục mẫu development không phải chào bán thương mại.",
-        "Quyền trả phí, hoàn tiền và hoa hồng đối tác tuân theo quy tắc đơn hàng, thanh toán và entitlement. URL thanh toán thành công không phải bằng chứng đã có quyền truy cập.",
-        "Điều khoản này chịu luật áp dụng cho bên vận hành khepree.com. Câu hỏi: hello@khepree.com.",
+        "Khepree cung cấp phần mềm và dịch vụ liên quan như mô tả trên trang sản phẩm. Giá, gói và tính năng đến từ danh mục đang chạy. Nếu sản phẩm không được liệt kê, sản phẩm đó không được chào bán.",
+        "Bạn chịu trách nhiệm bảo mật thông tin đăng nhập và hoạt động trên tài khoản. Những gì bạn dùng được theo quyền gắn với tài khoản, không phải tên gói.",
+        "Khóa giấy phép định danh một license. Chia sẻ khóa trái điều khoản sản phẩm, vượt giới hạn thiết bị, hoặc tấn công dịch vụ đều không được phép.",
+        "Website công khai, tài liệu và blog được cung cấp nguyên trạng. Chúng tôi có thể thay đổi, tạm dừng hoặc gỡ sản phẩm chưa xuất bản.",
+        "Quyền trả phí, hoàn tiền và hoa hồng đối tác tuân theo quy tắc đơn hàng và thanh toán tại thời điểm giao dịch. URL thanh toán thành công không phải bằng chứng đã có quyền truy cập.",
+        "Câu hỏi: hello@khepree.com.",
       ],
     },
   },

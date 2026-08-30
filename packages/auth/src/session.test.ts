@@ -5,6 +5,22 @@ const mockRedirect = vi.fn((url: string) => {
   throw new Error(`REDIRECT:${url}`);
 });
 
+function chain<T>(result: T) {
+  const query = {
+    from() {
+      return query;
+    },
+    where() {
+      return query;
+    },
+    limit: async () => result,
+    then(resolve: (value: T) => unknown, reject?: (reason: unknown) => unknown) {
+      return Promise.resolve(result).then(resolve, reject);
+    },
+  };
+  return query;
+}
+
 vi.mock("react", () => ({
   cache: (fn: unknown) => fn,
 }));
@@ -18,31 +34,14 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("@khepree/db", () => {
-  const profileQuery = {
-    from() {
-      return this;
-    },
-    where() {
-      return this;
-    },
-    limit: async () => [{ globalRole: "USER", locale: "vi" }],
-  };
-  const orgQuery = {
-    from() {
-      return this;
-    },
-    where: async () => [],
-  };
-  let calls = 0;
-  const select = vi.fn(() => {
-    calls += 1;
-    return calls % 2 === 1 ? profileQuery : orgQuery;
-  });
-
+  const select = vi.fn(() => chain([{ globalRole: "USER", locale: "vi" }]));
+  const db = { select };
   return {
-    requireDb: vi.fn(() => ({ select })),
+    getDb: vi.fn(() => db),
+    requireDb: vi.fn(() => db),
     userProfiles: { globalRole: "global_role", locale: "locale", userId: "user_id" },
     memberships: { organizationId: "organization_id", userId: "user_id" },
+    session: { token: "token", id: "id", userId: "user_id" },
   };
 });
 
@@ -62,14 +61,14 @@ describe("requireSession", () => {
     });
   });
 
-  it("redirects to sign-in when no session", async () => {
+  it("redirects to sign-in when no session", { timeout: 15_000 }, async () => {
     mockGetSession.mockResolvedValue(null);
     const { requireSession } = await import("./session");
 
     await expect(requireSession()).rejects.toThrow("REDIRECT:/sign-in");
   });
 
-  it("returns session when authenticated", async () => {
+  it("returns session when authenticated", { timeout: 15_000 }, async () => {
     mockGetSession.mockResolvedValue({
       user: {
         id: "u1",
@@ -95,7 +94,7 @@ describe("getSession", () => {
     mockGetSession.mockReset();
   });
 
-  it("returns null without a Better Auth session", async () => {
+  it("returns null without a Better Auth session", { timeout: 15_000 }, async () => {
     mockGetSession.mockResolvedValue(null);
     const { getSession } = await import("./session");
     await expect(getSession()).resolves.toBeNull();

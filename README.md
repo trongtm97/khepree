@@ -2,7 +2,7 @@
 
 Monorepo for the Khepree global software ecosystem.
 
-**Software that moves you forward.**
+**Software that helps you go further.**
 
 ## Prerequisites
 
@@ -64,6 +64,8 @@ pnpm dev:web      # Marketing → http://localhost:3000
 | **13** | ✅ Vietnam-first locale, VND, SePay. Not production-ready — B1 sandbox proof open. |
 | **13.1** | ✅ SePay form field order, manual refund commit, `payment_voided`. B1 still open. |
 | **14** | ✅ Platform reliability (outbox, composition root, partner/CMS/CI). **Not production-ready.** |
+| **15** | ✅ Product Studio, software releases, CMS editor. Not production-ready. |
+| **16** | ✅ Public website consistency, Vietnamese copy, product/CMS/SEO polish. **Not production-ready.** |
 
 See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), [docs/PRODUCTION-STATUS.md](./docs/PRODUCTION-STATUS.md), and [CONTRIBUTING.md](./CONTRIBUTING.md).
 

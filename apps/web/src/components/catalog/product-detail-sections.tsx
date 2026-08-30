@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { PublicProductDetail } from "@khepree/catalog";
-import { Badge, Card, CardDescription, CardTitle, Container } from "@khepree/ui";
+import { formatBillingInterval, formatPriceAmount } from "@khepree/catalog";
+import { Badge, Container } from "@khepree/ui";
 import Link from "next/link";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
@@ -35,36 +36,71 @@ export function ProductDetailSections({
   accountUrl?: string;
 }) {
   const { marketing } = product;
+  const price = product.startingPrice;
+  const interval = price ? formatBillingInterval(price.interval, locale) : null;
+  const gallery = product.gallery.length > 0 ? product.gallery : product.icon ? [product.icon] : [];
+  const pricingHref = `#pricing`;
+  const checkoutHref = accountUrl ? `${accountUrl}` : localePath(locale, "/pricing");
 
   return (
     <Container className="pb-16">
-      <section id="hero" className="py-12 lg:py-16">
-        <div className="max-w-3xl">
-          <div className="flex flex-wrap gap-2">
-            {product.platforms.map((platform) => (
-              <Badge key={platform} variant="outline">
-                {messages.catalog.platforms[platform]}
-              </Badge>
-            ))}
+      <section id="hero" className="grid gap-10 py-12 lg:grid-cols-2 lg:items-center lg:py-16">
+        <div>
+          <div className="flex items-center gap-4">
+            {product.icon ? (
+              // eslint-disable-next-line @next/next/no-img-element -- product icon from studio
+              <img src={product.icon.url} alt={product.icon.altText || product.name} className="h-16 w-16 rounded-2xl object-cover" />
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              {product.platforms.map((platform) => (
+                <Badge key={platform} variant="outline">
+                  {messages.catalog.platforms[platform]}
+                </Badge>
+              ))}
+            </div>
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">{product.name}</h1>
           {product.shortDescription ? (
             <p className="mt-4 text-lg text-khepree-slate/80">{product.shortDescription}</p>
           ) : null}
-          {product.content ? (
-            <p className="mt-4 text-khepree-slate/80">{product.content}</p>
+          {price ? (
+            <p className="mt-4 text-lg font-semibold">
+              {messages.catalog.startingFrom}{" "}
+              {formatPriceAmount(price.amountMinor, price.currency, locale)}
+              {interval}
+            </p>
           ) : null}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href={product.plans.length > 0 ? pricingHref : checkoutHref}
+              className="inline-flex h-11 items-center justify-center rounded-[var(--radius-button)] bg-khepree-teal px-5 text-sm font-medium text-khepree-white"
+            >
+              {messages.catalog.checkout}
+            </Link>
+            <Link
+              href={localePath(locale, "/about")}
+              className="inline-flex h-11 items-center justify-center rounded-[var(--radius-button)] border border-khepree-mist px-5 text-sm font-medium"
+            >
+              {messages.hero.ctaSecondary}
+            </Link>
+          </div>
         </div>
+        {gallery[0] ? (
+          <div className="overflow-hidden rounded-[var(--radius-card)] border border-khepree-mist">
+            {/* eslint-disable-next-line @next/next/no-img-element -- product studio screenshot */}
+            <img src={gallery[0].url} alt={gallery[0].altText || product.name} className="w-full object-cover" />
+          </div>
+        ) : null}
       </section>
 
       {marketing.benefits?.length ? (
-        <Section id="benefits" title={messages.catalog.sections.benefits}>
+        <Section id="outcomes" title={messages.catalog.sections.benefits}>
           <div className="grid gap-4 md:grid-cols-2">
             {marketing.benefits.map((item) => (
-              <Card key={item.title}>
-                <CardTitle className="text-lg">{item.title}</CardTitle>
-                <CardDescription className="mt-2">{item.description}</CardDescription>
-              </Card>
+              <article key={item.title} className="rounded-[var(--radius-card)] border border-khepree-mist p-5">
+                <h3 className="text-lg font-semibold">{item.title}</h3>
+                <p className="mt-2 text-khepree-slate/80">{item.description}</p>
+              </article>
             ))}
           </div>
         </Section>
@@ -72,25 +108,31 @@ export function ProductDetailSections({
 
       {marketing.highlights?.length ? (
         <Section id="features" title={messages.catalog.sections.features}>
-          <ul className="grid gap-4 md:grid-cols-2">
-            {marketing.highlights.map((item) => (
-              <li key={item.title}>
-                <Card>
-                  <CardTitle className="text-lg">{item.title}</CardTitle>
-                  <CardDescription className="mt-2">{item.description}</CardDescription>
-                </Card>
-              </li>
+          <div className="grid gap-4 md:grid-cols-6">
+            {marketing.highlights.map((item, index) => (
+              <article
+                key={item.title}
+                className={
+                  index === 0
+                    ? "rounded-[var(--radius-card)] border border-khepree-mist bg-khepree-cloud/70 p-6 md:col-span-4"
+                    : "rounded-[var(--radius-card)] border border-khepree-mist p-5 md:col-span-2"
+                }
+              >
+                <h3 className="text-lg font-semibold">{item.title}</h3>
+                <p className="mt-2 text-khepree-slate/80">{item.description}</p>
+              </article>
             ))}
-          </ul>
+          </div>
         </Section>
       ) : null}
 
-      {product.platforms.length > 0 ? (
-        <Section id="platforms" title={messages.catalog.sections.platforms}>
-          <ul className="flex flex-wrap gap-2">
-            {product.platforms.map((platform) => (
-              <li key={platform}>
-                <Badge>{messages.catalog.platforms[platform]}</Badge>
+      {gallery.length > 1 ? (
+        <Section id="gallery" title={messages.catalog.sections.gallery}>
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {gallery.slice(1).map((item) => (
+              <li key={item.url}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- product studio screenshot */}
+                <img src={item.url} alt={item.altText || product.name} className="w-full rounded-xl object-cover" />
               </li>
             ))}
           </ul>
@@ -112,6 +154,31 @@ export function ProductDetailSections({
               </li>
             ))}
           </ol>
+        </Section>
+      ) : null}
+
+      {product.operatingSystems.length > 0 || product.platforms.length > 0 ? (
+        <Section
+          id="platforms"
+          title={
+            product.operatingSystems.length > 0
+              ? messages.catalog.sections.requirements
+              : messages.catalog.sections.platforms
+          }
+        >
+          <ul className="flex flex-wrap gap-2">
+            {(product.operatingSystems.length > 0 ? product.operatingSystems : product.platforms).map(
+              (item) => (
+                <li key={item}>
+                  <Badge>
+                    {product.operatingSystems.length > 0
+                      ? item
+                      : messages.catalog.platforms[item as keyof typeof messages.catalog.platforms]}
+                  </Badge>
+                </li>
+              ),
+            )}
+          </ul>
         </Section>
       ) : null}
 
@@ -161,26 +228,28 @@ export function ProductDetailSections({
         </Section>
       ) : null}
 
-      {marketing.cta ? (
-        <Section id="cta" title={messages.catalog.sections.cta}>
-          <div className="rounded-2xl border border-khepree-slate/10 bg-khepree-slate/5 p-8">
-            <h3 className="text-xl font-semibold">{marketing.cta.headline}</h3>
-            {marketing.cta.description ? (
-              <p className="mt-2 text-khepree-slate/80">{marketing.cta.description}</p>
-            ) : null}
-            <Link
-              href={
-                marketing.cta.buttonHref.startsWith("http")
+      <Section id="cta" title={messages.catalog.sections.cta}>
+        <div className="rounded-2xl border border-khepree-slate/10 bg-khepree-ink p-8 text-khepree-white">
+          <h3 className="text-xl font-semibold">{marketing.cta?.headline ?? messages.cta.heading}</h3>
+          {marketing.cta?.description ? (
+            <p className="mt-2 text-white/80">{marketing.cta.description}</p>
+          ) : product.content ? (
+            <p className="mt-2 text-white/80">{product.content}</p>
+          ) : null}
+          <Link
+            href={
+              marketing.cta?.buttonHref
+                ? marketing.cta.buttonHref.startsWith("http")
                   ? marketing.cta.buttonHref
                   : localePath(locale, marketing.cta.buttonHref)
-              }
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-[var(--radius-button)] bg-khepree-teal px-5 text-sm font-medium text-khepree-white shadow-sm shadow-khepree-teal/20 transition-colors hover:bg-khepree-teal/90"
-            >
-              {marketing.cta.buttonLabel}
-            </Link>
-          </div>
-        </Section>
-      ) : null}
+                : localePath(locale, "/products")
+            }
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-[var(--radius-button)] bg-khepree-teal px-5 text-sm font-medium text-khepree-white"
+          >
+            {marketing.cta?.buttonLabel ?? messages.cta.button}
+          </Link>
+        </div>
+      </Section>
     </Container>
   );
 }

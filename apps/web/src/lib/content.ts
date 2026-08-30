@@ -74,8 +74,11 @@ export function renderArticleHtml(body: string, productBlocks: Record<string, Pr
   return renderContentMarkdown(body, { productBlocks });
 }
 
-export async function getFeaturedImageUrl(publicId: string | null): Promise<string | null> {
+export async function getFeaturedImage(
+  publicId: string | null,
+): Promise<{ url: string; altText: string } | null> {
   if (!publicId) return null;
   const media = await createMediaService().getByPublicId(publicId);
-  return media?.publicUrl ?? null;
+  if (!media?.publicUrl) return null;
+  return { url: media.publicUrl, altText: media.altText?.trim() || "" };
 }

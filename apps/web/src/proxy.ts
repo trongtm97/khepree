@@ -2,6 +2,7 @@ import { DEFAULT_LOCALE, LOCALE_COOKIE, SUPPORTED_LOCALES, isSupportedLocale } f
 import { attachSecurityHeaders, isMaintenanceMode } from "@khepree/security";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { matchPublicRedirect } from "@/lib/redirects";
 
 const PUBLIC_FILE = /\.(.*)$/;
 
@@ -10,7 +11,7 @@ function finish(request: NextRequest, response: NextResponse) {
   return response;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (isMaintenanceMode()) {
     return finish(
       request,
@@ -29,6 +30,17 @@ export function proxy(request: NextRequest) {
     PUBLIC_FILE.test(pathname)
   ) {
     return finish(request, NextResponse.next());
+  }
+
+  try {
+    const hit = await matchPublicRedirect(pathname);
+    if (hit) {
+      const url = request.nextUrl.clone();
+      url.pathname = hit.toPath;
+      return finish(request, NextResponse.redirect(url, hit.status));
+    }
+  } catch {
+    /* database optional on the public edge — skip redirects if lookup fails */
   }
 
   const hasLocale = SUPPORTED_LOCALES.some(

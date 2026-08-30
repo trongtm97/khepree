@@ -11,6 +11,14 @@ import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/
 
 export const revalidate = 3600;
 
+function productImage(product: { icon: { url: string } | null; gallery: Array<{ url: string }> }) {
+  return product.gallery?.[0]?.url ?? product.icon?.url ?? undefined;
+}
+
+function hreflangFromProduct(availableLocales: string[]): SupportedLocale[] {
+  return availableLocales.filter((locale): locale is SupportedLocale => isSupportedLocale(locale));
+}
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -32,6 +40,9 @@ export async function generateMetadata({
     title: product.seoTitle ?? product.name,
     description: product.seoDescription ?? product.shortDescription ?? product.description ?? "",
     path: `/products/${slug}`,
+    hreflangLocales: hreflangFromProduct(product.availableLocales),
+    image: productImage(product),
+    noIndex: Boolean(preview),
   });
   if (preview) {
     return { ...meta, robots: { index: false, follow: false, noarchive: true } };
@@ -66,12 +77,6 @@ export default async function ProductDetailPage({
     { label: product.name },
   ];
 
-  const operatingSystem = product.platforms.map((platform) => {
-    if (platform === "desktop") return "Windows, macOS, Linux";
-    if (platform === "mobile") return "iOS, Android";
-    return "Web Browser";
-  });
-
   return (
     <>
       <JsonLd
@@ -86,7 +91,8 @@ export default async function ProductDetailPage({
           name: product.name,
           description: product.seoDescription ?? product.shortDescription ?? product.description ?? "",
           url: siteUrl(path),
-          operatingSystem,
+          operatingSystem: product.operatingSystems,
+          image: productImage(product),
         })}
       />
       <div className="border-b border-khepree-slate/10">

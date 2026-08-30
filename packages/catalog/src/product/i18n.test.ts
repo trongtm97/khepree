@@ -25,4 +25,17 @@ describe("resolveLocalizedRow", () => {
     const row = resolveLocalizedRow(mixed, "vi");
     expect(row).toEqual({ locale: "vi", title: "Tiếng Việt", description: "VI body" });
   });
+
+  it("does not fall back to an arbitrary third locale", () => {
+    const onlyEn = [{ locale: "en", title: "English" }];
+    expect(resolveLocalizedRow(onlyEn, "fr")).toBeNull();
+  });
+});
+
+describe("requireLocaleRow", () => {
+  it("returns null when the requested locale is missing", async () => {
+    const { requireLocaleRow } = await import("./i18n");
+    expect(requireLocaleRow([{ locale: "vi", title: "VI" }], "en")).toBeNull();
+    expect(requireLocaleRow([{ locale: "en", title: "EN" }], "en")?.title).toBe("EN");
+  });
 });

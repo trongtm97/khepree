@@ -41,6 +41,8 @@ pnpm db:seed
 - **Phase 13:** Vietnam-first locale, VND, SePay payment adapter, commerce hardening — complete; **not** a production-ready claim; B1 sandbox IPN proof still open
 - **Phase 13.1:** SePay form field order, manual refund commit, `payment_voided` — complete; **not** a production-ready claim; do not go-live; B1 still open
 - **Phase 14:** platform reliability — transactional outbox, `@khepree/platform` composition root, partner/CMS/auth/email/CI hardening — complete; **not** a production-ready claim; B1 still open
+- **Phase 15:** Product Studio, software releases, CMS editor — complete; **not** a production-ready claim; B1 still open
+- **Phase 16:** public website consistency, Vietnamese copy, product/CMS/SEO polish — complete in source; **not** a production-ready claim; B1 still open
 
 Packages already implemented: `@khepree/auth`, `@khepree/catalog`, `@khepree/commerce`, `@khepree/storage`, `@khepree/db`, `@khepree/ui`, `@khepree/config`, `@khepree/security`, `@khepree/entitlement`, `@khepree/licensing`, `@khepree/reseller`, `@khepree/sdk`, `@khepree/events`, `@khepree/platform`.
 

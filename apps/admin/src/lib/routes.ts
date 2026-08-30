@@ -21,16 +21,17 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     id: "overview",
     label: "Tổng quan",
-    items: [{ label: "Tổng quan", href: "/dashboard", anyOf: ["admin.access"] }],
+    items: [
+      { label: "Tổng quan", href: "/dashboard", anyOf: ["admin.access"] },
+      { label: "Việc cần xử lý", href: "/inbox", anyOf: ["admin.access"] },
+    ],
   },
   {
     id: "products",
     label: "Sản phẩm",
     items: [
       { label: "Sản phẩm", href: "/products", anyOf: ["catalog.read"] },
-      { label: "Gói", href: "/plans", anyOf: ["catalog.read"] },
-      { label: "Tính năng", href: "/features", anyOf: ["catalog.read"] },
-      { label: "Giá", href: "/prices", anyOf: ["catalog.read"] },
+      { label: "Gói & Giá", href: "/plans", anyOf: ["catalog.read"] },
       { label: "Phiên bản", href: "/releases", anyOf: ["content.read"] },
       { label: "Tải xuống", href: "/downloads", anyOf: ["content.read"] },
     ],
@@ -43,6 +44,8 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { label: "Trang", href: "/content/pages", anyOf: ["content.read"] },
       { label: "Tài liệu", href: "/content/docs", anyOf: ["content.read"] },
       { label: "Media", href: "/media", anyOf: ["content.read"] },
+      { label: "SEO", href: "/seo", anyOf: ["content.read"] },
+      { label: "Chuyển hướng URL", href: "/redirects", anyOf: ["content.read"] },
     ],
   },
   {
@@ -59,7 +62,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { label: "Đơn hàng", href: "/orders", anyOf: ["finance.read", "support.read"] },
       { label: "Thanh toán", href: "/payments", anyOf: ["finance.read"] },
-      { label: "Đăng ký", href: "/subscriptions", anyOf: ["finance.read"] },
+      { label: "Hoàn tiền", href: "/refunds", anyOf: ["finance.read"] },
     ],
   },
   {
@@ -67,7 +70,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     label: "Bản quyền",
     items: [
       { label: "Quyền sử dụng", href: "/entitlements", anyOf: ["entitlement.read"] },
-      { label: "Bản quyền", href: "/licenses", anyOf: ["entitlement.read"] },
+      { label: "License", href: "/licenses", anyOf: ["entitlement.read"] },
       { label: "Thiết bị", href: "/devices", anyOf: ["entitlement.read"] },
     ],
   },
@@ -85,6 +88,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { label: "Nhật ký hoạt động", href: "/audit", anyOf: ["support.read", "finance.read"] },
       { label: "Hệ thống", href: "/system", anyOf: ["admin.access"] },
+      { label: "Cài đặt", href: "/settings", anyOf: ["admin.access"] },
     ],
   },
 ];

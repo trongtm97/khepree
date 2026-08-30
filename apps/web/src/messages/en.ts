@@ -2,7 +2,7 @@ export const en = {
   meta: {
     siteName: "Khepree",
     defaultDescription:
-      "Practical software designed to help you work smarter, create more, and turn opportunities into real value.",
+      "Khepree builds practical, powerful, easy-to-use tools so you can save time, work more effectively, and turn ideas into value.",
   },
   nav: {
     products: "Products",
@@ -11,30 +11,30 @@ export const en = {
     resources: "Resources",
     company: "Company",
     signIn: "Sign in",
-    exploreProducts: "Explore Products",
+    exploreProducts: "Explore products",
     openMenu: "Open menu",
     closeMenu: "Close menu",
   },
   hero: {
-    headline: "Software that moves you forward.",
+    headline: "Software that helps you go further.",
     supporting:
-      "Practical, powerful software designed to help you work smarter, create more, and turn opportunities into real value.",
-    ctaPrimary: "Explore Products",
-    ctaSecondary: "Why Khepree",
+      "Khepree builds practical, powerful, easy-to-use tools so you can save time, work more effectively, and turn ideas into value.",
+    ctaPrimary: "Explore products",
+    ctaSecondary: "Learn about Khepree",
   },
   valueStrip: {
-    saveTime: "Save Time",
-    workSmarter: "Work Smarter",
-    createMore: "Create More",
-    unlockOpportunities: "Unlock Opportunities",
+    saveTime: "Save time",
+    workSmarter: "Work more effectively",
+    createMore: "Create more value",
+    unlockOpportunities: "Expand opportunity",
   },
   products: {
-    heading: "Software built for real progress.",
-    copy: "Discover practical tools designed around real problems, real workflows and real outcomes.",
+    heading: "Practical tools. Clear value.",
+    copy: "Every Khepree product is built to solve a real problem — making work simpler, faster, and more effective.",
     comingSoon: "Coming soon",
     emptyTitle: "More products on the way",
     emptyDescription:
-      "We ship when something is genuinely useful — not to fill a catalog. New tools will appear here as they are ready.",
+      "We only ship when something is genuinely useful. New tools appear here when they are ready.",
   },
   catalog: {
     free: "Free",
@@ -44,6 +44,9 @@ export const en = {
     notIncluded: "Not included",
     noFeaturesListed: "No features listed.",
     checkout: "Checkout",
+    startingFrom: "From",
+    viewProduct: "View product",
+    seePricing: "See pricing",
     platforms: {
       desktop: "Desktop",
       web: "Web",
@@ -57,77 +60,71 @@ export const en = {
       contact_sales: "Custom",
     },
     sections: {
-      benefits: "Benefits",
-      features: "Features",
+      benefits: "Key outcomes",
+      features: "What you can do",
+      gallery: "Screenshots",
       platforms: "Platforms",
+      requirements: "Requirements",
       howItWorks: "How it works",
       pricing: "Pricing",
       faq: "FAQ",
-      related: "Related content",
+      related: "Related resources",
       cta: "Get started",
     },
   },
   why: {
-    heading: "Why Khepree",
+    heading: "Why Khepree?",
     usefulFirst: {
-      title: "Useful First",
-      copy: "Every feature earns its place. If it does not save time or create value, it does not ship.",
+      title: "Useful first",
+      copy: "Every feature has to earn its place. If it does not save time, reduce work, or create more value, it does not belong in the product.",
     },
     simpleByDesign: {
-      title: "Simple by Design",
-      copy: "Clear flows, sensible defaults, and interfaces that stay out of your way.",
+      title: "Simple to use",
+      copy: "Powerful technology should not make things harder. Khepree prefers a clear experience so you can start quickly and stay focused on the work.",
     },
     createRealValue: {
-      title: "Create Real Value",
-      copy: "We measure success by what you accomplish — not by engagement tricks.",
+      title: "Real value",
+      copy: "We care about the results you get: faster work, leaner processes, better output, and more opportunity.",
     },
     alwaysMovingForward: {
-      title: "Always Moving Forward",
-      copy: "Continuous improvement is built in. Software should get better as you grow.",
+      title: "Always improving",
+      copy: "Khepree keeps refining products from real needs and the way people actually work.",
     },
   },
   audience: {
-    heading: "Built for people who build",
-    creators: { title: "For Creators", copy: "Tools that help you focus on creating — not fighting your software." },
+    heading: "Made for the way you work.",
+    creators: {
+      title: "Creators",
+      copy: "Spend more time creating and publishing — less time repeating the same steps.",
+    },
     professionals: {
-      title: "For Professionals",
-      copy: "Reliable workflows for work that matters, without unnecessary complexity.",
+      title: "Professionals",
+      copy: "Reliable tools that keep work consistent so you can focus on quality.",
     },
     entrepreneurs: {
-      title: "For Entrepreneurs",
-      copy: "Move from idea to execution with software that respects your time and budget.",
+      title: "Entrepreneurs",
+      copy: "Automate the repetitive parts of a lean operation so you can create more value.",
     },
     businesses: {
-      title: "For Businesses",
-      copy: "Scalable foundations when your team and customers depend on you.",
+      title: "Businesses",
+      copy: "Help teams work together, stay organized, and scale without extra friction.",
     },
   },
   philosophy: {
-    heading: "Technology should create value.",
-    copy: "Khepree does not build software just because technology makes it possible. Every product must do something meaningfully better — faster, simpler, smarter, or more valuable.",
+    heading: "Technology only matters when it creates value.",
+    copy: "Khepree does not build software just to add more features. We build tools that make a job faster, simpler, more accurate, or more valuable for the people who use them.",
   },
   global: {
-    heading: "Built for a global world.",
-    multilingual: {
-      title: "Multilingual thinking",
-      copy: "Products and content designed from the start for international audiences.",
-    },
-    availability: {
-      title: "Global availability",
-      copy: "Cloud-first architecture with a path to serve users wherever they are.",
-    },
-    crossPlatform: {
-      title: "Cross-platform direction",
-      copy: "Web today, with a clear roadmap toward desktop and mobile experiences.",
-    },
-    international: {
-      title: "International customers",
-      copy: "Built for teams and individuals who work across borders and time zones.",
-    },
+    heading: "Starting in Vietnam. Ready for the world.",
+    copy: "Khepree is built first to serve Vietnamese users well — from language and payments to the everyday experience. At the same time, the platform is designed from day one to support more languages, markets, and platforms as Khepree grows globally.",
+  },
+  resources: {
+    heading: "Latest from Khepree",
+    copy: "Published articles and guides. Drafts are not listed.",
   },
   cta: {
-    heading: "Move forward with better software.",
-    button: "Explore Khepree Products",
+    heading: "Do more with the right tools.",
+    button: "Explore products",
   },
   footer: {
     products: "Products",
@@ -148,56 +145,53 @@ export const en = {
   pages: {
     products: {
       title: "Products",
-      description: "Practical software built for real progress.",
-      intro:
-        "Khepree builds tools around real workflows — not feature checklists. Explore what is available and what is coming next.",
+      description: "Practical tools with clear value.",
+      intro: "Each product is built around a real job to be done. If it is listed here, it is available.",
     },
     solutions: {
       title: "Solutions",
       description: "Software for creators, professionals, entrepreneurs, and businesses.",
-      intro:
-        "Whether you are shipping a product, running a practice, or scaling a team — Khepree focuses on outcomes that matter.",
+      intro: "Different work, same idea: save time, stay focused, and create more value.",
       audiences: {
         creators: {
-          seoDescription: "Software that stays out of the way so you can create, publish, and keep moving.",
-          body: "Creators need tools that respect attention. Khepree products are built to reduce friction in the work itself — drafting, organizing, shipping — instead of adding dashboards you have to manage. Explore the catalog for what is available today; new tools appear only when they are actually useful.",
+          seoDescription: "Tools that help you create, publish, and skip repetitive busywork.",
+          body: "If you create and publish, you need tools that stay out of the way. Khepree products are meant to shorten repetitive steps — drafting, organizing, shipping — so more of your time goes into the work itself.",
         },
         professionals: {
-          seoDescription: "Reliable software for professional work, without unnecessary complexity.",
-          body: "Professional work depends on software that is predictable. Khepree focuses on clear workflows, honest pricing, and features that earn their place. If a product is listed, its capabilities and prices come from the live catalog — not from placeholder claims.",
+          seoDescription: "Reliable tools for consistent, high-quality professional work.",
+          body: "Professional work needs tools you can trust every day. Khepree focuses on a clear workflow, honest pricing, and features that hold up under real use — so you can stay consistent without extra complexity.",
         },
         entrepreneurs: {
-          seoDescription: "Practical software for founders moving from idea to execution.",
-          body: "Early-stage work has little room for ceremony. Khepree is built for people who need to ship, invoice, license, and operate without a large IT team. Start with the product catalog and pricing pages; account and licensing tools sit on the account domain when you are ready to buy or activate.",
+          seoDescription: "Practical tools for lean operations, automation, and creating value.",
+          body: "When you are building a business, time is the scarce resource. Khepree is for people who need to automate repetitive work, keep operations lean, and turn ideas into something customers can use.",
         },
         business: {
-          seoDescription: "Software foundations for teams and customers that depend on you.",
-          body: "When a team and customers rely on you, access control, licensing, and billing have to be real systems — not slogans. Khepree separates identity, entitlement, and licenses so you can grant features, not plan nicknames. Talk to us at hello@khepree.com if you need partner or volume arrangements.",
+          seoDescription: "Tools that help teams work better together and grow with less friction.",
+          body: "Teams need shared tools they can rely on. Khepree helps groups stay productive, keep access under control, and grow without turning every process into extra overhead. For volume or partner arrangements, write to hello@khepree.com.",
         },
       },
     },
     pricing: {
       title: "Pricing",
-      description: "Clear pricing when products launch.",
-      intro:
-        "Each product in the catalog shows its live prices. There are no hidden tiers. If a product is not listed, it is not for sale.",
+      description: "Clear prices for products that are actually for sale.",
+      intro: "Each product shows its live price. There are no hidden tiers. If a product is not listed, it is not for sale.",
     },
     resources: {
       title: "Resources",
       description: "Guides, updates, and documentation from Khepree.",
-      intro: "Documentation, blog posts, and release notes will live here as the ecosystem grows.",
+      intro: "Published documentation and articles appear here as they are ready.",
     },
     about: {
-      title: "About Khepree",
-      description: "Inspired by renewal. Built for progress.",
-      intro: "Inspired by renewal. Built for progress.",
-      tagline: "Inspired by renewal. Built for progress.",
+      title: "From the spirit of Khepri to Khepree.",
+      description: "Inspired by renewal. Built to help you go further.",
+      intro: "From the spirit of Khepri to Khepree.",
+      tagline: "Khepree — Software that helps you go further.",
       story1:
-        "Khepree takes inspiration from Khepri — not as ancient imagery, but as a symbol of renewal: the rising sun, fresh starts, and continuous forward movement.",
+        "Khepree is inspired by Khepri — a symbol linked with the rising sun, renewal, and new beginnings in ancient Egyptian culture.",
       story2:
-        "We build software with that same spirit. Every release should feel like progress — faster workflows, clearer tools, and more value from the time you invest.",
+        "We bring that spirit into technology. For Khepree, good software is not just a long list of features. It should help people save time, simplify difficult work, expand what they can do, and create more value from what they already do.",
       story3:
-        "Our focus is practical: useful products, honest communication, and technology that helps people move forward.",
+        "That is why every Khepree product starts with a simple question: what does this product actually help people do better? We start in Vietnam, build for Vietnamese users, and take Khepree to people around the world step by step.",
     },
     contact: {
       title: "Contact",
@@ -208,57 +202,85 @@ export const en = {
     },
     blog: {
       title: "Blog",
-      description: "Updates and insights from Khepree.",
-      intro: "Published articles appear here. Unpublished drafts are not listed.",
+      description: "Updates and notes from Khepree.",
+      intro: "Published articles appear here. Drafts are not listed.",
       emptyTitle: "No articles published yet",
-      emptyDescription: "When we publish an update, it will show up on this page — we do not fill this list with sample posts.",
+      emptyDescription: "When we publish an update, it will appear here. This list is not filled with sample posts.",
     },
     docs: {
       title: "Documentation",
-      description: "Technical documentation for Khepree products.",
-      intro: "Published guides appear here. Unpublished drafts are not listed.",
+      description: "Guides for Khepree products.",
+      intro: "Published guides appear here. Drafts are not listed.",
       emptyTitle: "No documentation published yet",
-      emptyDescription: "Guides and references will appear when they are ready to use. This page stays empty rather than showing placeholder docs.",
+      emptyDescription: "Guides appear when they are ready to use. This page stays empty rather than showing sample docs.",
     },
     security: {
       title: "Security",
-      description: "How Khepree approaches security.",
-      intro: "Security is treated as a baseline for every surface, not a marketing feature.",
-      paragraphs: [
-        "Accounts use Better Auth for identity (email, sessions, optional Google sign-in). Entitlement and license keys are separate systems: a login does not grant product features by itself.",
-        "License keys are random identifiers. Only a SHA-256 hash is stored. Offline leases are signed with Ed25519; the private signing key belongs in production secret infrastructure and is never shipped to browsers.",
-        "Product files and CMS bodies live in a private object bucket. Public marketing assets use a separate public bucket. Private storage never falls back to public. Downloads that belong to a product require an entitlement before a signed URL is issued.",
-        "Public apps send security headers (including frame-ancestors none). Sensitive routes are rate-limited. Production configuration is validated at process start: database, auth secret, both storage buckets, license keys, and email settings must be present.",
-        "Report a vulnerability to hello@khepree.com. Please do not open a public issue with exploit details.",
+      description: "How Khepree protects accounts, access, downloads, and payments.",
+      intro: "Security should feel like protection you can rely on, not a list of internal systems.",
+      legalReview:
+        "This page describes current product behavior. It is not a substitute for a professional security review before a public commercial launch.",
+      benefits: [
+        {
+          title: "Account protection",
+          copy: "Sign-in protects your account with email, a private session, and optional extra verification. A sign-in never grants product access by itself.",
+        },
+        {
+          title: "Access control",
+          copy: "What you can use is based on the access you actually have — after a purchase or a grant — not on a plan nickname.",
+        },
+        {
+          title: "Protected downloads",
+          copy: "Installers and private files are not listed on the public site. A download link is issued only when your account is allowed to receive that file.",
+        },
+        {
+          title: "Payment safety",
+          copy: "Card details are handled by the payment service in use. Khepree does not store full card numbers. A success page is not proof of access.",
+        },
+        {
+          title: "Security reporting",
+          copy: "If you find a vulnerability, email hello@khepree.com. Please do not post exploit details in a public issue.",
+        },
+      ],
+      technicalHeading: "Technical details",
+      technical: [
+        "Identity (sign-in, sessions, optional Google sign-in) is separate from product access and license keys.",
+        "License identifiers are stored as hashes. Offline leases are signed with a private key that never ships to the browser.",
+        "Public marketing files and private product files use separate storage. Private files never fall back to public storage.",
+        "Public apps send security headers. Sensitive routes are rate-limited. Production configuration is checked when the process starts.",
       ],
     },
     privacy: {
       title: "Privacy Policy",
       description: "How Khepree handles your data.",
-      intro: "This describes the public website and account services as they exist today. It is not a substitute for a later, counsel-reviewed policy if the product set grows.",
+      intro: "This describes the public website and account services as they exist today.",
+      legalReview:
+        "This is a user-facing summary of current behavior. It is not a substitute for a professionally reviewed privacy policy before a public commercial launch.",
       paragraphs: [
-        "The public marketing site does not set marketing or analytics cookies. Language preference is part of the URL (for example /en or /vi). A /cookies page is not required for this model.",
-        "If you create an account, we store the identity data Better Auth needs: email, session, and related authentication records. Optional Google sign-in is used only when those credentials are configured.",
-        "Orders, payments, and entitlements are stored so we can fulfill access. When a live payment provider is connected, card data is handled by that provider — Khepree does not store full card numbers. Mock checkout exists only in development.",
-        "License identifiers are hashed at rest. Device activations store an installation hash, not hardware serials. Partner referral clicks store a hash of a visitor identifier, not a raw fingerprint.",
-        "Private files (installers, content bodies) are stored in a private bucket and are not listed on the public site. We do not sell personal data.",
-        "Contact hello@khepree.com to ask about access or deletion of account data. Public CMS pages, product copy, and legal pages may be crawled like any other public website.",
+        "The public marketing site does not set marketing or analytics cookies. Language is part of the URL (for example /vi or /en).",
+        "If you create an account, we store the identity data needed to sign you in: email, session, and related authentication records. Optional Google sign-in is used only when it is configured.",
+        "Orders, payments, and access records are stored so we can fulfill what you bought. When a live payment service is connected, card data is handled by that service — Khepree does not store full card numbers.",
+        "License identifiers and device activations are stored as hashes, not as raw hardware serials. Partner referral clicks store a hashed visitor identifier.",
+        "Private files (installers, article bodies) are stored privately and are not listed on the public site. We do not sell personal data.",
+        "Email hello@khepree.com to ask about access or deletion of account data. Public pages, product copy, and legal pages may be crawled like any other public website.",
       ],
     },
     terms: {
       title: "Terms of Service",
       description: "Terms for using Khepree products and services.",
-      intro: "These terms cover the public website and, when you create an account, the account, licensing, and partner surfaces.",
+      intro: "These terms cover the public website and, when you create an account, the account, licenses, and partner surfaces.",
+      legalReview:
+        "These terms describe current product access rules in plain language. They are not a substitute for professionally reviewed terms before a public commercial launch.",
       paragraphs: [
-        "Khepree provides software and related services as described on product pages. Catalog prices, plans, and features come from the live catalog. If a product is not listed, it is not offered.",
-        "You are responsible for keeping account credentials confidential and for activity under your account. Feature access is determined by entitlement records, not by the name of a plan.",
-        "License keys identify a license; they do not encode extra rights. Circumventing device limits, sharing keys in violation of a product's terms, or attacking the services is not allowed.",
-        "The public website, documentation, and blog are provided as-is. We may change, pause, or remove unpublished or unreleased products. Development sample catalog items are not commercial offers.",
-        "Paid access, refunds, and partner commissions follow the order, payment, and entitlement rules implemented in the platform. A payment-success URL is not proof of access.",
-        "These terms are governed by the laws applicable to the operator of khepree.com. Questions: hello@khepree.com.",
+        "Khepree provides software and related services as described on product pages. Prices, plans, and features come from the live catalog. If a product is not listed, it is not offered.",
+        "You are responsible for keeping account credentials confidential and for activity under your account. What you can use follows the access attached to your account, not the name of a plan.",
+        "License keys identify a license. Sharing keys against a product’s terms, bypassing device limits, or attacking the service is not allowed.",
+        "The public website, documentation, and blog are provided as-is. We may change, pause, or remove unpublished products.",
+        "Paid access, refunds, and partner commissions follow the order and payment rules in effect at the time of the transaction. A payment-success URL is not proof of access.",
+        "Questions: hello@khepree.com.",
       ],
     },
   },
-} ;
+};
 
 export type Messages = typeof en;
