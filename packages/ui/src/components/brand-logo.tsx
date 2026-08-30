@@ -6,30 +6,24 @@ export interface BrandLogoProps {
   variant?: "dark" | "light";
 }
 
-const sizeMap = {
-  sm: "text-lg",
-  md: "text-xl",
-  lg: "text-2xl",
+const heightMap = {
+  sm: "h-12",
+  md: "h-16",
+  lg: "h-20",
 } as const;
 
-/**
- * Text wordmark until /public/brand/logo.svg is provided.
- * Replace with Image + SVG when brand asset is ready.
- */
+/** Served from each app's `/public/brand/logo.png`. */
 export function BrandLogo({ className, size = "md", variant = "dark" }: BrandLogoProps) {
   return (
-    <span
+    <img
+      src="/brand/logo.png"
+      alt="Khepree"
       className={cn(
-        "inline-flex items-center font-semibold tracking-tight",
-        sizeMap[size],
-        variant === "light" ? "text-khepree-white" : "text-khepree-ink",
+        "block w-auto shrink-0",
+        heightMap[size],
+        variant === "light" && "brightness-0 invert",
         className,
       )}
-      aria-label="Khepree"
-    >
-      <span className="bg-gradient-to-r from-khepree-teal to-khepree-cyan bg-clip-text text-transparent">
-        Khepree
-      </span>
-    </span>
+    />
   );
 }
