@@ -12,7 +12,9 @@ import {
   extensionForMime,
   getPrivateObjectStorage,
   getPublicObjectStorage,
+  isAbsoluteHttpUrl,
   objectKeyIncludesOwner,
+  storageProviderForDb,
   validateUpload,
   type ObjectStorage,
 } from "@khepree/storage";
@@ -72,6 +74,7 @@ export class MediaService {
     const extension = extensionForMime(input.mimeType);
     const objectKey = createObjectKey({
       namespace: input.namespace,
+      pathPrefix: input.pathPrefix,
       extension,
       visibility: input.visibility,
       ownerId: input.ownerId ?? undefined,
@@ -96,6 +99,10 @@ export class MediaService {
   }
 
   async completeUpload(input: CompleteMediaUploadInput): Promise<MediaRecord> {
+    if (isAbsoluteHttpUrl(input.objectKey)) {
+      throw new Error("objectKey must be a canonical storage key, not a full URL");
+    }
+
     const contentClass =
       input.contentClass ??
       (input.bucket === "private" && input.context?.startsWith("release")
@@ -140,11 +147,15 @@ export class MediaService {
       throw new Error("Uploaded object does not belong to this owner");
     }
 
+    if (input.bucket === "public" && storage.verifyPublicReadAccess) {
+      await storage.verifyPublicReadAccess(input.objectKey);
+    }
+
     const [row] = await this.db
       .insert(mediaAssets)
       .values({
         publicId: createPublicId("med"),
-        storageProvider: storage.provider === "r2" ? "r2" : "mock",
+        storageProvider: storageProviderForDb(storage.provider),
         bucket: input.bucket,
         objectKey: input.objectKey,
         mimeType: input.mimeType,

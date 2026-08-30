@@ -14,6 +14,7 @@ import {
 } from "@khepree/db";
 import {
   getPrivateObjectStorage,
+  storageProviderForDb,
   type ObjectStorage,
   type StorageBucket,
 } from "@khepree/storage";
@@ -52,6 +53,7 @@ function mapVersion(
     bodyStorageProvider: row.bodyStorageProvider,
     bodyStorageBucket: row.bodyStorageBucket,
     bodyObjectKey: row.bodyObjectKey,
+    bodyChecksumSha256: row.bodyChecksumSha256,
     featuredMediaId: row.featuredMediaId,
     featuredMediaPublicId: meta.featuredMediaPublicId ?? null,
     authorUserId: row.authorUserId,
@@ -112,31 +114,35 @@ function isUniqueViolation(error: unknown): boolean {
 }
 
 type BodyMeta = {
-  bodyStorageProvider: "r2" | "mock" | null;
+  bodyStorageProvider: "s3" | "mock" | "r2" | null;
   bodyStorageBucket: string | null;
   bodyObjectKey: string | null;
+  bodyChecksumSha256: string | null;
 };
 
 const emptyBodyMeta: BodyMeta = {
   bodyStorageProvider: null,
   bodyStorageBucket: null,
   bodyObjectKey: null,
+  bodyChecksumSha256: null,
 };
 
 async function storeBody(
   storage: ObjectStorage,
   key: string,
   body: string,
-): Promise<{ provider: "r2" | "mock"; bucket: StorageBucket }> {
+): Promise<{ provider: "s3" | "mock" | "r2"; bucket: StorageBucket; checksumSha256: string }> {
+  const checksumSha256 = sha256Hex(body);
   await storage.putObject({
     key,
     body,
-    contentType: "text/markdown",
+    contentType: "text/markdown; charset=utf-8",
     bucket: "private",
   });
   return {
-    provider: storage.provider === "r2" ? "r2" : "mock",
+    provider: storageProviderForDb(storage.provider),
     bucket: "private",
+    checksumSha256,
   };
 }
 
@@ -155,6 +161,7 @@ async function bodyMetaFor(
     bodyStorageProvider: stored.provider,
     bodyStorageBucket: stored.bucket,
     bodyObjectKey: objectKey,
+    bodyChecksumSha256: stored.checksumSha256,
   };
 }
 
@@ -381,6 +388,7 @@ export class ContentService {
       bodyStorageProvider: existing.bodyStorageProvider,
       bodyStorageBucket: existing.bodyStorageBucket,
       bodyObjectKey: existing.bodyObjectKey,
+      bodyChecksumSha256: existing.bodyChecksumSha256,
     };
 
     if (input.body !== undefined) {
@@ -391,6 +399,7 @@ export class ContentService {
           bodyStorageProvider: stored.provider,
           bodyStorageBucket: stored.bucket,
           bodyObjectKey: objectKey,
+          bodyChecksumSha256: stored.checksumSha256,
         };
       } else {
         bodyMeta = emptyBodyMeta;

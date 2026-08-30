@@ -1,6 +1,6 @@
 import type { IntegrationStatus } from "@khepree/types";
 
-/** Logical bucket — maps to R2 public or private bucket names via config. */
+/** Logical bucket — maps to configured S3 public or private bucket names. */
 export type StorageBucket = "public" | "private";
 
 export interface PutObjectInput {
@@ -59,6 +59,10 @@ export interface ObjectStorage {
   headObject(key: string, bucket: StorageBucket): Promise<HeadObjectResult | null>;
   createPresignedUpload(input: PresignUploadInput): Promise<PresignedUpload>;
   createPresignedDownload(input: PresignDownloadInput): Promise<PresignedDownload>;
-  /** CDN URL for public bucket objects — null when not configured. */
+  /** CDN URL for public bucket objects — null for private instances or when not configured. */
   publicUrl(key: string): string | null;
+  /** Verify anonymous read via S3 API (completeUpload / diagnostics only). */
+  verifyPublicReadAccess?(key: string): Promise<void>;
+  /** Verify object is not anonymously readable (private isolation). */
+  verifyPrivateNotPubliclyReadable?(key: string): Promise<void>;
 }

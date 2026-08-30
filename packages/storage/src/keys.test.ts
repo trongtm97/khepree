@@ -7,6 +7,16 @@ describe("createObjectKey", () => {
     expect(key).toMatch(/^pub\/blog\/[a-f0-9]{32}\.webp$/);
   });
 
+  it("uses canonical pathPrefix without pub segment", () => {
+    const key = createObjectKey({
+      pathPrefix: "products/studio",
+      namespace: "marketing",
+      extension: "webp",
+      visibility: "public",
+    });
+    expect(key).toMatch(/^pub\/products\/studio\/[a-f0-9]{32}\.webp$/);
+  });
+
   it("uses private prefix for private visibility", () => {
     const key = createObjectKey({ namespace: "releases", extension: "zip", visibility: "private" });
     expect(key.startsWith("prv/releases/")).toBe(true);

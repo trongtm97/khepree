@@ -1,16 +1,47 @@
 import { randomBytes } from "node:crypto";
+import { assertSafeObjectKey } from "./object-key";
 
 const SAFE_NAMESPACE = /^[a-z0-9][a-z0-9-]{0,31}$/;
 const SAFE_EXTENSION = /^[a-z0-9]{1,12}$/;
+const SAFE_PATH_SEGMENT = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+/** Canonical public namespaces (always stored under pub/). */
+export const PUBLIC_OBJECT_PREFIXES = [
+  "pub/brand",
+  "pub/products",
+  "pub/blog",
+  "pub/content",
+  "pub/media",
+] as const;
+
+/** Canonical private namespaces (always stored under prv/). */
+export const PRIVATE_OBJECT_PREFIXES = [
+  "prv/content",
+  "prv/releases",
+  "prv/installers",
+  "prv/downloads",
+  "prv/private-media",
+] as const;
 
 export interface ObjectKeyInput {
-  /** e.g. marketing, blog, content, releases */
+  /** Fallback segment when pathPrefix is unset — e.g. media, releases. */
   namespace: string;
-  /** Derived from validated MIME — never from client filename. */
+  /** Relative path under pub/ or prv/, e.g. products/my-slug/screenshots. */
+  pathPrefix?: string;
   extension: string;
   visibility: "public" | "private";
-  /** When set, the key includes this owner segment so complete cannot claim another actor's object. */
   ownerId?: string;
+}
+
+function normalizePathPrefix(pathPrefix: string): string {
+  const trimmed = pathPrefix.replace(/^\/+|\/+$/g, "").replace(/\/+/g, "/");
+  for (const segment of trimmed.split("/")) {
+    if (!segment || !SAFE_PATH_SEGMENT.test(segment)) {
+      throw new Error(`Invalid storage path segment: ${segment || pathPrefix}`);
+    }
+  }
+  assertSafeObjectKey(trimmed);
+  return trimmed;
 }
 
 export function objectKeyOwnerSegment(ownerId: string): string {
@@ -25,7 +56,7 @@ export function objectKeyIncludesOwner(objectKey: string, ownerId: string): bool
   return objectKey.includes(`/${objectKeyOwnerSegment(ownerId)}/`);
 }
 
-/** Generate a non-guessable, URL-safe object key. */
+/** Generate a non-guessable, URL-safe object key under pub/ or prv/. */
 export function createObjectKey(input: ObjectKeyInput): string {
   if (!SAFE_NAMESPACE.test(input.namespace)) {
     throw new Error(`Invalid storage namespace: ${input.namespace}`);
@@ -35,12 +66,25 @@ export function createObjectKey(input: ObjectKeyInput): string {
   }
 
   const id = randomBytes(16).toString("hex");
-  const prefix = input.visibility === "public" ? "pub" : "prv";
+  const root = input.visibility === "public" ? "pub" : "prv";
+
+  if (input.pathPrefix) {
+    const canonical = normalizePathPrefix(input.pathPrefix);
+    const key = `${root}/${canonical}/${id}.${input.extension}`;
+    assertSafeObjectKey(key);
+    return key;
+  }
+
   if (input.ownerId) {
     const owner = objectKeyOwnerSegment(input.ownerId);
-    return `${prefix}/${input.namespace}/${owner}/${id}.${input.extension}`;
+    const key = `${root}/${input.namespace}/${owner}/${id}.${input.extension}`;
+    assertSafeObjectKey(key);
+    return key;
   }
-  return `${prefix}/${input.namespace}/${id}.${input.extension}`;
+
+  const key = `${root}/${input.namespace}/${id}.${input.extension}`;
+  assertSafeObjectKey(key);
+  return key;
 }
 
 /** Strip path segments and unsafe characters from a client filename (never used as key). */

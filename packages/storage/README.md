@@ -1,29 +1,36 @@
 # @khepree/storage — Object Storage
 
-S3-compatible object storage abstraction for Cloudflare R2.
+S3-compatible object storage abstraction (Vietnix, Cloudflare R2, MinIO).
+
+## Public URL model
+
+- **`S3_ENDPOINT`** — backend S3 API (upload, head, private presign). Never in browser `src`.
+- **`S3_PUBLIC_BASE_URL`** — CDN origin (`https://cdn.khepree.com`). Public URLs = base + canonical `objectKey` via `buildPublicObjectUrl()` / `ObjectStorage.publicUrl()`.
+- Postgres stores **`objectKey`** only — prefer `products/{slug}/…`, `blog/{slug}/…`, `brand/…`, `media/…`.
 
 ## Design
 
-Applications depend on **`ObjectStorage`** — not R2-specific APIs. Production uses `S3ObjectStorage` (AWS SDK v3 against R2 endpoints). Development/test falls back to **`MockObjectStorage`** only when R2 env vars are missing — **never in production/staging**.
+Applications depend on **`ObjectStorage`** — not vendor-specific APIs. Production uses `S3ObjectStorage`. Development/test falls back to **`MockObjectStorage`** only when credentials are missing — **never in production/staging**.
 
 ## Buckets
 
 | Logical bucket | Env var | Use |
 |----------------|---------|-----|
-| `public` | `R2_BUCKET_PUBLIC` | Marketing images, blog assets, product screenshots |
-| `private` | `R2_BUCKET_PRIVATE` | Installers, release files, protected downloads |
+| `public` | `S3_BUCKET_PUBLIC` | Marketing images, blog assets, product screenshots |
+| `private` | `S3_BUCKET_PRIVATE` | Installers, release files, protected downloads |
 
 **Private never falls back to public.** Both buckets are required in production/staging (`validateRuntimeEnv` fail-fast).
 
 Configure via `.env`:
 
 ```bash
-R2_ACCOUNT_ID=
-R2_ACCESS_KEY_ID=
-R2_SECRET_ACCESS_KEY=
-R2_BUCKET_PUBLIC=
-R2_BUCKET_PRIVATE=
-R2_PUBLIC_BASE_URL=https://cdn.khepree.com
+S3_ENDPOINT=https://your-vietnix-s3-api.example
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_BUCKET_PUBLIC=khepree-public
+S3_BUCKET_PRIVATE=khepree-private
+S3_PUBLIC_BASE_URL=https://cdn.khepree.com
+S3_FORCE_PATH_STYLE=true
 ```
 
 ## Interface

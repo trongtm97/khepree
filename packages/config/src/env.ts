@@ -25,7 +25,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-  /** Generic S3-compatible storage (Vietnix, MinIO, etc.). Preferred in production. */
+  /** Generic S3-compatible storage (Vietnix production). */
   STORAGE_PROVIDER: z.enum(["s3"]).optional(),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().optional(),
@@ -34,16 +34,9 @@ const envSchema = z.object({
   S3_BUCKET_PUBLIC: z.string().optional(),
   S3_BUCKET_PRIVATE: z.string().optional(),
   S3_PUBLIC_BASE_URL: optionalUrl,
-  /** Set true for path-style endpoints (typical Vietnix/MinIO). */
   S3_FORCE_PATH_STYLE: z.enum(["true", "false"]).optional(),
-
-  /** Legacy Cloudflare R2 — used when S3_* is unset. */
-  R2_ACCOUNT_ID: z.string().optional(),
-  R2_ACCESS_KEY_ID: z.string().optional(),
-  R2_SECRET_ACCESS_KEY: z.string().optional(),
-  R2_BUCKET_PUBLIC: z.string().optional(),
-  R2_BUCKET_PRIVATE: z.string().optional(),
-  R2_PUBLIC_BASE_URL: optionalUrl,
+  /** acl = per-object public-read (Vietnix default). none = bucket policy must grant public read. */
+  S3_PUBLIC_ACCESS_MODE: z.enum(["acl", "none"]).optional(),
 
   LICENSE_SIGNING_PRIVATE_KEY: z.string().optional(),
   LICENSE_SIGNING_PUBLIC_KEY: z.string().optional(),
@@ -113,12 +106,13 @@ export function isDatabaseConfigured(env: Env = getEnv()): boolean {
 export {
   isPrivateStorageConfigured,
   isPublicStorageConfigured,
-  isR2StorageConfigured,
   isS3StorageConfigured,
   isStorageConfigured,
+  resolvePublicAccessMode,
+  resolvePublicMediaBaseUrl,
   resolveStorageCredentials,
   type ResolvedStorageCredentials,
-  type StorageCredentialSource,
+  type S3PublicAccessMode,
 } from "./storage-env";
 
 export function mailFromAddress(env: Env = getEnv()): string | undefined {

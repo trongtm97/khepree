@@ -15,6 +15,11 @@ export {
   objectKeyOwnerSegment,
   sanitizeClientFilename,
 } from "./keys";
+export {
+  assertHttpsPublicBaseUrl,
+  buildPublicObjectUrl,
+  isAbsoluteHttpUrl,
+} from "./public-url";
 export { extensionForMime, validateUpload, UploadValidationError, UPLOAD_SIZE_LIMITS, sniffMagicMime, type UploadContentClass } from "./validation";
 export { MockObjectStorage } from "./mock-storage";
 export { S3ObjectStorage } from "./s3-storage";
@@ -23,6 +28,17 @@ export {
   StorageInfrastructureError,
   isObjectNotFoundError,
 } from "./errors";
+export { runStorageHealthCheck, type StorageHealthReport } from "./diagnostic";
+export { storageProviderForDb } from "./storage-provider";
+export {
+  PUBLIC_OBJECT_ACL,
+  PUBLIC_OBJECT_ACL_HEADER,
+  publicAclPutFields,
+  publicAclUploadHeaders,
+  resolvePublicAccessMode,
+  type S3PublicAccessMode,
+} from "./s3-access";
+export { assertSafeObjectKey } from "./object-key";
 export {
   getObjectStorage,
   getPublicObjectStorage,

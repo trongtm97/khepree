@@ -1,11 +1,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+import { withPublicMediaImages } from "../../tooling/next-public-images";
 import { withStandalone } from "../../tooling/next-standalone";
 
 const appDir = path.dirname(fileURLToPath(import.meta.url));
 
-const nextConfig: NextConfig = {
+const nextConfig: NextConfig = withPublicMediaImages({
   ...withStandalone(appDir),
   transpilePackages: [
     "@khepree/ui",
@@ -28,6 +29,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-};
+});
 
 export default nextConfig;

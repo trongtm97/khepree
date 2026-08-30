@@ -58,6 +58,7 @@ export interface ContentVersionRecord {
   bodyStorageProvider: string | null;
   bodyStorageBucket: string | null;
   bodyObjectKey: string | null;
+  bodyChecksumSha256: string | null;
   featuredMediaId: string | null;
   featuredMediaPublicId: string | null;
   authorUserId: string | null;
@@ -115,6 +116,8 @@ export interface PrepareMediaUploadInput {
   sizeBytes: number;
   visibility: MediaVisibility;
   namespace: string;
+  /** Canonical CDN path prefix — e.g. products/my-slug, blog/my-slug, brand, media. */
+  pathPrefix?: string;
   context?: string | null;
   altText?: string | null;
   ownerType?: string | null;

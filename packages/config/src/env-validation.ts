@@ -7,8 +7,10 @@ import {
   isPrivateStorageConfigured,
   isPublicStorageConfigured,
   isRedisConfigured,
+  isS3StorageConfigured,
   isSePayConfigured,
   mailFromAddress,
+  resolvePublicMediaBaseUrl,
 } from "./env";
 
 export class EnvValidationError extends Error {
@@ -45,6 +47,52 @@ export function validatePaymentProviderConfiguration(env: Env = getEnv()): void 
     return;
   }
   throw new EnvValidationError(`Unknown payment provider: ${env.PAYMENT_PROVIDER}`);
+}
+
+function validateS3Storage(env: Env): void {
+  requireValue("S3_ENDPOINT", env.S3_ENDPOINT);
+  requireValue("S3_REGION", env.S3_REGION);
+  requireValue("S3_ACCESS_KEY_ID", env.S3_ACCESS_KEY_ID);
+  requireValue("S3_SECRET_ACCESS_KEY", env.S3_SECRET_ACCESS_KEY);
+  requireValue("S3_BUCKET_PUBLIC", env.S3_BUCKET_PUBLIC);
+  requireValue("S3_BUCKET_PRIVATE", env.S3_BUCKET_PRIVATE);
+
+  const mode = env.S3_PUBLIC_ACCESS_MODE ?? "acl";
+  if (mode !== "acl" && mode !== "none") {
+    throw new EnvValidationError("S3_PUBLIC_ACCESS_MODE must be acl or none");
+  }
+}
+
+function validatePublicMediaUrls(env: Env): void {
+  const publicBase = resolvePublicMediaBaseUrl(env);
+  if (!publicBase) {
+    throw new EnvValidationError("S3_PUBLIC_BASE_URL is required in production for public media CDN URLs");
+  }
+
+  let cdnUrl: URL;
+  try {
+    cdnUrl = new URL(publicBase);
+  } catch {
+    throw new EnvValidationError("Public media base URL must be a valid URL");
+  }
+
+  if (cdnUrl.protocol !== "https:") {
+    throw new EnvValidationError("Public media base URL must use HTTPS in production");
+  }
+
+  if (isS3StorageConfigured(env) && env.S3_ENDPOINT) {
+    let apiUrl: URL;
+    try {
+      apiUrl = new URL(env.S3_ENDPOINT);
+    } catch {
+      throw new EnvValidationError("S3_ENDPOINT must be a valid URL");
+    }
+    if (apiUrl.hostname === cdnUrl.hostname) {
+      throw new EnvValidationError(
+        "S3_ENDPOINT must be the Vietnix S3 API endpoint — not the public CDN URL (S3_PUBLIC_BASE_URL)",
+      );
+    }
+  }
 }
 
 function validateProductionEmail(env: Env): void {
@@ -91,10 +139,14 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
   requireValue("API_URL", env.API_URL);
 
   if (!isPublicStorageConfigured(env) || !isPrivateStorageConfigured(env)) {
-    throw new EnvValidationError(
-      "S3 or R2 public and private bucket configuration is required in production",
-    );
+    throw new EnvValidationError("S3 public and private bucket configuration is required in production");
   }
+
+  if (isS3StorageConfigured(env)) {
+    validateS3Storage(env);
+  }
+
+  validatePublicMediaUrls(env);
 
   if (!isLicenseSigningConfigured(env)) {
     throw new EnvValidationError("LICENSE_SIGNING_PRIVATE_KEY and LICENSE_SIGNING_PUBLIC_KEY are required in production");

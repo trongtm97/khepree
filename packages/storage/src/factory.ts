@@ -25,14 +25,14 @@ function createForBucket(bucket: StorageBucket): ObjectStorage {
     if (isPublicStorageConfigured()) return new S3ObjectStorage("public");
     if (isDevLike()) return new MockObjectStorage();
     throw new StorageConfigurationError(
-      "Public object storage is not configured. Set S3_BUCKET_PUBLIC or R2_BUCKET_PUBLIC and credentials.",
+      "Public object storage is not configured. Set S3_BUCKET_PUBLIC and credentials.",
     );
   }
 
   if (isPrivateStorageConfigured()) return new S3ObjectStorage("private");
   if (isDevLike()) return new MockObjectStorage();
   throw new StorageConfigurationError(
-    "Private object storage is not configured. Set S3_BUCKET_PRIVATE or R2_BUCKET_PRIVATE — never fall back to public.",
+    "Private object storage is not configured. Set S3_BUCKET_PRIVATE — never fall back to public.",
   );
 }
 

@@ -20,10 +20,12 @@ function productionBase() {
     PARTNER_URL: "https://partner.example.com",
     API_URL: "https://api.example.com",
     S3_ENDPOINT: "https://s3.example.com",
+    S3_REGION: "auto",
     S3_ACCESS_KEY_ID: "key",
     S3_SECRET_ACCESS_KEY: "secret",
     S3_BUCKET_PUBLIC: "khepree-public",
     S3_BUCKET_PRIVATE: "khepree-private",
+    S3_PUBLIC_BASE_URL: "https://cdn.example.com",
     LICENSE_SIGNING_PRIVATE_KEY: "priv",
     LICENSE_SIGNING_PUBLIC_KEY: "pubk",
     MAIL_FROM: "Khepree <no-reply@khepree.com>",
@@ -135,6 +137,39 @@ describe("validateRuntimeEnv", () => {
         }),
       ),
     ).toThrow(/bucket configuration/);
+  });
+
+  it("rejects http public media base URL", () => {
+    process.env.NEXT_PHASE = "";
+    expect(() =>
+      validateRuntimeEnv(
+        getEnv({
+          ...productionBase(),
+          S3_PUBLIC_BASE_URL: "http://cdn.example.com",
+          PAYMENT_PROVIDER: "sepay",
+          SEPAY_ENV: "sandbox",
+          SEPAY_MERCHANT_ID: "m",
+          SEPAY_SECRET_KEY: "s",
+        }),
+      ),
+    ).toThrow(/HTTPS/);
+  });
+
+  it("rejects S3 endpoint matching CDN hostname", () => {
+    process.env.NEXT_PHASE = "";
+    expect(() =>
+      validateRuntimeEnv(
+        getEnv({
+          ...productionBase(),
+          S3_ENDPOINT: "https://cdn.example.com",
+          S3_PUBLIC_BASE_URL: "https://cdn.example.com",
+          PAYMENT_PROVIDER: "sepay",
+          SEPAY_ENV: "sandbox",
+          SEPAY_MERCHANT_ID: "m",
+          SEPAY_SECRET_KEY: "s",
+        }),
+      ),
+    ).toThrow(/S3_ENDPOINT must be the Vietnix S3 API endpoint/);
   });
 });
 

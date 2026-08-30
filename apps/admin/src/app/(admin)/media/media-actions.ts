@@ -36,7 +36,9 @@ export async function prepareMediaLibraryUploadAction(
     const mimeType = String(formData.get("mimeType") ?? "");
     const sizeBytes = Number(formData.get("sizeBytes") ?? 0);
     const visibility = String(formData.get("visibility") ?? "public") as "public" | "private";
-    const namespace = String(formData.get("namespace") ?? "marketing");
+    const namespace = String(formData.get("namespace") ?? "media");
+    const pathPrefixRaw = String(formData.get("pathPrefix") ?? "");
+    const pathPrefix = pathPrefixRaw.trim() || (namespace === "media" ? "media" : undefined);
     const context = String(formData.get("context") ?? "") || null;
     const contentClass = String(formData.get("contentClass") ?? "") || undefined;
 
@@ -45,6 +47,7 @@ export async function prepareMediaLibraryUploadAction(
       sizeBytes,
       visibility,
       namespace,
+      pathPrefix,
       context,
       ownerType: "user",
       ownerId: session.user.id,

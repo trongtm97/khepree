@@ -19,7 +19,7 @@ export type UploadContentClass =
   | "software_release"
   | "document";
 
-const RASTER_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const RASTER_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
 const DOCUMENT_MIMES = new Set(["application/pdf", "text/plain", "text/markdown"]);
 const SOFTWARE_MIMES = new Set([
   "application/octet-stream",
@@ -47,6 +47,7 @@ export function extensionForMime(mimeType: string): string {
     "image/png": "png",
     "image/webp": "webp",
     "image/gif": "gif",
+    "image/avif": "avif",
     "image/svg+xml": "svg",
     "video/mp4": "mp4",
     "application/pdf": "pdf",

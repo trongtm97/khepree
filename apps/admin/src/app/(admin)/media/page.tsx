@@ -59,7 +59,7 @@ export default async function MediaPage({
     <div className="space-y-6">
       <AdminPageHeader
         title="Media Library"
-        description="Tải lên, tìm kiếm và quản lý tệp R2."
+        description="Tải lên, tìm kiếm và quản lý Kho lưu trữ (Object Storage)."
       />
       {canWrite ? <MediaUploadPanel /> : null}
       <div className="flex flex-wrap gap-2 text-sm">

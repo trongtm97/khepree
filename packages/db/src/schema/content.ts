@@ -13,7 +13,7 @@ export const contentTypeEnum = pgEnum("content_type", [
 
 export const contentStatusEnum = pgEnum("content_status", ["DRAFT", "PUBLISHED", "ARCHIVED"]);
 
-export const storageProviderEnum = pgEnum("storage_provider", ["r2", "mock"]);
+export const storageProviderEnum = pgEnum("storage_provider", ["s3", "r2", "mock"]);
 
 export const mediaVisibilityEnum = pgEnum("media_visibility", ["public", "private"]);
 
@@ -78,6 +78,7 @@ export const contentVersions = pgTable(
     bodyStorageProvider: storageProviderEnum("body_storage_provider"),
     bodyStorageBucket: text("body_storage_bucket"),
     bodyObjectKey: text("body_object_key"),
+    bodyChecksumSha256: text("body_checksum_sha256"),
     featuredMediaId: uuid("featured_media_id").references(() => mediaAssets.id, {
       onDelete: "set null",
     }),

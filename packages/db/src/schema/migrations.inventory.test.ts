@@ -14,7 +14,16 @@ describe("migration inventory", () => {
     expect(journal.entries.some((entry) => entry.tag === "0011_phase15_2_software_releases")).toBe(true);
     expect(journal.entries.some((entry) => entry.tag === "0012_phase15_3_cms")).toBe(true);
     expect(journal.entries.some((entry) => entry.tag === "0013_phase16_url_redirects")).toBe(true);
-    expect(journal.entries.map((entry) => entry.idx)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+  });
+
+  it("includes S3 storage provider migration (0014)", () => {
+    const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
+      entries: Array<{ idx: number; tag: string }>;
+    };
+    expect(journal.entries.some((entry) => entry.tag === "0014_s3_storage_provider")).toBe(true);
+    expect(journal.entries.map((entry) => entry.idx)).toEqual([
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    ]);
   });
 
   it("does not rewrite historical migrations 0000–0008", () => {

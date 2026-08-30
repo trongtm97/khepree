@@ -1,4 +1,6 @@
 import type { IntegrationStatus } from "@khepree/types";
+import { resolvePublicAccessMode } from "./s3-access";
+import { StorageConfigurationError } from "./errors";
 import type {
   HeadObjectResult,
   ObjectStorage,
@@ -14,6 +16,7 @@ interface StoredObject {
   body: Buffer;
   contentType: string;
   bucket: StorageBucket;
+  publicRead?: boolean;
 }
 
 /** In-memory storage for development — never claims production delivery. */
@@ -21,6 +24,7 @@ export class MockObjectStorage implements ObjectStorage {
   readonly provider = "mock";
   readonly status: IntegrationStatus = "mock";
   private store = new Map<string, StoredObject>();
+  private readonly publicAccessMode = resolvePublicAccessMode();
 
   private storeKey(key: string, bucket: StorageBucket) {
     return `${bucket}:${key}`;
@@ -32,6 +36,7 @@ export class MockObjectStorage implements ObjectStorage {
       body,
       contentType: input.contentType,
       bucket: input.bucket,
+      publicRead: input.bucket === "public" && this.publicAccessMode === "acl",
     });
     return { key: input.key, etag: `"mock-${body.length}"` };
   }
@@ -64,6 +69,9 @@ export class MockObjectStorage implements ObjectStorage {
       expiresAt,
       headers: {
         "Content-Type": input.contentType,
+        ...(input.bucket === "public" && this.publicAccessMode === "acl"
+          ? { "x-amz-acl": "public-read" }
+          : {}),
         ...(typeof input.contentLength === "number"
           ? { "Content-Length": String(input.contentLength) }
           : {}),
@@ -84,5 +92,19 @@ export class MockObjectStorage implements ObjectStorage {
 
   publicUrl(key: string): string | null {
     return `/mock-storage/${key}`;
+  }
+
+  async verifyPublicReadAccess(key: string): Promise<void> {
+    const obj = this.store.get(this.storeKey(key, "public"));
+    if (!obj) {
+      throw new StorageConfigurationError("Public object not found for read verification");
+    }
+    if (this.publicAccessMode === "acl" && !obj.publicRead) {
+      throw new StorageConfigurationError("Public object is not marked public-read");
+    }
+  }
+
+  async verifyPrivateNotPubliclyReadable(_key: string): Promise<void> {
+    /* mock private objects are never anonymously readable */
   }
 }

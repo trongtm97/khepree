@@ -91,7 +91,20 @@ export default async function MediaDetailPage({
             <dd>{row.altText ?? "—"}</dd>
           </div>
         </dl>
-        <AdminTechnicalDetails>{row.objectKey}</AdminTechnicalDetails>
+          <div>
+            <dt className="text-khepree-slate/60">Provider</dt>
+            <dd>{row.storageProvider}</dd>
+          </div>
+          <div>
+            <dt className="text-khepree-slate/60">Bucket</dt>
+            <dd>{row.bucket}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-khepree-slate/60">Object key</dt>
+            <dd>
+              <AdminTechnicalDetails>{row.objectKey}</AdminTechnicalDetails>
+            </dd>
+          </div>
         {media?.publicUrl ? (
           <p className="mt-3 text-sm">
             URL public:{" "}

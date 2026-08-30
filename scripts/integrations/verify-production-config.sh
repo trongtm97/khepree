@@ -75,20 +75,19 @@ check_set LICENSE_SIGNING_PUBLIC_KEY
 
 if [[ -n "${S3_ENDPOINT:-}" && "${S3_ENDPOINT}" != *"CHANGE_ME"* ]]; then
   check_set S3_ENDPOINT
+  check_set S3_REGION
   check_set S3_ACCESS_KEY_ID
   check_set S3_SECRET_ACCESS_KEY
   check_set S3_BUCKET_PUBLIC
   check_set S3_BUCKET_PRIVATE
+  if [[ -n "${S3_PUBLIC_BASE_URL:-}" && "${S3_PUBLIC_BASE_URL}" == https://* ]]; then
+    ok "S3_PUBLIC_BASE_URL uses HTTPS CDN origin"
+  else
+    warn "S3_PUBLIC_BASE_URL must be https:// CDN origin (not S3 API endpoint)"
+  fi
   ok "S3 storage configured"
-elif [[ -n "${R2_ACCOUNT_ID:-}" && "${R2_ACCOUNT_ID}" != *"CHANGE_ME"* ]]; then
-  check_set R2_ACCOUNT_ID
-  check_set R2_ACCESS_KEY_ID
-  check_set R2_SECRET_ACCESS_KEY
-  check_set R2_BUCKET_PUBLIC
-  check_set R2_BUCKET_PRIVATE
-  ok "R2 storage configured (legacy)"
 else
-  warn "Neither S3 nor R2 storage is configured"
+  warn "S3 storage is not configured"
 fi
 
 mail_from="${MAIL_FROM:-${EMAIL_FROM:-}}"

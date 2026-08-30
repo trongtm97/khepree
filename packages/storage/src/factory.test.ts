@@ -34,6 +34,7 @@ describe("storage factory production fail-fast", () => {
     vi.stubEnv("S3_SECRET_ACCESS_KEY", "secret");
     vi.stubEnv("S3_BUCKET_PUBLIC", "public-bucket");
     vi.stubEnv("S3_BUCKET_PRIVATE", "");
+    vi.stubEnv("S3_PUBLIC_BASE_URL", "https://cdn.example.com");
 
     const { getPrivateObjectStorage } = await import("./factory");
     expect(() => getPrivateObjectStorage()).toThrow(

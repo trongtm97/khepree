@@ -50,7 +50,8 @@ export function MediaUploadPanel() {
       prep.set("mimeType", file.type || "application/octet-stream");
       prep.set("sizeBytes", String(file.size));
       prep.set("visibility", visibility);
-      prep.set("namespace", visibility === "public" ? "marketing" : "uploads");
+      prep.set("namespace", visibility === "public" ? "media" : "uploads");
+      prep.set("pathPrefix", visibility === "public" ? "media" : "");
       prep.set("context", (form.elements.namedItem("context") as HTMLInputElement | null)?.value ?? "");
 
       const prepared = await prepareMediaLibraryUploadAction({}, prep);
