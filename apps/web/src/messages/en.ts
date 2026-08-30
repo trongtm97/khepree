@@ -2,39 +2,42 @@ export const en = {
   meta: {
     siteName: "Khepree",
     defaultDescription:
-      "Khepree builds practical, powerful, easy-to-use tools so you can save time, work more effectively, and turn ideas into value.",
+      "Khepree builds tools that cut repetitive work, speed up time-consuming tasks, and help you use AI without needing to be technical.",
   },
   nav: {
     products: "Products",
     solutions: "Solutions",
+    pricing: "Pricing",
     resources: "Resources",
     company: "Company",
     ecosystem: "Ecosystem",
     signIn: "Sign in",
-    exploreProducts: "Explore products",
+    exploreProducts: "Find the right tool",
     openMenu: "Open menu",
     closeMenu: "Close menu",
   },
   hero: {
-    headline: "Software that helps you go further.",
+    headline: "Work lighter. Make room for what matters.",
     supporting:
-      "Khepree builds practical, powerful, easy-to-use tools so you can save time, work more effectively, and turn ideas into value.",
-    ctaPrimary: "Explore products",
-    ctaSecondary: "Explore the ecosystem",
+      "Khepree builds tools that cut repetitive work, speed up time-consuming tasks, and help you use AI without needing to be technical.",
+    ctaPrimary: "Find the right tool",
+    ctaSecondary: "See what Khepree can help with",
   },
   valueStrip: {
     saveTime: "Save time",
-    workSmarter: "Work more effectively",
-    createMore: "Create more value",
-    unlockOpportunities: "Expand opportunity",
+    workSmarter: "Skip repetitive work",
+    createMore: "Easy to start",
+    unlockOpportunities: "Get more done",
   },
   products: {
-    heading: "Practical tools. Clear value.",
-    copy: "Every Khepree product is built to solve a real problem — making work simpler, faster, and more effective.",
-    comingSoon: "Coming soon",
+    heading: "Pick a tool for what you need right now.",
+    copy: "Each product answers four questions fast: what it is, what it helps with, where it runs, and what it costs.",
+    whatItIs: "What it is",
+    helpsWith: "Helps you with",
+    worksOn: "Works on",
     emptyTitle: "More products on the way",
     emptyDescription:
-      "We only ship when something is genuinely useful. New tools appear here when they are ready.",
+      "We only ship when a tool genuinely helps you get work done. New ones appear here when ready.",
   },
   catalog: {
     free: "Free",
@@ -45,8 +48,13 @@ export const en = {
     noFeaturesListed: "No features listed.",
     checkout: "Checkout",
     startingFrom: "From",
-    viewProduct: "View product",
-    seePricing: "See pricing",
+    viewProduct: "See if it fits",
+    viewPlans: "View plans",
+    getStarted: "Get started",
+    periods: {
+      month: "1 month",
+      year: "1 year",
+    },
     platforms: {
       desktop: "Desktop",
       web: "Web",
@@ -60,12 +68,12 @@ export const en = {
       contact_sales: "Custom",
     },
     sections: {
-      benefits: "Key outcomes",
+      benefits: "What you get",
       features: "What you can do",
       gallery: "Screenshots",
-      platforms: "Platforms",
-      requirements: "Requirements",
-      howItWorks: "How it works",
+      platforms: "Works on",
+      requirements: "What you need",
+      howItWorks: "How to start",
       pricing: "Pricing",
       faq: "FAQ",
       related: "Related resources",
@@ -73,90 +81,117 @@ export const en = {
     },
   },
   why: {
-    heading: "Why Khepree?",
+    heading: "Software shouldn't wear you out.",
     usefulFirst: {
-      title: "Useful first",
-      copy: "Every feature has to earn its place. If it does not save time, reduce work, or create more value, it does not belong in the product.",
+      title: "Easy to understand from day one",
+      copy: "Open it and know what to do. No manual, no guessing where things are.",
     },
     simpleByDesign: {
-      title: "Simple to use",
-      copy: "Powerful technology should not make things harder. Khepree prefers a clear experience so you can start quickly and stay focused on the work.",
+      title: "Only the features you actually need",
+      copy: "If a button doesn't help you finish the job faster, it doesn't belong here.",
     },
     createRealValue: {
-      title: "Real value",
-      copy: "We care about the results you get: faster work, leaner processes, better output, and more opportunity.",
+      title: "Fewer steps to finish the job",
+      copy: "Less clicking, less copying, less waiting — more of the work actually done.",
     },
     alwaysMovingForward: {
-      title: "Always improving",
-      copy: "Khepree keeps refining products from real needs and the way people actually work.",
+      title: "Improved from how people really use it",
+      copy: "We watch what slows people down and fix that — not add more for the sake of it.",
+    },
+  },
+  intent: {
+    heading: "What are you trying to get done?",
+    lessRepetition: {
+      title: "Stop doing the same thing over and over",
+      copy: "Draft, send, update, repeat. Khepree tools help you bundle those steps so they take less of your day.",
+    },
+    fasterHardWork: {
+      title: "Handle a hard task faster",
+      copy: "When one job eats a whole afternoon, the right tool helps you get through it sooner.",
+    },
+    aiWithoutTech: {
+      title: "Use AI without being technical",
+      copy: "Need AI help but don't want a setup project? Pick a tool and use it — no engineering degree required.",
+    },
+    workAtScale: {
+      title: "Stay organized as work piles up",
+      copy: "More tasks, same calm workflow — without extra steps every time something new lands on your plate.",
     },
   },
   audience: {
-    heading: "Made for the way you work.",
+    heading: "Sound like your situation?",
     creators: {
-      title: "Creators",
-      copy: "Spend more time creating and publishing — less time repeating the same steps.",
+      title: "Less busywork, more creating",
+      copy: "Spend time on the work itself — not re-doing the same publish-and-format steps.",
     },
     professionals: {
-      title: "Professionals",
-      copy: "Reliable tools that keep work consistent so you can focus on quality.",
+      title: "Consistent work, less friction",
+      copy: "Tools you can open every day without re-learning how they work.",
     },
     entrepreneurs: {
-      title: "Entrepreneurs",
-      copy: "Automate the repetitive parts of a lean operation so you can create more value.",
+      title: "Lean ops, less manual work",
+      copy: "Automate what repeats so you can focus on customers and decisions.",
     },
     businesses: {
-      title: "Businesses",
-      copy: "Help teams work together, stay organized, and scale without extra friction.",
+      title: "Teams that stay on track",
+      copy: "Shared tools that keep everyone aligned without turning every process into overhead.",
     },
   },
   philosophy: {
-    heading: "Technology works behind the scenes. Simplicity stays up front.",
-    copy: "Khepree does not build software just to add more features. We build tools that make a job faster, simpler, more accurate, or more valuable for the people who use them.",
+    heading: "Good software helps you do less busywork.",
+    copy: "Khepree doesn't ship features just to fill a list. We build tools that make one job faster, simpler, or less annoying for the person doing it.",
     stepIdea: "Idea",
     stepSoftware: "Khepree Software",
     stepResult: "Result",
   },
   ecosystem: {
-    heading: "One ecosystem. Many ways to go further.",
-    copy: "Account, apps, partners, and developer resources — connected on the Khepree platform.",
+    heading: "When you need more, it all stays under Khepree.",
+    copy: "Account, apps, downloads, and support — connected so you are not hunting across unrelated sites.",
     center: "Khepree",
-    account: {
-      title: "Khepree Account",
-      copy: "Manage sign-in, licenses, and downloads.",
+  },
+  howItWorks: {
+    step1: "You have something to get done",
+    step2: "Pick the tool that fits",
+    step3: "Finish with fewer steps",
+  },
+  technology: {
+    heading: "Powerful tech inside. Easy to use outside.",
+    copy: "AI and automation work in the background — you get faster results without learning how any of it works.",
+    aiBenefit: "Smart suggestions when you need them, not a dashboard of knobs to tune.",
+    automationBenefit: "Repeat steps get bundled so you click less and finish sooner.",
+    reliabilityBenefit: "Built to stay fast and clear on the devices you already use.",
+  },
+  trust: {
+    heading: "What you can count on",
+    clearPayments: {
+      title: "Clear checkout",
+      copy: "Live prices on each product. Pay through a familiar flow — no surprise tiers after you buy.",
     },
-    webApps: {
-      title: "Web apps",
-      copy: "Access Khepree applications in your browser.",
+    purchasedProducts: {
+      title: "Manage what you bought",
+      copy: "Sign in to see licenses, subscriptions, and downloads tied to your account.",
     },
-    partner: {
-      title: "Partners & resellers",
-      copy: "Partner and reseller programs.",
+    safeDownloads: {
+      title: "Protected downloads",
+      copy: "Installers are issued only when your account is allowed — not listed openly on the public site.",
     },
-    downloads: {
-      title: "Download software",
-      copy: "Install desktop products when you have access.",
-    },
-    developers: {
-      title: "API / Developers",
-      copy: "Documentation and integration guides.",
-    },
-    products: {
-      title: "Products",
-      copy: "Explore Khepree software.",
+    vietnameseSupport: {
+      title: "Vietnamese-first experience",
+      copy: "Vietnamese copy, VND pricing, and local payment options where configured.",
     },
   },
   global: {
-    heading: "Starting in Vietnam. Ready for the world.",
-    copy: "Khepree is built first to serve Vietnamese users well — from language and payments to the everyday experience. At the same time, the platform is designed from day one to support more languages, markets, and platforms as Khepree grows globally.",
+    heading: "Built for Vietnam first.",
+    copy: "Vietnamese language, familiar payments, and an everyday experience that feels local — with room to grow beyond.",
   },
   resources: {
-    heading: "Latest from Khepree",
-    copy: "Published articles and guides. Drafts are not listed.",
+    heading: "Need a guide? Start here.",
+    copy: "Published how-tos and articles only — no placeholder filler.",
   },
   cta: {
-    heading: "Do more with the right tools.",
-    button: "Explore products",
+    heading: "What is eating your time?",
+    copy: "Browse Khepree products and pick the tool that fits.",
+    button: "View products",
   },
   footer: {
     products: "Products",
@@ -173,70 +208,65 @@ export const en = {
     privacy: "Privacy",
     terms: "Terms",
     copyright: "All rights reserved.",
-    ecosystem: "Ecosystem",
+    ecosystem: "Khepree tools",
   },
   pages: {
     products: {
       title: "Products",
-      description: "Practical tools with clear value.",
-      intro: "Each product is built around a real job to be done. If it is listed here, it is available.",
+      description: "Tools for the job you need to get done.",
+      intro: "Each product solves one clear problem. If it is listed here, you can use it today.",
     },
     solutions: {
       title: "Solutions",
-      description: "Software for creators, professionals, entrepreneurs, and businesses.",
-      intro: "Different work, same idea: save time, stay focused, and create more value.",
+      description: "Find tools that match what you are trying to accomplish.",
+      intro: "Different jobs, same idea: less repetitive work, more time for what matters.",
       audiences: {
         creators: {
-          seoDescription: "Tools that help you create, publish, and skip repetitive busywork.",
-          body: "If you create and publish, you need tools that stay out of the way. Khepree products are meant to shorten repetitive steps — drafting, organizing, shipping — so more of your time goes into the work itself.",
+          seoDescription: "Tools that help you create and publish with less repetitive busywork.",
+          body: "If you create and publish, you need tools that stay out of the way. Khepree products shorten repetitive steps — drafting, organizing, shipping — so more of your time goes into the work itself.",
         },
         professionals: {
-          seoDescription: "Reliable tools for consistent, high-quality professional work.",
-          body: "Professional work needs tools you can trust every day. Khepree focuses on a clear workflow, honest pricing, and features that hold up under real use — so you can stay consistent without extra complexity.",
+          seoDescription: "Reliable tools for consistent daily work without extra complexity.",
+          body: "Professional work needs tools you can open every day. Khepree focuses on a clear workflow and features that hold up under real use — so you stay consistent without learning a new system each month.",
         },
         entrepreneurs: {
-          seoDescription: "Practical tools for lean operations, automation, and creating value.",
-          body: "When you are building a business, time is the scarce resource. Khepree is for people who need to automate repetitive work, keep operations lean, and turn ideas into something customers can use.",
+          seoDescription: "Practical tools for lean operations and less manual work.",
+          body: "When you are building a business, time is scarce. Khepree is for people who need to automate repetitive work, keep operations lean, and ship something customers can actually use.",
         },
         business: {
-          seoDescription: "Tools that help teams work better together and grow with less friction.",
-          body: "Teams need shared tools they can rely on. Khepree helps groups stay productive, keep access under control, and grow without turning every process into extra overhead. For volume or partner arrangements, write to hello@khepree.com.",
+          seoDescription: "Tools that help teams stay aligned and grow with less friction.",
+          body: "Teams need shared tools they can rely on. Khepree helps groups stay productive and keep access under control without turning every process into extra overhead. For volume or partner arrangements, write to hello@khepree.com.",
         },
       },
     },
     pricing: {
       title: "Pricing",
-      description: "Clear prices for products that are actually for sale.",
-      intro: "Each product shows its live price. There are no hidden tiers. If a product is not listed, it is not for sale.",
-    },
-    resources: {
-      title: "Resources",
-      description: "Guides, updates, and documentation from Khepree.",
-      intro: "Published documentation and articles appear here as they are ready.",
+      description: "See what each product costs before you buy.",
+      intro: "Each product shows its live price. No hidden tiers. If a product is not listed, it is not for sale.",
     },
     about: {
       title: "From the spirit of Khepri to Khepree.",
-      description: "Inspired by renewal. Built to help you go further.",
+      description: "Software that helps you do less busywork.",
       intro: "From the spirit of Khepri to Khepree.",
-      tagline: "Khepree — Software that helps you go further.",
+      tagline: "Khepree — Work lighter. Make room for what matters.",
       story1:
-        "Khepree is inspired by Khepri — a symbol linked with the rising sun, renewal, and new beginnings in ancient Egyptian culture.",
+        "Khepree takes its name from Khepri — a symbol of the rising sun and fresh starts in ancient Egyptian culture.",
       story2:
-        "We bring that spirit into technology. For Khepree, good software is not just a long list of features. It should help people save time, simplify difficult work, expand what they can do, and create more value from what they already do.",
+        "We bring that spirit into everyday tools. Good software is not a long feature list. It should help you finish work sooner, skip steps that do not need doing, and feel easy from the first open.",
       story3:
-        "That is why every Khepree product starts with a simple question: what does this product actually help people do better? We start in Vietnam, build for Vietnamese users, and take Khepree to people around the world step by step.",
+        "Every Khepree product starts with one question: what job does this make easier for the person using it? We began in Vietnam, built for Vietnamese users first, and expand step by step.",
     },
     contact: {
       title: "Contact",
-      description: "Get in touch with the Khepree team.",
-      intro: "Questions, partnerships, or feedback — we read every message.",
+      description: "Questions, feedback, or partnership — we read every message.",
+      intro: "Tell us what you are trying to do. We read every message.",
       email: "hello@khepree.com",
       emailLabel: "Email hello@khepree.com",
     },
     blog: {
       title: "Blog",
-      description: "Updates and notes from Khepree.",
-      intro: "Published articles appear here. Drafts are not listed.",
+      description: "Updates and practical notes from Khepree.",
+      intro: "Published articles only. No draft filler.",
       emptyTitle: "No articles published yet",
       emptyDescription: "When we publish an update, it will appear here. This list is not filled with sample posts.",
       featuredLabel: "Featured",
@@ -245,8 +275,8 @@ export const en = {
     },
     docs: {
       title: "Documentation",
-      description: "Guides for Khepree products.",
-      intro: "Published guides appear here. Drafts are not listed.",
+      description: "How to use Khepree products.",
+      intro: "Published guides only. We leave this empty rather than show placeholder docs.",
       emptyTitle: "No documentation published yet",
       emptyDescription: "Guides appear when they are ready to use. This page stays empty rather than showing sample docs.",
     },
@@ -318,5 +348,3 @@ export const en = {
     },
   },
 };
-
-export type Messages = typeof en;

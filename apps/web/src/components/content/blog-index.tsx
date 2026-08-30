@@ -40,11 +40,11 @@ export async function BlogIndex({
           breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
         )}
       />
-      <Container className="py-12 lg:py-16">
+      <Container className="px-5 py-12 sm:px-6 lg:py-16">
         <Breadcrumbs items={breadcrumbs} />
         <header className="mt-6 max-w-3xl">
           <HeroTitle>{page.title}</HeroTitle>
-          <BodyText className="mt-4 text-lg">{page.description}</BodyText>
+          <BodyText className="mt-4 text-base leading-relaxed sm:text-lg">{page.description}</BodyText>
         </header>
 
         {entries.length === 0 ? (
@@ -60,7 +60,7 @@ export async function BlogIndex({
               >
                 <div className="grid lg:grid-cols-5">
                   <div className="h-2 bg-gradient-to-r from-teal via-cyan to-indigo lg:col-span-5" />
-                  <div className="p-8 lg:col-span-3 lg:p-10">
+                  <div className="p-6 sm:p-8 lg:col-span-3 lg:p-10">
                     <CapsLabel>{messages.footer.blog}</CapsLabel>
                     {featured.categoryName ? (
                       <p className="mt-2 text-sm font-medium text-teal">{featured.categoryName}</p>
@@ -93,7 +93,7 @@ export async function BlogIndex({
             ) : null}
 
             {recent.length > 0 ? (
-              <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {recent.map((entry) => (
                   <li key={entry.entryPublicId}>
                     <Link href={localePath(locale, `/blog/${entry.slug}`)} className="block h-full">

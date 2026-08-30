@@ -1,6 +1,6 @@
 import type { PublicProductSummary } from "@khepree/catalog";
 import { formatBillingInterval, formatPriceAmount } from "@khepree/catalog";
-import { Badge, BodyText, Container, EmptyState, ProductWindow, Title } from "@khepree/ui";
+import { BodyText, Container, EmptyState, ProductWindow, Title } from "@khepree/ui";
 import Link from "next/link";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
@@ -23,19 +23,62 @@ function ProductShowcaseRow({
   const interval = price ? formatBillingInterval(price.interval, locale) : null;
   const priceLabel =
     price && messages
-      ? `${messages.catalog.startingFrom} ${formatPriceAmount(price.amountMinor, price.currency, locale)}${interval ?? ""}`
+      ? `${formatPriceAmount(price.amountMinor, price.currency, locale)}${interval ?? ""}`
       : messages.catalog.priceUnavailable;
   const platformLabel =
     product.platforms.length > 0
       ? product.platforms.map((p) => messages.catalog.platforms[p] ?? p).join(" · ")
       : null;
+  const helpText = product.shortDescription ?? product.description ?? "";
 
   return (
     <ScrollReveal delay={reverse ? 120 : 0}>
-      <article
-        className={`grid items-center gap-8 lg:grid-cols-2 lg:gap-12 ${reverse ? "lg:[&>*:first-child]:order-2" : ""}`}
-      >
-        <div className="relative">
+      <article className="grid items-center gap-6 border-b border-border pb-12 last:border-b-0 last:pb-0 lg:grid-cols-2 lg:gap-12 lg:pb-0 lg:last:border-b-0">
+        <div className={reverse ? "lg:order-2" : undefined}>
+          <dl className="space-y-4">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {messages.products.whatItIs}
+              </dt>
+              <dd className="mt-1">
+                <Title as="h3" className="text-2xl sm:text-3xl">
+                  {product.name}
+                </Title>
+              </dd>
+            </div>
+            {helpText ? (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  {messages.products.helpsWith}
+                </dt>
+                <dd className="mt-1">
+                  <BodyText className="text-base leading-relaxed sm:text-lg">{helpText}</BodyText>
+                </dd>
+              </div>
+            ) : null}
+            {platformLabel ? (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  {messages.products.worksOn}
+                </dt>
+                <dd className="mt-1 text-base font-medium text-foreground">{platformLabel}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {messages.catalog.startingFrom}
+              </dt>
+              <dd className="mt-1 font-mono text-base text-teal">{priceLabel}</dd>
+            </div>
+          </dl>
+          <div className="mt-6 max-[390px]:[&_a]:block max-[390px]:[&_a]:w-full max-[390px]:[&_a]:text-center">
+            <ButtonLink href={localePath(locale, `/products/${product.slug}`)}>
+              {messages.catalog.viewProduct}
+            </ButtonLink>
+          </div>
+        </div>
+
+        <div className={`relative hidden lg:block ${reverse ? "lg:order-1" : ""}`}>
           {media?.url ? (
             <div className="product-window-depth overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-elevated)]">
               {/* eslint-disable-next-line @next/next/no-img-element -- real product media */}
@@ -58,26 +101,6 @@ function ProductShowcaseRow({
             </ProductWindow>
           )}
         </div>
-
-        <div>
-          {platformLabel ? (
-            <Badge variant="outline" className="mb-4">
-              {platformLabel}
-            </Badge>
-          ) : null}
-          <Title as="h3" className="text-2xl sm:text-3xl">
-            {product.name}
-          </Title>
-          <BodyText className="mt-4 text-lg">
-            {product.shortDescription ?? product.description ?? ""}
-          </BodyText>
-          <p className="mt-4 font-mono text-sm text-teal">{priceLabel}</p>
-          <div className="mt-6">
-            <ButtonLink href={localePath(locale, `/products/${product.slug}`)}>
-              {messages.catalog.viewProduct}
-            </ButtonLink>
-          </div>
-        </div>
       </article>
     </ScrollReveal>
   );
@@ -93,7 +116,7 @@ export function ProductShowcaseSection({
   products: PublicProductSummary[];
 }) {
   return (
-    <section id="products" className="py-16 lg:py-24">
+    <section id="products" className="border-t border-border py-16 lg:py-24">
       <Container>
         <div className="max-w-2xl">
           <Title>{messages.products.heading}</Title>
@@ -101,7 +124,7 @@ export function ProductShowcaseSection({
         </div>
 
         {products.length > 0 ? (
-          <div className="mt-14 space-y-20 lg:space-y-28">
+          <div className="mt-14 space-y-12 sm:space-y-16 lg:space-y-20">
             {products.map((product, index) => (
               <ProductShowcaseRow
                 key={product.publicId}

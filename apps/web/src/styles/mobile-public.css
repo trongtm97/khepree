@@ -1,0 +1,50 @@
+/* Phase 18.3 — mobile-first public reading & touch performance */
+
+@layer components {
+  .article-prose {
+    width: 100%;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .article-prose img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .article-prose pre {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .article-prose :is(table) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .article-prose :is(th, td) {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 767px) {
+    .article-prose :is(pre, table) {
+      max-width: calc(100vw - 2.5rem);
+    }
+  }
+}
+
+@layer utilities {
+  @media (max-width: 767px), (pointer: coarse) {
+    .mobile-reduce-motion {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .mobile-no-blur {
+      backdrop-filter: none !important;
+      filter: none !important;
+    }
+  }
+}

@@ -36,13 +36,13 @@ export function ValueStrip({ messages }: { messages: Messages }) {
         {KEYS.map((key) => (
           <div
             key={key}
-            className="flex flex-col items-center gap-3 bg-background px-4 py-8 text-center motion-float"
+            className="flex flex-col items-center gap-4 bg-background px-5 py-9 text-center sm:py-10 motion-float mobile-reduce-motion"
             style={{ animationDelay: `${KEYS.indexOf(key) * 0.4}s` }}
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated ring-1 ring-border-subtle">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-elevated ring-1 ring-border-subtle sm:h-12 sm:w-12">
               {ICONS[key]}
             </span>
-            <p className="text-sm font-semibold text-foreground sm:text-base">{messages.valueStrip[key]}</p>
+            <p className="text-sm font-semibold leading-snug text-foreground sm:text-base">{messages.valueStrip[key]}</p>
           </div>
         ))}
       </Container>

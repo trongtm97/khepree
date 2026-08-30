@@ -1,42 +1,45 @@
-import type { Messages } from "./en";
+import type { Messages } from "./contract";
 
 export const vi = {
   meta: {
     siteName: "Khepree",
     defaultDescription:
-      "Khepree tạo ra những công cụ thiết thực, mạnh mẽ và dễ sử dụng để bạn tiết kiệm thời gian, làm việc hiệu quả hơn và biến ý tưởng thành giá trị.",
+      "Khepree tạo công cụ giúp bạn giảm việc lặp lại, xử lý những việc tốn thời gian nhanh hơn và dùng AI mà không cần rành công nghệ.",
   },
   nav: {
     products: "Sản phẩm",
     solutions: "Giải pháp",
+    pricing: "Bảng giá",
     resources: "Tài nguyên",
     company: "Công ty",
     ecosystem: "Hệ sinh thái",
     signIn: "Đăng nhập",
-    exploreProducts: "Khám phá sản phẩm",
+    exploreProducts: "Tìm công cụ phù hợp",
     openMenu: "Mở menu",
     closeMenu: "Đóng menu",
   },
   hero: {
-    headline: "Phần mềm giúp bạn tiến xa hơn.",
+    headline: "Làm việc gọn hơn. Có thêm thời gian cho điều quan trọng.",
     supporting:
-      "Khepree tạo ra những công cụ thiết thực, mạnh mẽ và dễ sử dụng để bạn tiết kiệm thời gian, làm việc hiệu quả hơn và biến ý tưởng thành giá trị.",
-    ctaPrimary: "Khám phá sản phẩm",
-    ctaSecondary: "Khám phá hệ sinh thái",
+      "Khepree tạo ra những công cụ giúp bạn giảm việc lặp lại, xử lý những việc tốn thời gian nhanh hơn và tận dụng AI mà không cần rành công nghệ.",
+    ctaPrimary: "Tìm công cụ phù hợp",
+    ctaSecondary: "Xem Khepree giúp được gì",
   },
   valueStrip: {
     saveTime: "Tiết kiệm thời gian",
-    workSmarter: "Làm việc hiệu quả hơn",
-    createMore: "Tạo nhiều giá trị hơn",
-    unlockOpportunities: "Mở rộng cơ hội",
+    workSmarter: "Bớt việc lặp lại",
+    createMore: "Dễ bắt đầu",
+    unlockOpportunities: "Làm được nhiều hơn",
   },
   products: {
-    heading: "Công cụ thiết thực. Giá trị rõ ràng.",
-    copy: "Mỗi sản phẩm Khepree được xây dựng để giải quyết một vấn đề thực tế — giúp công việc đơn giản hơn, nhanh hơn và hiệu quả hơn.",
-    comingSoon: "Sắp ra mắt",
+    heading: "Chọn công cụ cho việc bạn đang cần.",
+    copy: "Mỗi sản phẩm trả lời nhanh bốn câu hỏi: là gì, giúp việc gì, chạy trên thiết bị nào, và giá từ bao nhiêu.",
+    whatItIs: "Đây là gì",
+    helpsWith: "Giúp bạn",
+    worksOn: "Dùng trên",
     emptyTitle: "Sản phẩm mới sẽ xuất hiện tại đây",
     emptyDescription:
-      "Chúng tôi chỉ ra mắt khi sản phẩm thực sự hữu ích. Công cụ mới sẽ xuất hiện khi sẵn sàng.",
+      "Chúng tôi chỉ ra mắt khi công cụ thực sự giúp bạn xong việc. Có gì mới sẽ hiện ở đây.",
   },
   catalog: {
     free: "Miễn phí",
@@ -47,8 +50,13 @@ export const vi = {
     noFeaturesListed: "Chưa có tính năng được liệt kê.",
     checkout: "Thanh toán",
     startingFrom: "Từ",
-    viewProduct: "Xem sản phẩm",
-    seePricing: "Xem bảng giá",
+    viewProduct: "Xem có phù hợp không",
+    viewPlans: "Xem gói",
+    getStarted: "Bắt đầu",
+    periods: {
+      month: "1 tháng",
+      year: "1 năm",
+    },
     platforms: {
       desktop: "Desktop",
       web: "Web",
@@ -62,12 +70,12 @@ export const vi = {
       contact_sales: "Tùy chỉnh",
     },
     sections: {
-      benefits: "Kết quả bạn nhận được",
-      features: "Bạn có thể làm gì",
+      benefits: "Bạn nhận được gì",
+      features: "Giúp bạn làm gì",
       gallery: "Hình ảnh sản phẩm",
-      platforms: "Nền tảng",
-      requirements: "Yêu cầu",
-      howItWorks: "Cách hoạt động",
+      platforms: "Dùng trên",
+      requirements: "Bạn cần gì",
+      howItWorks: "Bắt đầu thế nào",
       pricing: "Bảng giá",
       faq: "Câu hỏi thường gặp",
       related: "Tài nguyên liên quan",
@@ -75,90 +83,117 @@ export const vi = {
     },
   },
   why: {
-    heading: "Vì sao chọn Khepree?",
+    heading: "Phần mềm không nên làm bạn mệt thêm.",
     usefulFirst: {
-      title: "Hữu ích trước tiên",
-      copy: "Mỗi tính năng đều phải có lý do để tồn tại. Nếu không giúp bạn tiết kiệm thời gian, giảm bớt công việc hoặc tạo thêm giá trị, chúng tôi không cần đưa nó vào sản phẩm.",
+      title: "Dễ hiểu ngay từ lần đầu",
+      copy: "Mở lên là biết bấm gì — không cần xem hướng dẫn dài hay đoán menu.",
     },
     simpleByDesign: {
-      title: "Đơn giản để sử dụng",
-      copy: "Công nghệ mạnh không nên khiến mọi thứ phức tạp hơn. Khepree ưu tiên trải nghiệm rõ ràng để bạn có thể bắt đầu nhanh và tập trung vào việc cần làm.",
+      title: "Chỉ giữ những tính năng thật sự cần",
+      copy: "Nút nào không giúp bạn xong việc nhanh hơn thì không cần có.",
     },
     createRealValue: {
-      title: "Giá trị thực",
-      copy: "Chúng tôi quan tâm đến kết quả bạn đạt được: công việc nhanh hơn, quy trình gọn hơn, sản phẩm tốt hơn và nhiều cơ hội hơn.",
+      title: "Ít bước hơn để hoàn thành công việc",
+      copy: "Bớt bấm, bớt copy-paste, bớt chờ — việc thì xong sớm hơn.",
     },
     alwaysMovingForward: {
-      title: "Không ngừng cải tiến",
-      copy: "Khepree liên tục hoàn thiện sản phẩm dựa trên nhu cầu thực tế và cách người dùng làm việc.",
+      title: "Cải tiến dựa trên cách người dùng thật sự sử dụng",
+      copy: "Chúng tôi xem chỗ nào làm bạn chậm lại rồi sửa — không thêm cho có.",
+    },
+  },
+  intent: {
+    heading: "Bạn đang muốn làm gì?",
+    lessRepetition: {
+      title: "Bớt việc phải làm đi làm lại",
+      copy: "Soạn, gửi, cập nhật — lặp hoài. Công cụ Khepree gom bớt các bước đó cho nhanh.",
+    },
+    fasterHardWork: {
+      title: "Xử lý một việc khó nhanh hơn",
+      copy: "Một việc tốn cả buổi? Công cụ đúng giúp bạn xử lý xong sớm hơn.",
+    },
+    aiWithoutTech: {
+      title: "Dùng AI mà không cần rành kỹ thuật",
+      copy: "Cần AI hỗ trợ nhưng không muốn cấu hình phức tạp? Chọn công cụ và dùng luôn.",
+    },
+    workAtScale: {
+      title: "Làm việc gọn hơn khi công việc nhiều lên",
+      copy: "Việc nhiều hơn mà quy trình vẫn gọn — không thêm bước thừa mỗi lần có việc mới.",
     },
   },
   audience: {
-    heading: "Được tạo cho cách bạn làm việc.",
+    heading: "Có giống tình huống của bạn không?",
     creators: {
-      title: "Người sáng tạo",
-      copy: "Dành nhiều thời gian hơn cho việc sáng tạo và xuất bản — ít lặp lại những bước thủ công.",
+      title: "Bớt việc lặp, dành thời gian sáng tạo",
+      copy: "Dành thời gian cho việc đang làm — không phải soạn và gửi đi gửi lại.",
     },
     professionals: {
-      title: "Chuyên gia",
-      copy: "Công cụ đáng tin cậy, giúp công việc nhất quán để bạn tập trung vào chất lượng.",
+      title: "Công việc ổn định, ít phiền",
+      copy: "Công cụ mở ra dùng được ngay, không phải học lại mỗi tháng.",
     },
     entrepreneurs: {
-      title: "Người kinh doanh",
-      copy: "Tự động hóa phần việc lặp lại trong vận hành tinh gọn để tạo ra nhiều giá trị hơn.",
+      title: "Vận hành gọn, bớt việc tay",
+      copy: "Tự động hóa phần lặp lại để tập trung khách hàng và quyết định.",
     },
     businesses: {
-      title: "Doanh nghiệp",
-      copy: "Giúp nhóm làm việc hiệu quả, dễ quản lý và mở rộng mà không thêm ma sát.",
+      title: "Nhóm làm việc không loạn",
+      copy: "Công cụ dùng chung, ai cũng biết việc mình — không thêm quy trình rườm rà.",
     },
   },
   philosophy: {
-    heading: "Công nghệ hoạt động phía sau, sự đơn giản ở phía trước.",
-    copy: "Khepree không làm phần mềm chỉ để có thêm tính năng. Chúng tôi xây dựng những công cụ giúp một việc trở nên nhanh hơn, đơn giản hơn, chính xác hơn hoặc tạo ra nhiều giá trị hơn cho người sử dụng.",
+    heading: "Phần mềm tốt là phần mềm giúp bạn bớt việc.",
+    copy: "Khepree không làm phần mềm chỉ để có thêm tính năng. Chúng tôi làm công cụ giúp một việc nhanh hơn, đơn giản hơn hoặc bớt phiền cho người đang làm.",
     stepIdea: "Ý tưởng",
     stepSoftware: "Khepree Software",
     stepResult: "Kết quả",
   },
   ecosystem: {
-    heading: "Một hệ sinh thái. Nhiều cách để tiến xa hơn.",
-    copy: "Tài khoản, ứng dụng, đối tác và tài nguyên dành cho developer — kết nối trong một nền tảng Khepree.",
+    heading: "Khi cần thêm, mọi thứ vẫn ở cùng Khepree.",
+    copy: "Tài khoản, ứng dụng, tải phần mềm và hỗ trợ được kết nối để bạn không phải tìm mỗi thứ ở một nơi.",
     center: "Khepree",
-    account: {
-      title: "Tài khoản Khepree",
-      copy: "Quản lý đăng nhập, giấy phép và tải xuống.",
+  },
+  howItWorks: {
+    step1: "Bạn có một việc cần xử lý",
+    step2: "Chọn công cụ phù hợp",
+    step3: "Hoàn thành với ít bước hơn",
+  },
+  technology: {
+    heading: "Công nghệ mạnh ở bên trong. Dễ dùng ở bên ngoài.",
+    copy: "AI và tự động hóa chạy phía sau — bạn nhận kết quả nhanh hơn mà không cần học cách hệ thống vận hành.",
+    aiBenefit: "Gợi ý thông minh khi bạn cần — không phải bảng điều khiển đầy nút bấm.",
+    automationBenefit: "Các bước lặp được gom lại để bạn bấm ít hơn và xong việc sớm hơn.",
+    reliabilityBenefit: "Thiết kế để chạy nhanh và rõ ràng trên thiết bị bạn đang dùng.",
+  },
+  trust: {
+    heading: "Những gì bạn có thể tin cậy",
+    clearPayments: {
+      title: "Thanh toán rõ ràng",
+      copy: "Giá thật trên từng sản phẩm. Thanh toán qua luồng quen thuộc — không có gói ẩn sau khi mua.",
     },
-    webApps: {
-      title: "Ứng dụng web",
-      copy: "Truy cập ứng dụng Khepree trên trình duyệt.",
+    purchasedProducts: {
+      title: "Quản lý sản phẩm đã mua",
+      copy: "Đăng nhập để xem giấy phép, gói thuê bao và bản tải gắn với tài khoản của bạn.",
     },
-    partner: {
-      title: "Đối tác & Đại lý",
-      copy: "Chương trình đối tác và bán lại.",
+    safeDownloads: {
+      title: "Tải phần mềm an toàn",
+      copy: "Bộ cài chỉ được cấp khi tài khoản được phép — không liệt kê công khai trên website.",
     },
-    downloads: {
-      title: "Tải phần mềm",
-      copy: "Cài đặt sản phẩm desktop khi bạn có quyền truy cập.",
-    },
-    developers: {
-      title: "API / Developers",
-      copy: "Tài liệu và hướng dẫn tích hợp.",
-    },
-    products: {
-      title: "Sản phẩm",
-      copy: "Khám phá phần mềm Khepree.",
+    vietnameseSupport: {
+      title: "Hỗ trợ tiếng Việt",
+      copy: "Nội dung tiếng Việt, giá VND và thanh toán quen thuộc khi đã được cấu hình.",
     },
   },
   global: {
-    heading: "Bắt đầu từ Việt Nam. Sẵn sàng cho thế giới.",
-    copy: "Khepree được xây dựng trước hết để phục vụ tốt người dùng Việt Nam — từ ngôn ngữ, thanh toán đến trải nghiệm sử dụng. Đồng thời, nền tảng được thiết kế ngay từ đầu để hỗ trợ nhiều ngôn ngữ, nhiều thị trường và nhiều nền tảng khi Khepree mở rộng ra toàn cầu.",
+    heading: "Làm việc bằng tiếng Việt, thanh toán quen thuộc.",
+    copy: "Khepree ưu tiên trải nghiệm cho người dùng Việt Nam — ngôn ngữ, thanh toán và cách dùng hàng ngày. Khi mở rộng, chúng tôi giữ cùng một hướng: dễ dùng, không rườm rà.",
   },
   resources: {
-    heading: "Bài viết và tài liệu mới",
-    copy: "Chỉ hiện bài và hướng dẫn đã xuất bản. Bản nháp không được liệt kê.",
+    heading: "Cần hướng dẫn? Bắt đầu từ đây.",
+    copy: "Chỉ hiện hướng dẫn và bài viết đã xuất bản — không có nội dung giữ chỗ.",
   },
   cta: {
-    heading: "Làm được nhiều hơn với công cụ phù hợp.",
-    button: "Khám phá sản phẩm",
+    heading: "Bạn đang mất thời gian ở việc nào?",
+    copy: "Xem các sản phẩm Khepree và chọn công cụ phù hợp.",
+    button: "Xem sản phẩm",
   },
   footer: {
     products: "Sản phẩm",
@@ -175,70 +210,65 @@ export const vi = {
     privacy: "Quyền riêng tư",
     terms: "Điều khoản",
     copyright: "Bảo lưu mọi quyền.",
-    ecosystem: "Hệ sinh thái",
+    ecosystem: "Các công cụ Khepree",
   },
   pages: {
     products: {
       title: "Sản phẩm",
-      description: "Công cụ thiết thực, giá trị rõ ràng.",
-      intro: "Mỗi sản phẩm được xây để giải quyết một việc cụ thể. Nếu sản phẩm xuất hiện tại đây, sản phẩm đó đang được cung cấp.",
+      description: "Công cụ cho việc bạn đang cần làm.",
+      intro: "Mỗi sản phẩm giải quyết một việc cụ thể. Có trên trang này nghĩa là bạn dùng được hôm nay.",
     },
     solutions: {
       title: "Giải pháp",
-      description: "Phần mềm cho người sáng tạo, chuyên gia, người kinh doanh và doanh nghiệp.",
-      intro: "Công việc khác nhau, cùng một hướng: tiết kiệm thời gian, tập trung hơn và tạo ra nhiều giá trị hơn.",
+      description: "Tìm công cụ phù hợp với việc bạn muốn làm.",
+      intro: "Việc khác nhau, cùng một hướng: bớt việc lặp, dành thời gian cho điều quan trọng.",
       audiences: {
         creators: {
-          seoDescription: "Công cụ giúp bạn sáng tạo, xuất bản và giảm việc lặp lại.",
-          body: "Nếu bạn sáng tạo và xuất bản, bạn cần công cụ không cản trở. Sản phẩm Khepree giúp rút ngắn những bước lặp lại — soạn, sắp xếp, phát hành — để bạn dành nhiều thời gian hơn cho việc đang làm.",
+          seoDescription: "Công cụ giúp bạn sáng tạo và xuất bản mà bớt việc lặp lại.",
+          body: "Nếu bạn sáng tạo và xuất bản, bạn cần công cụ không cản trở. Sản phẩm Khepree rút ngắn các bước lặp — soạn, sắp xếp, phát hành — để bạn dành thời gian cho việc đang làm.",
         },
         professionals: {
-          seoDescription: "Công cụ đáng tin cậy cho công việc chuyên môn nhất quán.",
-          body: "Công việc chuyên môn cần công cụ dùng được mỗi ngày. Khepree tập trung vào quy trình rõ ràng, giá trung thực và tính năng đứng vững khi dùng thật — để bạn giữ được sự nhất quán mà không thêm phức tạp.",
+          seoDescription: "Công cụ dùng được mỗi ngày, không thêm phức tạp.",
+          body: "Công việc chuyên môn cần công cụ mở ra là dùng được. Khepree tập trung quy trình rõ ràng và tính năng chịu được dùng thật — giữ nhất quán mà không phải học hệ thống mới liên tục.",
         },
         entrepreneurs: {
-          seoDescription: "Công cụ thiết thực cho vận hành tinh gọn, tự động hóa và tạo giá trị.",
-          body: "Khi bạn đang xây dựng công việc kinh doanh, thời gian là thứ khan hiếm. Khepree dành cho người cần tự động hóa việc lặp lại, giữ vận hành tinh gọn và biến ý tưởng thành thứ khách hàng dùng được.",
+          seoDescription: "Công cụ cho vận hành gọn và bớt việc làm tay.",
+          body: "Khi bạn đang xây dựng công việc kinh doanh, thời gian là thứ khan hiếm. Khepree dành cho người cần tự động hóa việc lặp, giữ vận hành gọn và đưa sản phẩm đến tay khách hàng.",
         },
         business: {
-          seoDescription: "Công cụ giúp nhóm làm việc tốt hơn và mở rộng với ít ma sát hơn.",
-          body: "Nhóm cần công cụ dùng chung và đáng tin. Khepree giúp mọi người làm việc hiệu quả, kiểm soát quyền truy cập và mở rộng mà không biến mỗi quy trình thành gánh nặng. Liên hệ hello@khepree.com nếu cần mua số lượng lớn hoặc hợp tác.",
+          seoDescription: "Công cụ giúp nhóm làm việc thống nhất, ít ma sát.",
+          body: "Nhóm cần công cụ dùng chung và đáng tin. Khepree giúp mọi người làm việc hiệu quả và kiểm soát quyền truy cập mà không biến mỗi quy trình thành gánh nặng. Liên hệ hello@khepree.com nếu cần mua số lượng lớn hoặc hợp tác.",
         },
       },
     },
     pricing: {
       title: "Bảng giá",
-      description: "Giá rõ ràng cho sản phẩm đang được bán.",
-      intro: "Mỗi sản phẩm hiện giá thật. Không có gói ẩn. Nếu sản phẩm không được liệt kê, sản phẩm đó không được bán.",
-    },
-    resources: {
-      title: "Tài nguyên",
-      description: "Hướng dẫn, cập nhật và tài liệu từ Khepree.",
-      intro: "Tài liệu và bài viết đã xuất bản sẽ xuất hiện tại đây khi sẵn sàng.",
+      description: "Xem giá từng sản phẩm trước khi mua.",
+      intro: "Mỗi sản phẩm hiện giá thật. Không có gói ẩn. Không liệt kê nghĩa là chưa bán.",
     },
     about: {
       title: "Từ tinh thần Khepri đến Khepree.",
-      description: "Lấy cảm hứng từ sự đổi mới. Phần mềm giúp bạn tiến xa hơn.",
+      description: "Phần mềm giúp bạn bớt việc, không thêm việc.",
       intro: "Từ tinh thần Khepri đến Khepree.",
-      tagline: "Khepree — Phần mềm giúp bạn tiến xa hơn.",
+      tagline: "Khepree — Làm việc gọn hơn. Có thêm thời gian cho điều quan trọng.",
       story1:
-        "Khepree được lấy cảm hứng từ Khepri — biểu tượng gắn với mặt trời mọc, sự đổi mới và những khởi đầu mới trong văn hóa Ai Cập cổ đại.",
+        "Khepree lấy cảm hứng từ Khepri — biểu tượng mặt trời mọc và khởi đầu mới trong văn hóa Ai Cập cổ đại.",
       story2:
-        "Chúng tôi mang tinh thần ấy vào công nghệ. Với Khepree, một phần mềm tốt không chỉ cần nhiều tính năng. Nó phải giúp người sử dụng tiết kiệm thời gian, đơn giản hóa những việc phức tạp, mở rộng khả năng và tạo ra nhiều giá trị hơn từ công việc của mình.",
+        "Chúng tôi mang tinh thần ấy vào công cụ hàng ngày. Phần mềm tốt không phải danh sách tính năng dài. Nó giúp bạn xong việc sớm hơn, bỏ qua bước không cần thiết và cảm thấy dễ dùng ngay lần đầu.",
       story3:
-        "Đó là lý do mỗi sản phẩm Khepree đều bắt đầu bằng một câu hỏi đơn giản: Sản phẩm này thực sự giúp người dùng làm được điều gì tốt hơn? Chúng tôi bắt đầu từ Việt Nam, xây dựng cho người dùng Việt Nam và từng bước đưa Khepree đến với người dùng trên toàn thế giới.",
+        "Mỗi sản phẩm Khepree bắt đầu bằng một câu hỏi: việc này giúp người dùng làm gì dễ hơn? Chúng tôi bắt đầu từ Việt Nam, làm cho người dùng Việt Nam trước, rồi mở rộng từng bước.",
     },
     contact: {
       title: "Liên hệ",
-      description: "Liên hệ với đội ngũ Khepree.",
-      intro: "Câu hỏi, hợp tác hoặc phản hồi — chúng tôi đọc mọi tin nhắn.",
+      description: "Hỏi đáp, góp ý hoặc hợp tác — chúng tôi đọc mọi tin nhắn.",
+      intro: "Cho chúng tôi biết bạn đang cần làm gì. Chúng tôi đọc mọi tin nhắn.",
       email: "hello@khepree.com",
       emailLabel: "Gửi email hello@khepree.com",
     },
     blog: {
       title: "Blog",
-      description: "Cập nhật và góc nhìn từ Khepree.",
-      intro: "Bài đã xuất bản xuất hiện tại đây. Bản nháp không được liệt kê.",
+      description: "Cập nhật và góc nhìn thực tế từ Khepree.",
+      intro: "Chỉ hiện bài đã xuất bản — không có bài nháp hay nội dung giữ chỗ.",
       emptyTitle: "Chưa có bài viết nào được xuất bản",
       emptyDescription: "Khi chúng tôi xuất bản cập nhật, bài sẽ xuất hiện tại đây — danh sách này không được lấp bằng bài mẫu.",
       featuredLabel: "Bài nổi bật",
@@ -247,8 +277,8 @@ export const vi = {
     },
     docs: {
       title: "Tài liệu",
-      description: "Tài liệu cho sản phẩm Khepree.",
-      intro: "Hướng dẫn đã xuất bản xuất hiện tại đây. Bản nháp không được liệt kê.",
+      description: "Cách dùng sản phẩm Khepree.",
+      intro: "Chỉ hiện hướng dẫn đã xuất bản — trang này để trống thay vì hiện tài liệu giữ chỗ.",
       emptyTitle: "Chưa có tài liệu được xuất bản",
       emptyDescription: "Hướng dẫn sẽ xuất hiện khi sẵn sàng sử dụng. Trang này để trống thay vì hiện tài liệu giữ chỗ.",
     },

@@ -1,12 +1,12 @@
 import { CtaSection } from "@/components/marketing/cta-section";
 import { EcosystemSection } from "@/components/marketing/ecosystem-section";
-import { GlobalSection } from "@/components/marketing/global-section";
 import { HeroSection } from "@/components/marketing/hero-section";
+import { HowKhepreeHelpsSection } from "@/components/marketing/how-khepree-helps-section";
+import { IntentSection } from "@/components/marketing/intent-section";
 import { ProductShowcaseSection } from "@/components/marketing/product-showcase-section";
 import { ResourcesSection } from "@/components/marketing/resources-section";
-import { TechnologySection } from "@/components/marketing/technology-section";
-import { ValueStrip } from "@/components/marketing/value-strip";
-import { WhySection } from "@/components/marketing/why-section";
+import { TechnologyShowcaseSection } from "@/components/marketing/technology-showcase-section";
+import { TrustSection } from "@/components/marketing/trust-section";
 import { getEcosystemNetworkSurfaces } from "@/lib/ecosystem-nav";
 import { listPublishedContent } from "@/lib/content";
 import { getPublicProducts } from "@/lib/catalog";
@@ -65,12 +65,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         screenshotAlt={heroMedia?.altText || heroProduct?.name}
         productName={heroProduct?.name}
       />
-      <ValueStrip messages={messages} />
+      <IntentSection messages={messages} />
       <ProductShowcaseSection locale={locale} messages={messages} products={products} />
-      <TechnologySection messages={messages} />
-      <WhySection messages={messages} />
+      <HowKhepreeHelpsSection messages={messages} />
+      <TechnologyShowcaseSection messages={messages} />
       <EcosystemSection messages={messages} surfaces={ecosystemSurfaces} />
-      <GlobalSection messages={messages} />
+      <TrustSection messages={messages} />
       <ResourcesSection locale={locale} messages={messages} items={resources} />
       <CtaSection locale={locale} messages={messages} />
     </>

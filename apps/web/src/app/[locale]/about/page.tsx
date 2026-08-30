@@ -42,13 +42,13 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       <section className="tech-section relative overflow-hidden border-b border-white/10">
         <GradientMesh tone="mixed" className="opacity-50" />
         <HeroEnergyField intensity="soft" />
-        <Container className="relative py-16 lg:py-24">
+        <Container className="relative px-5 py-14 sm:px-6 sm:py-16 lg:py-24">
           <Breadcrumbs items={breadcrumbs} />
           <HeroTitle className="mt-6 max-w-3xl text-foreground">{content.title}</HeroTitle>
           <BodyText className="mt-4 max-w-2xl text-lg text-muted">{content.intro}</BodyText>
         </Container>
       </section>
-      <Container className="py-14 lg:py-20">
+      <Container className="px-5 py-14 sm:px-6 lg:py-20">
         <div className="mx-auto max-w-3xl space-y-8 text-lg leading-relaxed text-muted">
           {[content.story1, content.story2, content.story3].map((paragraph, index) => (
             <ScrollReveal key={index}>

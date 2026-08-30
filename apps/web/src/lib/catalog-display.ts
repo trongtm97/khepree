@@ -1,6 +1,7 @@
 import type { PublicPlan, PublicPrice } from "@khepree/catalog";
 import { formatPriceAmount, selectDisplayPrice } from "@khepree/catalog";
 import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION } from "@khepree/config";
+import { getMessages } from "@/lib/i18n/get-messages";
 import type { SupportedLocale } from "@/lib/i18n/config";
 
 /** Human plan period — no billing jargon or provider names. */
@@ -9,15 +10,16 @@ export function formatPublicPlanPeriod(
   price: PublicPrice | null,
   locale: SupportedLocale,
 ): string | null {
-  if (plan.pricingMode === "free") return locale === "vi" ? "Miễn phí" : "Free";
-  if (plan.pricingMode === "contact_sales") return locale === "vi" ? "Liên hệ" : "Contact us";
+  const { catalog } = getMessages(locale);
+  if (plan.pricingMode === "free") return catalog.free;
+  if (plan.pricingMode === "contact_sales") return catalog.contactSales;
   if (plan.billingType === "perpetual" || plan.pricingMode === "perpetual") {
-    return locale === "vi" ? "Trọn đời" : "Lifetime";
+    return catalog.billing.perpetual;
   }
   const interval = price?.interval?.toLowerCase() ?? null;
-  if (interval === "month") return locale === "vi" ? "1 tháng" : "1 month";
-  if (interval === "year") return locale === "vi" ? "1 năm" : "1 year";
-  if (plan.billingType === "one_time") return locale === "vi" ? "Một lần" : "One-time";
+  if (interval === "month") return catalog.periods.month;
+  if (interval === "year") return catalog.periods.year;
+  if (plan.billingType === "one_time") return catalog.billing.one_time;
   return null;
 }
 
@@ -56,10 +58,11 @@ export function formatPublicStartingPrice(
   interval: string | null,
   locale: SupportedLocale,
 ): { amount: string; period: string | null } {
+  const { catalog } = getMessages(locale);
   const amount = formatPriceAmount(amountMinor, currency, locale);
   const normalized = interval?.toLowerCase() ?? null;
   let period: string | null = null;
-  if (normalized === "month") period = locale === "vi" ? "1 tháng" : "1 month";
-  else if (normalized === "year") period = locale === "vi" ? "1 năm" : "1 year";
+  if (normalized === "month") period = catalog.periods.month;
+  else if (normalized === "year") period = catalog.periods.year;
   return { amount, period };
 }

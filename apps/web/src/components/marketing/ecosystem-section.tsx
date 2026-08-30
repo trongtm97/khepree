@@ -69,17 +69,17 @@ export function EcosystemSection({
           ))}
         </OffscreenMotionPause>
 
-        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-10 divide-y divide-border">
           {surfaces.map((surface) => (
             <li key={surface.id}>
               <Link
                 href={surface.url}
                 target={surface.external ? "_blank" : undefined}
                 rel={surface.external ? "noopener noreferrer" : undefined}
-                className="block rounded-[var(--radius-card)] border border-border p-5 transition-colors hover:border-teal/40 hover:bg-surface"
+                className="flex flex-col gap-1 py-4 transition-colors hover:text-teal sm:flex-row sm:items-baseline sm:justify-between"
               >
-                <h3 className="font-semibold text-foreground">{surface.label}</h3>
-                <BodyText className="mt-2 text-sm">{surface.description}</BodyText>
+                <span className="font-semibold text-foreground">{surface.label}</span>
+                <BodyText className="text-sm">{surface.description}</BodyText>
               </Link>
             </li>
           ))}

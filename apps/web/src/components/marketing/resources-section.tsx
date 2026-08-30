@@ -1,9 +1,8 @@
-import { ArticleCard, Container, Title } from "@khepree/ui";
+import { Container, Title } from "@khepree/ui";
 import Link from "next/link";
 import type { PublishedContent } from "@khepree/catalog";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
-import { ScrollRevealStagger } from "./scroll-reveal";
 
 export function ResourcesSection({
   locale,
@@ -17,27 +16,26 @@ export function ResourcesSection({
   if (items.length === 0) return null;
 
   return (
-    <section className="border-t border-border py-16 lg:py-24">
+    <section className="py-16 lg:py-24">
       <Container>
         <Title>{messages.resources.heading}</Title>
         <p className="mt-3 max-w-2xl text-muted">{messages.resources.copy}</p>
-        <ScrollRevealStagger>
-          <ul className="mt-10 grid gap-4 md:grid-cols-2">
-            {items.map((item) => (
-              <li key={`${item.contentType}-${item.slug}`}>
-                <Link href={item.href} className="block h-full">
-                  <ArticleCard
-                    title={item.title}
-                    excerpt={item.excerpt ?? undefined}
-                    tag={
-                      item.contentType === "article" ? messages.footer.blog : messages.footer.docs
-                    }
-                  />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </ScrollRevealStagger>
+        <ul className="mt-10 divide-y divide-border rounded-[var(--radius-card)] border border-border">
+          {items.map((item) => (
+            <li key={`${item.contentType}-${item.slug}`}>
+              <Link
+                href={item.href}
+                className="flex flex-col gap-1 p-5 transition-colors hover:bg-surface sm:flex-row sm:items-center sm:justify-between sm:p-6"
+              >
+                <span className="font-medium text-foreground">{item.title}</span>
+                <span className="text-sm text-muted">
+                  {item.contentType === "article" ? messages.footer.blog : messages.footer.docs}
+                  {item.excerpt ? ` · ${item.excerpt}` : ""}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
         <div className="mt-8 flex flex-wrap gap-4 text-sm font-medium">
           <Link href={localePath(locale, "/blog")} className="text-teal hover:underline">
             {messages.footer.blog}

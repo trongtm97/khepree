@@ -13,9 +13,9 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes = {
-  sm: "h-9 px-3.5 text-sm",
-  md: "h-11 px-5 text-sm",
-  lg: "h-12 px-6 text-base",
+  sm: "h-11 min-h-11 px-3.5 text-base",
+  md: "h-11 min-h-11 px-5 text-base",
+  lg: "h-12 min-h-12 px-6 text-base",
 } as const;
 
 export interface ButtonLinkProps extends Omit<ComponentProps<typeof Link>, "className"> {

@@ -51,7 +51,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
               {group.product.shortDescription ? (
                 <p className="mt-2 text-khepree-slate/80">{group.product.shortDescription}</p>
               ) : null}
-              <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {group.plans.map((plan) => (
                   <PricingPlanCard
                     key={plan.publicId}

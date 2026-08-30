@@ -139,7 +139,7 @@ export async function PublishedContentArticle({
 
   const bodyContent = html ? (
     <div
-      className="prose prose-neutral max-w-none prose-headings:scroll-mt-24 prose-a:text-teal :lang(vi):prose-p:leading-[1.8]"
+      className="prose prose-neutral max-w-none prose-headings:scroll-mt-24 prose-a:text-teal prose-img:max-w-full prose-pre:overflow-x-auto :lang(vi):prose-p:leading-[1.8]"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   ) : (
@@ -230,7 +230,7 @@ function RelatedArticles({
   return (
     <section aria-labelledby="related-articles">
       <h2 id="related-articles" className="text-lg font-semibold text-foreground">
-        {messages.pages.blog.relatedHeading ?? "Bài viết liên quan"}
+        {messages.pages.blog.relatedHeading}
       </h2>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {items.map((item) => (

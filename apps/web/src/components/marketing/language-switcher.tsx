@@ -38,7 +38,7 @@ export function LanguageSwitcher({ locale }: { locale: SupportedLocale }) {
           aria-pressed={code === locale}
           aria-current={code === locale ? "true" : undefined}
           className={cn(
-            "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+            "min-h-11 rounded-md px-3 py-2.5 text-sm font-medium motion-safe:transition-colors",
             code === locale
               ? "bg-khepree-ink text-khepree-white"
               : "text-khepree-slate/70 hover:text-khepree-ink",

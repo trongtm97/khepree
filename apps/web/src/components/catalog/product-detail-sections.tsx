@@ -16,6 +16,7 @@ import { localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { ButtonLink } from "@/components/marketing/button-link";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { PricingPlanCard } from "./pricing-plan-card";
+import { ProductMobileCta } from "./product-mobile-cta";
 import { ProductHeroVisual, ProductScreenshot } from "./product-visual";
 
 function Section({
@@ -70,9 +71,12 @@ export function ProductDetailSections({
   const storyScreens = product.gallery.slice(1);
   const pricingHref = "#pricing";
   const checkoutHref = accountUrl ?? localePath(locale, "/pricing");
+  const hasPlans = product.plans.length > 0;
+  const mobileCtaHref = hasPlans ? pricingHref : checkoutHref;
+  const mobileCtaLabel = hasPlans ? messages.catalog.viewPlans : messages.catalog.getStarted;
 
   return (
-    <Container className="pb-20">
+    <Container className={`pb-20 ${hasPlans ? "max-lg:pb-28" : ""}`}>
       <section id="hero" className="relative overflow-hidden py-12 lg:py-20">
         <HeroEnergyField intensity="soft" className="opacity-60" />
         <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
@@ -109,9 +113,9 @@ export function ProductDetailSections({
                 ) : null}
               </p>
             ) : null}
-            <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href={product.plans.length > 0 ? pricingHref : checkoutHref} size="lg">
-                {messages.catalog.checkout}
+            <div className="mt-8 flex flex-col gap-3 max-[390px]:[&_a]:w-full max-[390px]:[&_a]:justify-center sm:flex-row sm:flex-wrap">
+              <ButtonLink href={hasPlans ? pricingHref : checkoutHref} size="lg">
+                {hasPlans ? messages.catalog.viewPlans : messages.catalog.checkout}
               </ButtonLink>
               <ButtonLink href={localePath(locale, "/products")} variant="secondary" size="lg">
                 {messages.footer.allProducts}
@@ -224,7 +228,7 @@ export function ProductDetailSections({
 
       {product.plans.length > 0 ? (
         <Section id="pricing" title={messages.catalog.sections.pricing}>
-          <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {product.plans.map((plan, index) => (
               <ScrollReveal key={plan.publicId} className={index === 1 ? "lg:-translate-y-2" : undefined}>
                 <PricingPlanCard
@@ -297,6 +301,7 @@ export function ProductDetailSections({
           </ButtonLink>
         </div>
       </Section>
+      {hasPlans ? <ProductMobileCta href={mobileCtaHref} label={mobileCtaLabel} /> : null}
     </Container>
   );
 }

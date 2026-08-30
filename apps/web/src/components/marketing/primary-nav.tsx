@@ -27,7 +27,7 @@ export function PrimaryNav({
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "rounded-[var(--radius-control)] px-3 py-2 text-sm transition-colors hover:text-foreground",
+              "inline-flex min-h-10 items-center rounded-[var(--radius-control)] px-3 py-2 text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40",
               active ? "font-medium text-foreground" : "text-muted",
             )}
           >

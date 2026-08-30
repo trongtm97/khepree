@@ -1,4 +1,5 @@
 import "@khepree/ui/globals.css";
+import "@/styles/mobile-public.css";
 import { GeistSans } from "geist/font/sans";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";

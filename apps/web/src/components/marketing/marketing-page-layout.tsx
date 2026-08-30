@@ -23,7 +23,7 @@ export function MarketingPageLayout({
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })))} />
-      <Container className="py-12 lg:py-16">
+      <Container className="px-5 py-12 sm:px-6 lg:py-16">
         <Breadcrumbs items={breadcrumbs} />
         <PageHeader title={title} description={description} />
         {children ? (

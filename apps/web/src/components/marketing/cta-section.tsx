@@ -1,4 +1,4 @@
-import { Container, GradientMesh, HeroEnergyField, Title } from "@khepree/ui";
+import { BodyText, Container, GradientMesh, HeroEnergyField, Title } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { ButtonLink } from "./button-link";
@@ -16,6 +16,7 @@ export function CtaSection({
       <HeroEnergyField intensity="soft" />
       <Container className="relative text-center">
         <Title className="mx-auto max-w-3xl text-foreground">{messages.cta.heading}</Title>
+        <BodyText className="mx-auto mt-4 max-w-2xl text-lg text-muted">{messages.cta.copy}</BodyText>
         <ButtonLink
           href={localePath(locale, "/products")}
           size="lg"
