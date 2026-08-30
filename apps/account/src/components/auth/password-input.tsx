@@ -42,13 +42,13 @@ export function PasswordInput({
           onChange={(e) => onChange(e.target.value)}
           aria-describedby={hint ? `${id}-hint` : undefined}
           className={cn(
-            "h-11 w-full rounded-[var(--radius-control)] border border-border bg-surface px-3.5 pr-11 text-sm text-foreground",
+            "h-11 w-full rounded-[var(--radius-control)] border border-border bg-surface px-3.5 pr-11 text-base text-foreground md:text-sm",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal focus-visible:border-teal/40",
           )}
         />
         <button
           type="button"
-          className="absolute inset-y-0 right-0 px-3 text-xs font-medium text-muted hover:text-foreground"
+          className="absolute inset-y-0 right-0 flex min-w-11 items-center justify-center px-3 text-xs font-medium text-muted hover:text-foreground"
           aria-label={visible ? copy.hidePassword : copy.showPassword}
           onClick={() => setVisible((v) => !v)}
         >

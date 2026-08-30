@@ -95,6 +95,7 @@ export {
 export {
   formatPriceAmount,
   formatBillingInterval,
+  minorToMajor,
   resolvePricingDisplayMode,
   selectDisplayPrice,
   currencyMinorUnits,

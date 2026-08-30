@@ -40,6 +40,7 @@ export function parseProductMarketingMetadata(
   const marketing = raw as Record<string, unknown>;
 
   return {
+    solutions: parseItems(marketing.solutions, parseSolution),
     benefits: parseItems(marketing.benefits, parseBenefit),
     highlights: parseItems(marketing.highlights, parseBenefit),
     howItWorks: parseItems(marketing.howItWorks, parseHowItWorks),
@@ -63,6 +64,12 @@ function parseItems<T>(
 function parseBenefit(item: Record<string, unknown>) {
   if (typeof item.title !== "string" || typeof item.description !== "string") return null;
   return { title: item.title, description: item.description };
+}
+
+function parseSolution(item: Record<string, unknown>) {
+  if (typeof item.problem !== "string" || typeof item.helps !== "string") return null;
+  const result = typeof item.result === "string" ? item.result : "";
+  return { problem: item.problem, helps: item.helps, result };
 }
 
 function parseHowItWorks(item: Record<string, unknown>) {

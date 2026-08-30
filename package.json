@@ -18,7 +18,10 @@
     "db:push": "pnpm --filter @khepree/db db:push",
     "db:studio": "pnpm --filter @khepree/db db:studio",
     "db:seed": "pnpm --filter @khepree/db db:seed",
-    "outbox:run": "pnpm --filter @khepree/platform outbox:run"
+    "outbox:run": "pnpm --filter @khepree/platform outbox:run",
+    "docker:build": "bash docker/smoke-images.sh build",
+    "docker:smoke": "bash docker/smoke-images.sh smoke",
+    "docker:test": "bash docker/smoke-images.sh all"
   },
   "devDependencies": {
     "@khepree/eslint-config": "workspace:*",

@@ -1,5 +1,16 @@
 export { BrandLogo, BRAND_LOGO_ASPECT_RATIO, type BrandLogoContext, type BrandLogoProps } from "./components/brand-logo";
-export { Button } from "./components/button";
+export { Button, type ButtonProps } from "./components/button";
+export {
+  buttonClassName,
+  buttonVariants,
+  buttonSizes,
+  buttonMobileFullWidthClass,
+  ctaButtonGroupClass,
+  CtaArrow,
+  withOptionalArrow,
+  type ButtonSize,
+  type ButtonVariant,
+} from "./components/button-contract";
 export { Input } from "./components/input";
 export { Textarea } from "./components/textarea";
 export { Select, type SelectOption } from "./components/select";

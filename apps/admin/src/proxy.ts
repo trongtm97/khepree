@@ -25,6 +25,11 @@ export async function proxy(request: NextRequest) {
     );
   }
 
+  const { pathname } = request.nextUrl;
+  if (pathname === "/healthz") {
+    return finish(request, NextResponse.next());
+  }
+
   if (request.method !== "GET" && request.method !== "HEAD") {
     const limited = await enforceRateLimit(request, RATE_LIMITS.SENSITIVE_MUTATION, "admin");
     if (limited) {
@@ -32,7 +37,6 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const { pathname } = request.nextUrl;
   const sessionCookie =
     request.cookies.get("better-auth.session_token") ??
     request.cookies.get("__Secure-better-auth.session_token");

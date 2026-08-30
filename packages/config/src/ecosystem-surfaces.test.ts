@@ -53,7 +53,8 @@ describe("ecosystem-surfaces", () => {
       marketingPath: (path) => `/en${path}`,
     });
     expect(nav.some((s) => s.id === "status")).toBe(true);
-    expect(nav.find((s) => s.id === "marketing")?.url).toBe("/en/products");
+    expect(nav.some((s) => s.id === "marketing")).toBe(false);
+    expect(nav.find((s) => s.id === "developers")?.url).toBe("/en/docs");
   });
 
   it("never exposes admin in public nav", () => {

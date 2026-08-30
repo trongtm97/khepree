@@ -7,6 +7,7 @@ import { cn } from "@khepree/ui";
 const TABS = [
   { id: "overview", label: "Tổng quan" },
   { id: "content", label: "Nội dung" },
+  { id: "marketing", label: "Trang TM" },
   { id: "plans", label: "Gói & Giá" },
   { id: "features", label: "Tính năng" },
   { id: "media", label: "Media" },

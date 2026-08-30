@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+# One-shot Drizzle migrations — run via compose `migrate` service.
+
+ARG NODE_VERSION=22-bookworm-slim
+
+FROM node:${NODE_VERSION} AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="${PNPM_HOME}:${PATH}"
+RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps ./apps
+COPY packages ./packages
+COPY tooling ./tooling
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS migrate
+COPY . .
+ENV CI=true
+CMD ["pnpm", "db:migrate"]

@@ -1,16 +1,19 @@
 "use client";
 
+import type { ResolvedKhepreeSurface } from "@khepree/config";
 import { cn } from "@khepree/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
+import type { NavProductItem } from "@/lib/nav-products";
 import { ButtonLink } from "./button-link";
 import { EcosystemMobileLinks } from "./ecosystem-menu";
 import { LanguageSwitcher } from "./language-switcher";
-import { NAV_KEYS, NAV_PATHS } from "./nav";
-import type { ResolvedKhepreeSurface } from "@khepree/config";
+import { ABOUT_PATH } from "./nav";
+import { ProductsMobileLinks } from "./products-menu";
+import { ResourcesMobileLinks } from "./resources-menu";
 
 const HEADER_OFFSET = "3.5rem";
 
@@ -19,18 +22,22 @@ export function MobileNav({
   messages,
   signInUrl,
   signUpUrl,
+  products,
   ecosystemSurfaces,
 }: {
   locale: SupportedLocale;
   messages: Messages;
   signInUrl: string;
   signUpUrl: string;
+  products: NavProductItem[];
   ecosystemSurfaces: ResolvedKhepreeSurface[];
 }) {
   const [menu, setMenu] = useState({ open: false, path: "" });
   const panelId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
+  const aboutHref = localePath(locale, ABOUT_PATH);
+  const aboutActive = pathname === aboutHref || pathname.startsWith(`${aboutHref}/`);
 
   const open = menu.open && menu.path === pathname;
 
@@ -68,7 +75,7 @@ export function MobileNav({
       <button
         ref={triggerRef}
         type="button"
-        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-control)] border border-border/70 bg-background/50 transition-colors hover:bg-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-control)] border border-border/70 bg-background/60 transition-colors hover:bg-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
         aria-expanded={open}
         aria-controls={panelId}
         aria-haspopup="dialog"
@@ -112,33 +119,31 @@ export function MobileNav({
             aria-label="Mobile"
             role="dialog"
             aria-modal="true"
-            className="fixed inset-x-0 z-50 flex flex-col overflow-hidden border-t border-border/80 bg-background/98 backdrop-blur-lg motion-safe:animate-in motion-safe:slide-in-from-top-2"
+            className="fixed inset-x-0 z-50 flex flex-col overflow-hidden border-t border-border/80 bg-background/98 shadow-[0_16px_48px_rgb(0_0_0/0.12)] backdrop-blur-xl motion-safe:animate-in motion-safe:slide-in-from-top-2"
             style={{
               top: HEADER_OFFSET,
               height: `calc(100dvh - ${HEADER_OFFSET})`,
               paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
             }}
           >
-            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-              <ul className="flex flex-col gap-1">
-                {NAV_KEYS.map((key) => (
-                  <li key={key}>
-                    <Link
-                      href={localePath(locale, NAV_PATHS[key])}
-                      className="flex min-h-11 items-center rounded-[var(--radius-control)] px-3 text-base font-medium text-foreground transition-colors hover:bg-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
-                      onClick={close}
-                    >
-                      {messages.nav[key]}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4">
+              <ProductsMobileLinks locale={locale} messages={messages} products={products} onNavigate={close} />
+              <ResourcesMobileLinks locale={locale} messages={messages} onNavigate={close} />
+              <EcosystemMobileLinks messages={messages} surfaces={ecosystemSurfaces} onNavigate={close} />
 
-              <EcosystemMobileLinks
-                messages={messages}
-                surfaces={ecosystemSurfaces}
-                onNavigate={close}
-              />
+              <div className="mt-4 border-t border-border pt-4">
+                <Link
+                  href={aboutHref}
+                  aria-current={aboutActive ? "page" : undefined}
+                  className={cn(
+                    "flex min-h-11 items-center rounded-[var(--radius-control)] px-3 text-base font-medium transition-colors hover:bg-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40",
+                    aboutActive ? "text-foreground" : "text-muted",
+                  )}
+                  onClick={close}
+                >
+                  {messages.nav.about}
+                </Link>
+              </div>
 
               <div className="mt-4 border-t border-border pt-4">
                 <LanguageSwitcher locale={locale} />
@@ -146,16 +151,16 @@ export function MobileNav({
             </div>
 
             <div className="shrink-0 space-y-3 border-t border-border bg-background/95 px-4 py-4">
-              <ButtonLink href={signUpUrl} className="w-full" size="lg" onClick={close}>
-                {messages.nav.signUp}
-              </ButtonLink>
               <Link
                 href={signInUrl}
-                className="flex min-h-11 items-center justify-center text-sm font-medium text-muted transition-colors hover:text-foreground"
+                className="flex min-h-11 items-center justify-center rounded-[var(--radius-control)] text-sm font-medium text-muted transition-colors hover:bg-border-subtle hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
                 onClick={close}
               >
                 {messages.nav.signIn}
               </Link>
+              <ButtonLink href={signUpUrl} variant="accent" showArrow fullWidthMobile className="w-full" onClick={close}>
+                {messages.nav.signUp}
+              </ButtonLink>
             </div>
           </nav>
         </>

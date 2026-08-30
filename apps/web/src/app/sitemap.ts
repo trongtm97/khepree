@@ -1,6 +1,5 @@
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, hreflangCode } from "@khepree/config";
 import type { MetadataRoute } from "next";
-import { AUDIENCE_SLUGS } from "@/lib/audiences";
 import { listPublishedContent } from "@/lib/content";
 import { getPublicProducts } from "@/lib/catalog";
 import { isSupportedLocale, localePath } from "@/lib/i18n/config";
@@ -9,9 +8,6 @@ import { siteUrl } from "@/lib/seo/metadata";
 const ROUTES = [
   "",
   "/products",
-  "/solutions",
-  ...AUDIENCE_SLUGS.map((slug) => `/solutions/${slug}`),
-  "/pricing",
   "/about",
   "/contact",
   "/blog",

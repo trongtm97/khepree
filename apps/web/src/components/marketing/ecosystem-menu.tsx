@@ -42,9 +42,11 @@ function EcosystemLinkItem({
 export function EcosystemMenu({
   messages,
   surfaces,
+  align = "right",
 }: {
   messages: Messages;
   surfaces: ResolvedKhepreeSurface[];
+  align?: "left" | "right";
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -82,7 +84,7 @@ export function EcosystemMenu({
         aria-haspopup="menu"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40",
+          "inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40",
           open ? "bg-border-subtle text-foreground" : "text-muted hover:text-foreground",
         )}
       >
@@ -101,7 +103,10 @@ export function EcosystemMenu({
           id={panelId}
           role="menu"
           aria-label={messages.nav.ecosystem}
-          className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-2rem,26rem)] overflow-hidden rounded-[var(--radius-card)] border border-border/80 bg-surface/95 p-2 shadow-[0_8px_30px_rgb(0_0_0/0.08)] backdrop-blur-md motion-safe:motion-soft-scale"
+          className={cn(
+            "absolute top-full z-50 mt-2 w-[min(100vw-2rem,26rem)] overflow-hidden rounded-[var(--radius-card)] border border-border/80 bg-surface/95 p-2 shadow-[0_8px_30px_rgb(0_0_0/0.08)] backdrop-blur-md motion-safe:motion-soft-scale",
+            align === "left" ? "left-0" : "right-0",
+          )}
         >
           <ul className="grid gap-0.5">
             {surfaces.map((surface) => (

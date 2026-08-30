@@ -1,8 +1,8 @@
-# Remaining work ledger (Phase 17.0)
+# Remaining work ledger (Phase 21.0)
 
-Items are categorized as they stood after Phase 17.0 system consistency work. **BLOCKER** means do not send real customers to production until it is resolved. This list is not an implementation backlog for a later product phase.
+Items are categorized as they stood after Phase 21.0 production code gate. **BLOCKER** means do not send real customers to production until it is resolved. This list is not an implementation backlog for a later product phase.
 
-Phase 17.0 added migrate-from-zero tests, outbox stale-lock recovery + dedicated worker, `getRateLimiter()` wired to Redis in production, and E2E CI smoke (local stack + staging URL mode). **B1 is still open.** Email delivery is implemented behind an adapter but **not** proven with a live send. Do not claim production-ready.
+Phase 21.0 added configurable DB pool, outbox poll-loop worker (`pnpm outbox:run`), production Redis rate-limit enforcement tests, and E2E staging URL validation. **B1 is still open.** Email delivery is implemented behind an adapter but **not** proven with a live send. Do not claim production-ready.
 
 ## BLOCKER
 
@@ -19,7 +19,7 @@ Phase 17.0 added migrate-from-zero tests, outbox stale-lock recovery + dedicated
 
 | ID | Item | Notes |
 |----|------|--------|
-| P1 | Shared rate-limit store | `getRateLimiter()` uses Redis when `REDIS_URL` is set; production boot fails without it. Operate Redis in staging before go-live. |
+| P1 | Shared rate-limit store | `getRateLimiter()` uses Redis in production (`validateRuntimeEnv` requires `REDIS_URL`). Operate Redis in staging before go-live. |
 | P2 | Live PSP webhook proof | SePay IPN verifies `X-Secret-Key`. Remaining work is the sandbox proof in B1. |
 | P3 | Email provider proof | Adapter is wired; fail closed if send fails. Close together with B2. |
 | P4 | Staging environment | Separate DB, buckets, auth URLs, keys (`docs/ENVIRONMENTS.md`). Restore drill (`docs/DATABASE.md`). |
@@ -27,9 +27,9 @@ Phase 17.0 added migrate-from-zero tests, outbox stale-lock recovery + dedicated
 | P6 | OAuth redirect URIs | Google (if enabled) must list production account origin only. |
 | P7 | CSP nonces | CSP still allows `'unsafe-inline'` for scripts/styles (Phase 11). |
 | P8 | Backup + restore drill | Postgres and object storage. |
-| P9 | Playwright against staging | `.github/workflows/e2e.yml` supports staging dispatch with base URL inputs. Sandbox payment E2E is manual. |
+| P9 | Playwright against staging | `.github/workflows/e2e.yml` staging dispatch requires all four `*_BASE_URL` inputs (fails fast if missing). Sandbox payment E2E is manual. |
 | P10 | Catalog/CMS content | Production products, prices, and published blog/docs — no development seed. |
-| P11 | Outbox worker schedule | Wire cron to `POST /api/v1/internal/outbox/run` or run `pnpm outbox:run` on an interval in production. |
+| P11 | Outbox worker in production | Run `pnpm outbox:run` as a supervised process (poll loop + graceful shutdown), or cron `POST /api/v1/internal/outbox/run` for single ticks. |
 
 ## POST-MVP
 

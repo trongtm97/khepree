@@ -37,7 +37,7 @@ Checked at Node boot (skipped during `next build`):
 - `PAYMENT_PROVIDER=sepay` with `SEPAY_ENV`, `SEPAY_MERCHANT_ID`, `SEPAY_SECRET_KEY`
 - Optional: `SEPAY_IPN_SECRET` (defaults to `SEPAY_SECRET_KEY`), `TRUSTED_PROXY=none|cloudflare`
 
-Template: `.env.example`. Real values live only in the environment’s secret store.
+Template: `.env.example`. Production checklist: `docs/PRODUCTION-INTEGRATIONS.md`. Real values live only in the environment’s secret store.
 
 ## Preview vs production hosts
 

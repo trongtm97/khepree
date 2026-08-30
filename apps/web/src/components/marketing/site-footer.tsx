@@ -75,16 +75,6 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
                   {messages.footer.allProducts}
                 </Link>
               </li>
-              <li>
-                <Link href={localePath(locale, "/solutions")} className={linkClass}>
-                  {messages.nav.solutions}
-                </Link>
-              </li>
-              <li>
-                <Link href={localePath(locale, "/pricing")} className={linkClass}>
-                  {messages.pages.pricing.title}
-                </Link>
-              </li>
             </ul>
           </FooterLinkList>
 

@@ -41,6 +41,8 @@ export interface PurchasableOffer {
 }
 
 export interface ProductMarketingMetadata {
+  /** Use-case cards: problem → how the product helps → outcome. */
+  solutions?: Array<{ problem: string; helps: string; result: string }>;
   benefits?: Array<{ title: string; description: string }>;
   highlights?: Array<{ title: string; description: string }>;
   howItWorks?: Array<{ step: number; title: string; description: string }>;

@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "test": "vitest run",
+    "build:worker": "node scripts/build-outbox-worker.mjs",
     "outbox:run": "tsx src/run-outbox-cli.ts"
   },
   "dependencies": {
@@ -18,12 +19,14 @@
     "@khepree/entitlement": "workspace:*",
     "@khepree/events": "workspace:*",
     "@khepree/licensing": "workspace:*",
-    "@khepree/reseller": "workspace:*"
+    "@khepree/reseller": "workspace:*",
+    "@khepree/security": "workspace:*"
   },
   "devDependencies": {
     "@khepree/eslint-config": "workspace:*",
     "@khepree/typescript-config": "workspace:*",
     "eslint": "^9.34.0",
+    "esbuild": "^0.25.9",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"

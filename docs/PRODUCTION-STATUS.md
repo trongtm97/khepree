@@ -1,4 +1,4 @@
-# Production status (Phase 17.0)
+# Production status (Phase 21.0)
 
 This is an inventory, not a launch certificate. **Khepree is not production-ready** while any BLOCKER in `docs/TODOS.md` remains open. Compiling Phase 14 does not mean go-live. SePay B1 sandbox proof is **not** resolved. Real email delivery is **not** verified. Production infrastructure and backup/restore drills do not exist in this repo.
 
@@ -33,14 +33,15 @@ packages/
 
 ## 2. Implemented capabilities
 
-- Transactional outbox: payment/order transition and `outbox_events` insert share one PostgreSQL transaction. Dedicated worker via `pnpm outbox:run` or `POST /api/v1/internal/outbox/run` (Bearer `OUTBOX_WORKER_SECRET`). Stale `PROCESSING` locks are reclaimed after `OUTBOX_LOCK_TIMEOUT_MS`.
+- Transactional outbox: payment/order transition and `outbox_events` insert share one PostgreSQL transaction. Dedicated worker via `pnpm outbox:run` (poll loop with `OUTBOX_POLL_INTERVAL_MS`, graceful SIGTERM/SIGINT shutdown) or `POST /api/v1/internal/outbox/run` (Bearer `OUTBOX_WORKER_SECRET`, single tick). Stale `PROCESSING` locks are reclaimed after `OUTBOX_LOCK_TIMEOUT_MS`. Batch size: `OUTBOX_BATCH_SIZE`.
 - Apps compose via `@khepree/platform`. `@khepree/reseller` is partner domain behavior.
 - Audit writers can `bind(tx)` so audit rows roll back with the business transaction.
 - Partner: VND wallets, `/vi` referral URLs, `accessTermDays`, explicit partner context, drizzle atomic issue.
 - CMS: version allocation retries unique conflicts; compensating delete after failed metadata write; `media_assets.size_bytes` is BIGINT.
 - Server-side `MarketPolicy` (default VN/VND). Production payment env is provider-extensible; mock is forbidden.
 - Email: `ResendEmailAdapter` behind the existing interface. Production fails closed on `EMAIL_PROVIDER=dev`. Delivery is not proven.
-- CI: unit job (no DB) + Postgres integration job (migrate from empty + critical-table tests). E2E PR workflow starts Postgres, migrates, builds apps, runs Playwright; staging mode uses configurable base URLs.
+- CI: unit job (no DB) + Postgres integration job (migrate from empty + critical-table tests). E2E PR workflow starts Postgres, migrates, builds apps, runs Playwright; staging dispatch requires `WEB_BASE_URL` / `ACCOUNT_BASE_URL` / `ADMIN_BASE_URL` / `PARTNER_BASE_URL` (fails fast if missing).
+- PostgreSQL pool: `DATABASE_POOL_MAX` (default 10), `DATABASE_IDLE_TIMEOUT`, `DATABASE_CONNECT_TIMEOUT` — tuned for single VPS per process.
 
 ## 3. Missing production credentials
 
@@ -71,17 +72,17 @@ Applied set in repo: `0000` … `0013_phase16_url_redirects`. Production is **no
 
 ## 6. Security status
 
-Addressed through Phase 17.0: same-tx outbox with stale-lock recovery and dedicated worker, tx-bound audit, upload content classes, market price gate, request-scoped session memo, `getRateLimiter()` wired to Redis in production, production email fail-closed, provider-extensible payment env validation, migrate-from-zero integration tests.
+Addressed through Phase 21.0: same-tx outbox with stale-lock recovery and dedicated poll-loop worker, tx-bound audit, upload content classes, market price gate, request-scoped session memo, `getRateLimiter()` wired to Redis in production (memory forbidden when `REDIS_URL` set), production email fail-closed, provider-extensible payment env validation, migrate-from-zero integration tests, configurable DB pool.
 
 Still open for launch: B1–B6 and P1–P10 in `docs/TODOS.md`. Email adapter is not proven against Resend. CSP allows unsafe-inline. SePay recurring and automated refunds are **not** implemented.
 
 ## 7. Test status
 
-`pnpm test` is the unit gate (no database). CI `integration` job applies migrations from empty Postgres and re-runs tests so Postgres `skipIf` cases execute, including critical-table inventory after migrate-from-zero. Playwright: local PR workflow (`.github/workflows/e2e.yml`) or staging dispatch with `WEB_BASE_URL` / `ACCOUNT_BASE_URL` / `ADMIN_BASE_URL` / `PARTNER_BASE_URL`. SePay Sandbox live IPN is **not** proven. B1 remains open.
+`pnpm test` is the unit gate (no database). CI `integration` job applies migrations from empty Postgres and re-runs tests so Postgres `skipIf` cases execute, including critical-table inventory after migrate-from-zero. Playwright: local PR workflow (`.github/workflows/e2e.yml`) starts full stack before tests; staging dispatch requires all four `*_BASE_URL` env vars. SePay Sandbox live IPN is **not** proven. B1 remains open.
 
 ## 8. Build status
 
-`pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build` are the Phase 17.0 quality gate with the unit CI job. Apply migrations through `0013_phase16_url_redirects` before using Redirect Manager. Local `pnpm db:seed` keeps the catalog fixture (`development-sample`) **hidden** so it does not appear on the public website.
+`pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build` are the Phase 21.0 quality gate with the unit CI job. Apply migrations through `0013_phase16_url_redirects` before using Redirect Manager. Local `pnpm db:seed` keeps the catalog fixture (`development-sample`) **hidden** so it does not appear on the public website.
 
 ## 9. Deployment checklist
 

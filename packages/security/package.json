@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./permissions": "./src/permissions.ts"
+    "./permissions": "./src/permissions.ts",
+    "./redis-health": "./src/redis-health.ts",
+    "./worker-heartbeat": "./src/worker-heartbeat.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

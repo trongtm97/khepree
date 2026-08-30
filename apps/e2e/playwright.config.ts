@@ -2,6 +2,23 @@ import { defineConfig } from "@playwright/test";
 
 const staging = process.env.E2E_MODE === "staging";
 
+const STAGING_BASE_URL_KEYS = [
+  "WEB_BASE_URL",
+  "ACCOUNT_BASE_URL",
+  "ADMIN_BASE_URL",
+  "PARTNER_BASE_URL",
+] as const;
+
+if (staging) {
+  const missing = STAGING_BASE_URL_KEYS.filter((key) => !process.env[key]?.trim());
+  if (missing.length > 0) {
+    throw new Error(
+      `E2E_MODE=staging requires deployed base URLs: ${missing.join(", ")}. ` +
+        "Do not run Playwright against localhost without a running stack.",
+    );
+  }
+}
+
 function baseUrl(envKey: string, fallback: string): string {
   const value = process.env[envKey]?.trim();
   return value && value.length > 0 ? value.replace(/\/$/, "") : fallback;

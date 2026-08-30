@@ -308,18 +308,9 @@ function resolveSurface(
   };
 }
 
-/** Header / launcher — PUBLIC + DEVELOPER, configured only. Never INTERNAL. */
+/** Header ecosystem dropdown — configured platform surfaces only. Never INTERNAL or marketing catalog. */
 export function listEcosystemNavSurfaces(options: ResolveSurfacesOptions): ResolvedKhepreeSurface[] {
-  const ids: KhepreeNavSurfaceId[] = [
-    "marketing",
-    "account",
-    "app",
-    "partner",
-    "download",
-    "status",
-    "developers",
-    "api",
-  ];
+  const ids: KhepreeNavSurfaceId[] = ["account", "app", "partner", "download", "status", "developers"];
   return ids
     .map((id) => resolveSurface(id, options))
     .filter((surface): surface is ResolvedKhepreeSurface => surface !== null)

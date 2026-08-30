@@ -1,0 +1,12 @@
+# Khepree backup cron examples (install with `crontab -e` as khepree user).
+#
+# Adjust paths. Requires rclone, gpg, docker, and /etc/khepree/backup.env configured.
+
+# Daily encrypted Postgres backup + remote retention (03:00 UTC)
+0 3 * * * cd /opt/khepree && ./scripts/backup/postgres-backup.sh >> /var/log/khepree-backup.log 2>&1
+
+# Health check twice daily — alert on non-zero exit (wire to your notifier)
+0 6,18 * * * cd /opt/khepree && ./scripts/backup/db-health-check.sh >> /var/log/khepree-db-health.log 2>&1
+
+# Quarterly restore drill reminder (manual — do not auto-restore production)
+# 0 9 1 1,4,7,10 * echo "Run restore drill: docs/DATA-SAFETY.md#restore-drill" | mail -s "Khepree restore drill" ops@example.com

@@ -1,4 +1,4 @@
-import { computeProductReadiness, parseOperatingSystems } from "@khepree/catalog";
+import { computeProductReadiness, parseOperatingSystems, parseProductMarketingMetadata } from "@khepree/catalog";
 import type { ProductPlatform } from "@khepree/db";
 import { hasPermission } from "@khepree/security";
 import { Input, Select, Textarea } from "@khepree/ui";
@@ -30,6 +30,7 @@ import { formatDate } from "@/lib/format";
 import { labelStatus } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
 import { DangerFields } from "@/components/danger-fields";
+import { ProductMarketingForm } from "@/components/product-studio/product-marketing-form";
 import { resolveStudioTab } from "@/components/product-studio/product-studio-tabs";
 import { requireAdmin } from "@/lib/admin-session";
 import { getProductStudio } from "@/lib/product-studio";
@@ -146,6 +147,15 @@ export default async function ProductStudioPage({
           );
         })}
       </div>
+    );
+  }
+
+  if (tab === "marketing") {
+    const marketing = parseProductMarketingMetadata(snapshot.metadata);
+    return (
+      <AdminFormSection title="Trang thương mại" description="Giải pháp, tính năng, FAQ, hướng dẫn và CTA — hiển thị trên /products/[slug]">
+        <ProductMarketingForm productId={productId} marketing={marketing} canWrite={canWrite} />
+      </AdminFormSection>
     );
   }
 

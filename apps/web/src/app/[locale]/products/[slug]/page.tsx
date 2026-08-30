@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { ProductDetailSections } from "@/components/catalog/product-detail-sections";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { getPublicProductBySlug, getProductPreviewBySlug } from "@/lib/catalog";
-import { breadcrumbJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
+import { breadcrumbJsonLd, faqPageJsonLd, productPlanOffersJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
 import { createPageMetadata, siteUrl } from "@/lib/seo/metadata";
 import { accountPublicUrl } from "@/lib/urls";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
@@ -71,6 +71,8 @@ export default async function ProductDetailPage({
   const isPreview = Boolean(preview);
 
   const path = localePath(locale, `/products/${slug}`);
+  const pageUrl = siteUrl(path);
+  const offers = productPlanOffersJsonLd(product, pageUrl);
   const breadcrumbs = [
     { label: messages.meta.siteName, href: localePath(locale) },
     { label: messages.pages.products.title, href: localePath(locale, "/products") },
@@ -90,11 +92,13 @@ export default async function ProductDetailPage({
         data={softwareApplicationJsonLd({
           name: product.name,
           description: product.seoDescription ?? product.shortDescription ?? product.description ?? "",
-          url: siteUrl(path),
+          url: pageUrl,
           operatingSystem: product.operatingSystems,
           image: productImage(product),
+          offers: offers.length > 0 ? offers : undefined,
         })}
       />
+      {product.marketing.faq?.length ? <JsonLd data={faqPageJsonLd(product.marketing.faq)} /> : null}
       <div className="border-b border-khepree-slate/10">
         <div className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
           {isPreview ? (

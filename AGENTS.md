@@ -19,6 +19,7 @@ pnpm test
 pnpm build
 pnpm db:migrate       # Requires DATABASE_URL
 pnpm db:seed
+pnpm outbox:run       # Outbox worker poll loop (production)
 ```
 
 ## Tech stack
@@ -50,10 +51,18 @@ pnpm db:seed
 - **Phase 17.4:** public page visual polish (product, blog, docs, about, security) — complete; **not** a production-ready claim; B1 still open
 - **Phase 17.5:** technology motion & interaction polish (energy field, orbit, cursor spotlight, scroll reveal, data flow) — complete; **not** a production-ready claim; B1 still open
 - **Phase 17.6:** public website final design QA — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.0:** production code gate — DB pool config, outbox poll-loop worker, Redis rate-limit enforcement, E2E staging validation — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.1:** production Dockerization — standalone Next.js images, outbox worker image, `/healthz` + API `/readyz`, CI docker smoke — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.2:** VPS production stack — `compose.production.yml`, Caddy TLS reverse proxy, internal Postgres/Redis, one-shot migrate, `.env.production.example` — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.3:** VPS security runbook — `docs/VPS-SECURITY.md`, `scripts/vps/*` host hardening helpers — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.4:** data safety — `docs/DATA-SAFETY.md`, `scripts/backup/*` encrypted off-VPS Postgres backups, restore drill, monitoring — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.5:** production integrations checklist — `docs/PRODUCTION-INTEGRATIONS.md`, `scripts/integrations/verify-production-config.sh` — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.6:** observability — structured JSON logging, request correlation, outbox health metrics, `ErrorReporter`, `docs/OBSERVABILITY.md` — complete; **not** a production-ready claim; B1 still open
+- **Phase 21.7:** VPS CI/CD — `.github/workflows/production.yml`, GHCR SHA-tagged images, SSH deploy + rollback, `docs/VPS-CICD.md` — complete; **not** a production-ready claim; B1 still open
 
 Packages already implemented: `@khepree/auth`, `@khepree/catalog`, `@khepree/commerce`, `@khepree/storage`, `@khepree/db`, `@khepree/ui`, `@khepree/config`, `@khepree/security`, `@khepree/entitlement`, `@khepree/licensing`, `@khepree/reseller`, `@khepree/sdk`, `@khepree/events`, `@khepree/platform`.
 
-Ops docs: `docs/DEPLOYMENT.md`, `docs/ENVIRONMENTS.md`, `docs/PRODUCTION-STATUS.md`.
+Ops docs: `docs/DEPLOYMENT.md`, `docs/ENVIRONMENTS.md`, `docs/PRODUCTION-STATUS.md`, `docs/VPS-SECURITY.md`, `docs/DATA-SAFETY.md`, `docs/PRODUCTION-INTEGRATIONS.md`, `docs/OBSERVABILITY.md`, `docs/VPS-CICD.md`.
 
 Later phases: TBD.
 

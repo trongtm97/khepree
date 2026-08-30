@@ -12,8 +12,10 @@ dist
 # env
 .env
 .env.local
+.env.production
 .env.*.local
 !.env.example
+!.env.production.example
 
 # logs
 *.log
@@ -33,6 +35,8 @@ Thumbs.db
 coverage
 playwright-report
 test-results
+.lighthouse-home.json
+*.report.html
 
 # drizzle
 packages/db/drizzle/meta

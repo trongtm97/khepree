@@ -1,0 +1,232 @@
+name: Production
+
+# main push → quality → integration → GHCR images → VPS deploy
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      git_sha:
+        description: "Git commit SHA to deploy (default: branch HEAD)"
+        required: false
+        type: string
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TURBO_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_sha || github.sha }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: khepree
+          POSTGRES_PASSWORD: khepree_local
+          POSTGRES_DB: khepree_local
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U khepree -d khepree_local"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TURBO_TELEMETRY_DISABLED: "1"
+      DATABASE_URL: postgresql://khepree:khepree_local@localhost:5432/khepree_local
+      INTEGRATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_sha || github.sha }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      - run: pnpm test
+
+  docker-build:
+    name: docker-build
+    needs: [quality, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: khepree
+          POSTGRES_PASSWORD: khepree_local
+          POSTGRES_DB: khepree_local
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U khepree -d khepree_local"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://khepree:khepree_local@localhost:5432/khepree_local
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_prefix: ${{ steps.meta.outputs.image_prefix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_sha || github.sha }}
+
+      - name: Image metadata
+        id: meta
+        run: |
+          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          prefix="${REGISTRY}/${owner}/khepree"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.git_sha }}" ]]; then
+            tag="${{ inputs.git_sha }}"
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag="${GITHUB_SHA}"
+          else
+            tag="${GITHUB_SHA}"
+          fi
+          echo "image_prefix=${prefix}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "semver_tag=" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "semver_tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push app images
+        run: |
+          set -euo pipefail
+          prefix="${{ steps.meta.outputs.image_prefix }}"
+          tag="${{ steps.meta.outputs.image_tag }}"
+          semver="${{ steps.meta.outputs.semver_tag }}"
+          build_push() {
+            local name="$1" filter="$2" port="$3"
+            docker build \
+              --network host \
+              -f docker/Dockerfile.app \
+              --build-arg APP_NAME="${name}" \
+              --build-arg APP_FILTER="${filter}" \
+              --build-arg PORT="${port}" \
+              --build-arg DATABASE_URL="${DATABASE_URL}" \
+              -t "${prefix}-${name}:${tag}" \
+              .
+            docker push "${prefix}-${name}:${tag}"
+            if [[ -n "${semver}" ]]; then
+              docker tag "${prefix}-${name}:${tag}" "${prefix}-${name}:${semver}"
+              docker push "${prefix}-${name}:${semver}"
+            fi
+          }
+          build_push web @khepree/web 3000
+          build_push account @khepree/account 3001
+          build_push admin @khepree/admin 3002
+          build_push partner @khepree/partner 3003
+          build_push api @khepree/api 3004
+
+      - name: Build and push worker image
+        run: |
+          prefix="${{ steps.meta.outputs.image_prefix }}"
+          tag="${{ steps.meta.outputs.image_tag }}"
+          semver="${{ steps.meta.outputs.semver_tag }}"
+          docker build -f docker/Dockerfile.outbox-worker -t "${prefix}-outbox-worker:${tag}" .
+          docker push "${prefix}-outbox-worker:${tag}"
+          if [[ -n "${semver}" ]]; then
+            docker tag "${prefix}-outbox-worker:${tag}" "${prefix}-outbox-worker:${semver}"
+            docker push "${prefix}-outbox-worker:${semver}"
+          fi
+
+      - name: Build and push migrate image
+        run: |
+          prefix="${{ steps.meta.outputs.image_prefix }}"
+          tag="${{ steps.meta.outputs.image_tag }}"
+          semver="${{ steps.meta.outputs.semver_tag }}"
+          docker build -f docker/Dockerfile.migrate -t "${prefix}-migrate:${tag}" .
+          docker push "${prefix}-migrate:${tag}"
+          if [[ -n "${semver}" ]]; then
+            docker tag "${prefix}-migrate:${tag}" "${prefix}-migrate:${semver}"
+            docker push "${prefix}-migrate:${semver}"
+          fi
+
+  deploy-production:
+    name: deploy-production
+    needs: docker-build
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.docker-build.outputs.image_tag }}
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          GHCR_TOKEN: ${{ secrets.GHCR_PULL_TOKEN || github.token }}
+          GIT_SHA: ${{ needs.docker-build.outputs.image_tag }}
+          GHCR_IMAGE_PREFIX: ${{ needs.docker-build.outputs.image_prefix }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          echo "${VPS_SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key "${VPS_USER}@${VPS_HOST}" \
+            "GHCR_TOKEN='${GHCR_TOKEN}' GIT_SHA='${GIT_SHA}' GHCR_IMAGE_PREFIX='${GHCR_IMAGE_PREFIX}' WORKFLOW_RUN_ID='${WORKFLOW_RUN_ID}' DEPLOY_OPERATOR='github-actions' bash -s" \
+            < scripts/deploy/deploy-production.sh

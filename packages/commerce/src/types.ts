@@ -182,6 +182,8 @@ export interface RefundProviderResult {
 export interface WebhookRequest {
   headers: Record<string, string>;
   rawBody: string;
+  /** HTTP request ID for webhook → outbox → entitlement tracing. */
+  requestId?: string;
 }
 
 export interface VerifiedWebhook {

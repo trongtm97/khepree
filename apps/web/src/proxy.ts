@@ -24,6 +24,10 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  if (pathname === "/healthz") {
+    return finish(request, NextResponse.next());
+  }
+
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
@@ -68,5 +72,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon|icon.png|apple-icon|robots.txt|sitemap.xml).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon|icon.png|apple-icon|robots.txt|sitemap.xml|healthz).*)"],
 };

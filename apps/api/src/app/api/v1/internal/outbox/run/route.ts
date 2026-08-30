@@ -1,19 +1,13 @@
-import { getEnv } from "@khepree/config";
 import { createKhepreeOutboxWorker } from "@khepree/platform";
 import { jsonError, jsonOk, getRequestId } from "@/lib/api-response";
+import { isInternalWorkerAuthorized } from "@/lib/internal-auth";
 
 export const dynamic = "force-dynamic";
-
-function isAuthorized(request: Request): boolean {
-  const secret = getEnv().OUTBOX_WORKER_SECRET;
-  if (!secret || secret.includes("CHANGE_ME")) return false;
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
 
 /** Secure cron/internal trigger for the durable outbox worker. */
 export async function POST(request: Request) {
   const requestId = getRequestId(request);
-  if (!isAuthorized(request)) {
+  if (!isInternalWorkerAuthorized(request)) {
     return jsonError("UNAUTHORIZED", "Invalid outbox worker secret", 401, requestId);
   }
   try {

@@ -3,4 +3,7 @@ export * from "./env";
 export * from "./env-validation";
 export * from "./ecosystem-surfaces";
 export * from "./logger";
+export * from "./request-id";
+export * from "./alert";
+export * from "./error-reporter";
 export * from "./products";

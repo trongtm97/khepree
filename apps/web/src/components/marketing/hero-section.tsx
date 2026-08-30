@@ -1,4 +1,4 @@
-import { BodyText, Container, HeroEnergyField, HeroTitle } from "@khepree/ui";
+import { BodyText, Container, HeroEnergyField, HeroTitle, cn, ctaButtonGroupClass } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { accountSignUpUrl } from "@/lib/urls";
@@ -29,16 +29,11 @@ export function HeroSection({
           <BodyText className="mt-4 text-base leading-relaxed text-muted sm:mt-5 sm:text-lg">
             {messages.hero.supporting}
           </BodyText>
-          <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap max-[430px]:[&_a]:w-full max-[430px]:[&_a]:justify-center">
-            <ButtonLink href={localePath(locale, "/products")} size="lg">
+          <div className={cn(ctaButtonGroupClass, "mt-7 sm:mt-8")}>
+            <ButtonLink href={localePath(locale, "/products")} variant="accent" showArrow fullWidthMobile>
               {messages.hero.ctaPrimary}
             </ButtonLink>
-            <ButtonLink
-              href={accountSignUpUrl()}
-              variant="secondary"
-              size="lg"
-              className="border-white/15 bg-white/5 text-foreground hover:bg-white/10"
-            >
+            <ButtonLink href={accountSignUpUrl()} variant="secondaryDark" fullWidthMobile>
               {messages.hero.ctaSecondary}
             </ButtonLink>
           </div>

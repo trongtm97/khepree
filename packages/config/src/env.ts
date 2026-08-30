@@ -11,9 +11,19 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
   DATABASE_URL: z.string().min(1).optional(),
+  /** Max connections per process (single-VPS default). */
+  DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
+  /** postgres.js idle_timeout (seconds). */
+  DATABASE_IDLE_TIMEOUT: z.coerce.number().int().nonnegative().default(20),
+  /** postgres.js connect_timeout (seconds). */
+  DATABASE_CONNECT_TIMEOUT: z.coerce.number().int().positive().default(10),
 
   BETTER_AUTH_SECRET: z.string().min(32).optional(),
   BETTER_AUTH_URL: optionalUrl,
+
+  /** Google OAuth — server-only; optional identity login for account app. */
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 
   R2_ACCOUNT_ID: z.string().optional(),
   R2_ACCESS_KEY_ID: z.string().optional(),
@@ -35,6 +45,10 @@ const envSchema = z.object({
   OUTBOX_LOCK_TIMEOUT_MS: z.coerce.number().int().positive().default(300_000),
   /** Max handler attempts before FAILED (non-immortal event types). */
   OUTBOX_MAX_ATTEMPTS: z.coerce.number().int().positive().default(12),
+  /** Dedicated outbox worker poll interval (ms). */
+  OUTBOX_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5_000),
+  /** Events claimed per outbox worker tick. */
+  OUTBOX_BATCH_SIZE: z.coerce.number().int().positive().default(20),
   /** Bearer secret for POST /api/v1/internal/outbox/run (cron / worker trigger). */
   OUTBOX_WORKER_SECRET: z.string().optional(),
 
@@ -123,6 +137,17 @@ export function isSePayConfigured(env: Env = getEnv()): boolean {
 
 export function isRedisConfigured(env: Env = getEnv()): boolean {
   return Boolean(env.REDIS_URL && !env.REDIS_URL.includes("CHANGE_ME"));
+}
+
+/** True when Google OAuth credentials are present (identity scopes only). */
+export function isGoogleAuthConfigured(
+  source: Env | Record<string, string | undefined> = getEnv(),
+): boolean {
+  const clientId = source.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = source.GOOGLE_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) return false;
+  if (clientId.includes("CHANGE_ME") || clientSecret.includes("CHANGE_ME")) return false;
+  return true;
 }
 
 export function sepayIpnSecret(env: Env = getEnv()): string | undefined {

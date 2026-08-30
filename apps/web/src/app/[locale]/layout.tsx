@@ -6,10 +6,13 @@ import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { JsonLd } from "@/components/seo/json-ld";
+import { getPublicProducts } from "@/lib/catalog";
 import { getEcosystemFooterSurfaces, getEcosystemNavSurfaces } from "@/lib/ecosystem-nav";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, htmlLang, SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/i18n/config";
+import { toNavProducts } from "@/lib/nav-products";
 import { organizationJsonLd } from "@/lib/seo/json-ld";
+import { accountSignInUrl, accountSignUpUrl } from "@/lib/urls";
 
 export function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
@@ -29,6 +32,9 @@ export default async function LocaleLayout({
   const messages = getMessages(locale);
   const ecosystemNav = getEcosystemNavSurfaces(locale);
   const ecosystemFooter = getEcosystemFooterSurfaces(locale);
+  const products = toNavProducts(await getPublicProducts(locale), locale, messages);
+  const signInUrl = accountSignInUrl();
+  const signUpUrl = accountSignUpUrl();
 
   return (
     <html lang={htmlLang(locale)} suppressHydrationWarning className={GeistSans.variable}>
@@ -38,7 +44,10 @@ export default async function LocaleLayout({
           <SiteHeader
             locale={locale}
             messages={messages}
+            products={products}
             ecosystemSurfaces={ecosystemNav}
+            signInUrl={signInUrl}
+            signUpUrl={signUpUrl}
           />
           <main className="homepage-safe-x flex-1 overflow-x-clip">{children}</main>
           <SiteFooter locale={locale} messages={messages} ecosystemSurfaces={ecosystemFooter} />

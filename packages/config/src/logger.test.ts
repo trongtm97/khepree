@@ -39,5 +39,6 @@ describe("createLogger", () => {
     expect(parsed.event).toBe("webhook_received");
     expect(parsed.service).toBe("api");
     expect(parsed.requestId).toBe("r1");
+    expect(parsed.timestamp).toBeTypeOf("string");
   });
 });

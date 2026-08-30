@@ -1,3 +1,5 @@
+import { emitAlert } from "@khepree/config";
+
 export class StorageConfigurationError extends Error {
   constructor(message: string) {
     super(message);
@@ -12,6 +14,10 @@ export class StorageInfrastructureError extends Error {
     super(message);
     this.name = "StorageInfrastructureError";
     this.cause = cause;
+    emitAlert("error", "r2_operation_failed", {
+      error: message,
+      cause: cause instanceof Error ? cause.message : String(cause),
+    });
   }
 }
 

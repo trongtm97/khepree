@@ -1,0 +1,50 @@
+# Production reverse proxy — TLS via ACME. Apps set security headers; Caddy does not duplicate CSP/HSTS.
+# Forwards X-Request-ID; apps generate UUID when header is absent.
+
+{
+	email {$CADDY_ACME_EMAIL}
+}
+
+www.khepree.com {
+	redir https://khepree.com{uri} permanent
+}
+
+khepree.com {
+	reverse_proxy web:3000 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+account.khepree.com {
+	reverse_proxy account:3001 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+admin.khepree.com {
+	reverse_proxy admin:3002 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+partner.khepree.com {
+	reverse_proxy partner:3003 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+api.khepree.com {
+	reverse_proxy api:3004 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}

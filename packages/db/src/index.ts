@@ -1,4 +1,4 @@
-export { getDb, requireDb, closeDb, type Database } from "./client";
+export { getDb, requireDb, closeDb, pingDatabase, type Database } from "./client";
 export { withTransaction } from "./lib/transactions";
 export { createPublicId, isPublicId } from "./lib/ids";
 export {

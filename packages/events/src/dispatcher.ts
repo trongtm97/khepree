@@ -3,7 +3,10 @@ import {
   COMMERCE_ORDER_REFUNDED_V1,
   COMMERCE_ORDER_VOIDED_V1,
 } from "./contracts";
+import { emitAlert, correlationRequestId, createLogger } from "@khepree/config";
 import type { DispatcherOptions, DomainEventHandler, OutboxEventRecord, OutboxStore } from "./types";
+
+const log = createLogger("outbox");
 
 const DEFAULT_MAX_ATTEMPTS = 12;
 const DEFAULT_LOCK_TIMEOUT_MS = 300_000;
@@ -61,20 +64,43 @@ export class PollingOutboxDispatcher {
   }
 
   private async dispatchOne(event: OutboxEventRecord): Promise<void> {
+    const requestId = correlationRequestId(event.payload);
     const handlers = this.handlers.get(event.eventType) ?? [];
     try {
       for (const handler of handlers) {
         await handler.handle(event);
       }
       await this.options.store.markProcessed(event.id, this.now());
+      log.info({
+        event: "outbox_event_processed",
+        requestId,
+        outboxPublicId: event.publicId,
+        eventType: event.eventType,
+        aggregateId: event.aggregateId,
+      });
     } catch (error) {
       const attempts = event.attempts + 1;
       const lastError = error instanceof Error ? error.message : String(error);
       const immortal = this.immortal.has(event.eventType);
       if (attempts >= this.maxAttempts && !immortal) {
         await this.options.store.markFailed(event.id, { attempts, lastError, now: this.now() });
+        emitAlert("error", "outbox_event_failed", {
+          requestId,
+          outboxPublicId: event.publicId,
+          eventType: event.eventType,
+          aggregateId: event.aggregateId,
+          attempts,
+        });
         return;
       }
+      log.warn({
+        event: "outbox_event_retry",
+        requestId,
+        outboxPublicId: event.publicId,
+        eventType: event.eventType,
+        attempts,
+        lastError,
+      });
       await this.options.store.markRetry(event.id, {
         attempts,
         availableAt: new Date(this.now().getTime() + retryDelayMs(attempts)),

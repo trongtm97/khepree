@@ -88,14 +88,16 @@ export function SignUpForm({
         </>
       ) : null}
 
-      <Input label={copy.name} autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} />
+      <Input label={copy.name} autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} className="text-base md:text-sm" />
       <Input
         label={copy.email}
         type="email"
         autoComplete="email"
+        inputMode="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        className="text-base md:text-sm"
       />
       <PasswordInput
         label={copy.password}

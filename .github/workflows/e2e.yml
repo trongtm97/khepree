@@ -124,5 +124,19 @@ jobs:
       - name: Install Playwright browser
         run: pnpm --filter @khepree/e2e exec playwright install --with-deps chromium
 
+      - name: Validate staging URLs
+        run: |
+          missing=""
+          for key in WEB_BASE_URL ACCOUNT_BASE_URL ADMIN_BASE_URL PARTNER_BASE_URL; do
+            eval "val=\$$key"
+            if [ -z "$val" ]; then
+              missing="$missing $key"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Staging E2E requires deployed base URLs:$missing"
+            exit 1
+          fi
+
       - name: Playwright smoke (staging)
         run: pnpm test:e2e

@@ -9,7 +9,11 @@ let limiterInit: Promise<RateLimiter> | null = null;
 async function resolveRateLimiter(): Promise<RateLimiter> {
   const env = getEnv();
   if (isRedisConfigured(env)) {
-    return createRateLimiter(await createRedisCommands(env.REDIS_URL!));
+    const limiter = createRateLimiter(await createRedisCommands(env.REDIS_URL!));
+    if (env.NODE_ENV === "production" && limiter instanceof MemoryRateLimiter) {
+      throw new Error("Production must use RedisRateLimiter when REDIS_URL is set");
+    }
+    return limiter;
   }
   if (env.NODE_ENV === "production") {
     throw new Error("REDIS_URL is required in production for shared rate limiting");

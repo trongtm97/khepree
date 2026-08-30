@@ -11,6 +11,7 @@ import {
   type CommerceOrderVoidedV1,
   type DomainEventHandler,
 } from "@khepree/events";
+import { getRequestIdFromContext } from "./request-context";
 import type { CommerceRepository } from "./store";
 import type {
   CommerceLifecycleHooks,
@@ -31,6 +32,12 @@ function itemDto(item: OrderItemRecord): CommerceOrderItemV1 {
 
 function customerRef(customer: CustomerRecord) {
   return { userId: customer.userId, organizationId: customer.organizationId };
+}
+
+function withCorrelation(payload: Record<string, unknown>): Record<string, unknown> {
+  const requestId = getRequestIdFromContext();
+  if (!requestId) return payload;
+  return { ...payload, _correlation: { requestId } };
 }
 
 export async function enqueueOrderPaid(
@@ -58,7 +65,7 @@ export async function enqueueOrderPaid(
     eventType: COMMERCE_ORDER_PAID_V1,
     aggregateType: "order",
     aggregateId: input.order.publicId,
-    payload: payload as unknown as Record<string, unknown>,
+    payload: withCorrelation(payload as unknown as Record<string, unknown>),
   });
 }
 
@@ -92,7 +99,7 @@ export async function enqueueOrderRefunded(
     eventType: COMMERCE_ORDER_REFUNDED_V1,
     aggregateType: "order",
     aggregateId: input.order.publicId,
-    payload: payload as unknown as Record<string, unknown>,
+    payload: withCorrelation(payload as unknown as Record<string, unknown>),
   });
 }
 
@@ -119,7 +126,7 @@ export async function enqueueOrderVoided(
     eventType: COMMERCE_ORDER_VOIDED_V1,
     aggregateType: "order",
     aggregateId: input.order.publicId,
-    payload: payload as unknown as Record<string, unknown>,
+    payload: withCorrelation(payload as unknown as Record<string, unknown>),
   });
 }
 

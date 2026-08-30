@@ -1,0 +1,326 @@
+# Khepree production VPS stack. Development stays in docker-compose.yml.
+#
+# Usage:
+#   cp .env.production.example .env.production   # fill secrets on the server (or use /etc/khepree/.env.production — see docs/VPS-SECURITY.md)
+#   docker compose -f compose.production.yml --env-file .env.production up -d
+#
+# Only Caddy publishes 80/443. Apps, Postgres, and Redis are internal.
+
+name: khepree-production
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+  TRUSTED_PROXY: cloudflare
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+  WEB_URL: ${WEB_URL}
+  APP_URL: ${APP_URL}
+  ACCOUNT_URL: ${ACCOUNT_URL}
+  ADMIN_URL: ${ADMIN_URL}
+  PARTNER_URL: ${PARTNER_URL}
+  API_URL: ${API_URL}
+  NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL}
+  NEXT_PUBLIC_ACCOUNT_URL: ${NEXT_PUBLIC_ACCOUNT_URL}
+  NEXT_PUBLIC_ADMIN_URL: ${NEXT_PUBLIC_ADMIN_URL}
+  NEXT_PUBLIC_PARTNER_URL: ${NEXT_PUBLIC_PARTNER_URL}
+  R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+  R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+  R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+  R2_BUCKET_PUBLIC: ${R2_BUCKET_PUBLIC}
+  R2_BUCKET_PRIVATE: ${R2_BUCKET_PRIVATE}
+  R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL}
+  LICENSE_SIGNING_PRIVATE_KEY: ${LICENSE_SIGNING_PRIVATE_KEY}
+  LICENSE_SIGNING_PUBLIC_KEY: ${LICENSE_SIGNING_PUBLIC_KEY}
+  EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+  EMAIL_FROM: ${EMAIL_FROM}
+  EMAIL_PROVIDER_API_KEY: ${EMAIL_PROVIDER_API_KEY}
+  PAYMENT_PROVIDER: ${PAYMENT_PROVIDER}
+  SEPAY_ENV: ${SEPAY_ENV}
+  SEPAY_MERCHANT_ID: ${SEPAY_MERCHANT_ID}
+  SEPAY_SECRET_KEY: ${SEPAY_SECRET_KEY}
+  SEPAY_IPN_SECRET: ${SEPAY_IPN_SECRET}
+  OUTBOX_WORKER_SECRET: ${OUTBOX_WORKER_SECRET}
+  OUTBOX_LOCK_TIMEOUT_MS: ${OUTBOX_LOCK_TIMEOUT_MS:-300000}
+  OUTBOX_MAX_ATTEMPTS: ${OUTBOX_MAX_ATTEMPTS:-12}
+  OUTBOX_POLL_INTERVAL_MS: ${OUTBOX_POLL_INTERVAL_MS:-5000}
+  OUTBOX_BATCH_SIZE: ${OUTBOX_BATCH_SIZE:-20}
+  DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
+  DATABASE_IDLE_TIMEOUT: ${DATABASE_IDLE_TIMEOUT:-20}
+  DATABASE_CONNECT_TIMEOUT: ${DATABASE_CONNECT_TIMEOUT:-10}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  MAINTENANCE_MODE: ${MAINTENANCE_MODE:-}
+
+x-app-depends: &app-depends
+  migrate:
+    condition: service_completed_successfully
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  khepree_pg_data:
+  khepree_redis_data:
+  caddy_data:
+  caddy_config:
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - khepree_pg_data:/var/lib/postgresql/data
+    networks:
+      - app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  redis:
+    image: redis:7.4.2-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - khepree_redis_data:/data
+    networks:
+      - app
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  migrate:
+    image: ${KHEPREE_MIGRATE_IMAGE:-khepree-migrate:production}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app
+    restart: "no"
+    logging: *default-logging
+
+  web:
+    image: ${KHEPREE_WEB_IMAGE:-khepree-web:production}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      args:
+        APP_NAME: web
+        APP_FILTER: "@khepree/web"
+        PORT: 3000
+        DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      PORT: 3000
+      APP_NAME: web
+      HOSTNAME: 0.0.0.0
+    depends_on: *app-depends
+    networks:
+      - app
+    stop_grace_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  account:
+    image: ${KHEPREE_ACCOUNT_IMAGE:-khepree-account:production}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      args:
+        APP_NAME: account
+        APP_FILTER: "@khepree/account"
+        PORT: 3001
+        DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      PORT: 3001
+      APP_NAME: account
+      HOSTNAME: 0.0.0.0
+    depends_on: *app-depends
+    networks:
+      - app
+    stop_grace_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  admin:
+    image: ${KHEPREE_ADMIN_IMAGE:-khepree-admin:production}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      args:
+        APP_NAME: admin
+        APP_FILTER: "@khepree/admin"
+        PORT: 3002
+        DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      PORT: 3002
+      APP_NAME: admin
+      HOSTNAME: 0.0.0.0
+    depends_on: *app-depends
+    networks:
+      - app
+    stop_grace_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  partner:
+    image: ${KHEPREE_PARTNER_IMAGE:-khepree-partner:production}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      args:
+        APP_NAME: partner
+        APP_FILTER: "@khepree/partner"
+        PORT: 3003
+        DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      PORT: 3003
+      APP_NAME: partner
+      HOSTNAME: 0.0.0.0
+    depends_on: *app-depends
+    networks:
+      - app
+    stop_grace_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  api:
+    image: ${KHEPREE_API_IMAGE:-khepree-api:production}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      args:
+        APP_NAME: api
+        APP_FILTER: "@khepree/api"
+        PORT: 3004
+        DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      PORT: 3004
+      APP_NAME: api
+      HOSTNAME: 0.0.0.0
+    depends_on: *app-depends
+    networks:
+      - app
+    stop_grace_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  worker:
+    image: ${KHEPREE_WORKER_IMAGE:-khepree-outbox-worker:production}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.outbox-worker
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+    depends_on: *app-depends
+    networks:
+      - app
+    stop_grace_period: 60s
+    stop_signal: SIGTERM
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  caddy:
+    image: caddy:2.9.1-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_started
+      account:
+        condition: service_started
+      admin:
+        condition: service_started
+      partner:
+        condition: service_started
+      api:
+        condition: service_started
+    networks:
+      - app
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M

@@ -41,7 +41,9 @@ pnpm dev:web      # Marketing → http://localhost:3000
 | `pnpm lint`       | ESLint                         |
 | `pnpm test`       | Unit tests (DB-less). Postgres `skipIf` tests run in CI integration. |
 | `pnpm test:e2e`   | Playwright smoke (`E2E=1`). PR workflow starts apps; staging uses `WEB_BASE_URL` env vars. |
-| `pnpm outbox:run` | Process one outbox worker batch (reclaim + dispatch) |
+| `pnpm docker:build` | Build all production Docker images |
+| `pnpm docker:smoke` | Smoke-test built images (`/healthz`) |
+| `pnpm docker:test` | Build + smoke all images |
 | `pnpm db:migrate` | Apply Drizzle migrations       |
 | `pnpm db:seed`    | Idempotent development seed    |
 
@@ -69,6 +71,7 @@ pnpm dev:web      # Marketing → http://localhost:3000
 | **16** | ✅ Public website consistency, Vietnamese copy, product/CMS/SEO polish. **Not production-ready.** |
 | **17.0** | ✅ System consistency & reliability — migrations, outbox worker, Redis rate limits, E2E CI. **Not production-ready.** |
 | **17.1** | ✅ Visual design system — tokens, typography, depth primitives, motion, component polish. Page redesign **not** started. |
+| **21.0** | ✅ Production code gate — DB pool config, outbox worker loop, Redis rate-limit enforcement, E2E staging validation. **Not production-ready.** |
 
 See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), [docs/VISUAL-DESIGN-SYSTEM.md](./docs/VISUAL-DESIGN-SYSTEM.md), [docs/PRODUCTION-STATUS.md](./docs/PRODUCTION-STATUS.md), and [CONTRIBUTING.md](./CONTRIBUTING.md).
 
@@ -76,10 +79,12 @@ See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), [docs/VISUAL-DESIGN-SYSTEM.m
 
 Copy `.env.example` to `.env`. Production requires:
 
-- `DATABASE_URL`
+- `DATABASE_URL` (+ optional `DATABASE_POOL_MAX`, `DATABASE_IDLE_TIMEOUT`, `DATABASE_CONNECT_TIMEOUT`)
 - `BETTER_AUTH_SECRET` / `BETTER_AUTH_URL`
 - `R2_BUCKET_PUBLIC` **and** `R2_BUCKET_PRIVATE` (no fallback)
-- App URLs (`APP_URL`, `ACCOUNT_URL`, …)
+- `REDIS_URL` (required — `validateRuntimeEnv` fails without it)
+- App URLs (`WEB_URL`, `ACCOUNT_URL`, …)
+- `OUTBOX_WORKER_SECRET` for cron/manual `POST /api/v1/internal/outbox/run`
 
 Private bucket missing in production **fail fast** — mock storage is dev/test only.
 

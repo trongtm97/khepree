@@ -1,6 +1,6 @@
 import type { PublicProductSummary } from "@khepree/catalog";
 import { formatBillingInterval, formatPriceAmount } from "@khepree/catalog";
-import { BodyText, Container, ProductWindow, Title } from "@khepree/ui";
+import { BodyText, Container, ProductWindow, Title, cn, ctaButtonGroupClass } from "@khepree/ui";
 import Link from "next/link";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
@@ -71,8 +71,13 @@ function ProductShowcaseRow({
               <dd className="mt-1 font-mono text-base text-teal">{priceLabel}</dd>
             </div>
           </dl>
-          <div className="mt-6 max-[390px]:[&_a]:block max-[390px]:[&_a]:w-full max-[390px]:[&_a]:text-center">
-            <ButtonLink href={localePath(locale, `/products/${product.slug}`)}>
+          <div className={cn(ctaButtonGroupClass, "mt-6")}>
+            <ButtonLink
+              href={localePath(locale, `/products/${product.slug}`)}
+              variant="accent"
+              showArrow
+              fullWidthMobile
+            >
               {messages.catalog.viewProduct}
             </ButtonLink>
           </div>

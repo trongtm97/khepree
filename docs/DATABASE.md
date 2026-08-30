@@ -15,25 +15,28 @@ Order for a release that includes schema: migrate first, then deploy apps. If th
 
 ## Backup strategy
 
-Use the PostgreSQL tooling your operator already runs (for example `pg_dump` / continuous WAL archiving). This repo does not embed a vendor backup product.
+Automated scripts and runbook: **`docs/DATA-SAFETY.md`** and `scripts/backup/`.
 
 Minimum:
 
 - Automated backups of the production database on a schedule that matches your RPO.
 - Encryption at rest for backup storage.
 - Retention long enough to recover from a bad migration discovered days later.
-- Backups stored **off** the production database host.
+- Backups stored **off** the production database host (rclone → R2/S3/B2).
+- Docker volumes are **not** backups.
+
+Default retention: 7 daily, 4 weekly, 3 monthly (configurable in `/etc/khepree/backup.env`).
 
 ## Restore test strategy
 
-A backup that has never been restored is not a backup.
+A backup that has never been restored is not a backup. Use `scripts/backup/postgres-restore.sh` against a **staging** database only — never auto-restore production.
 
 1. Provision an empty instance (not production).
-2. Restore the latest backup.
+2. Restore the latest backup (`postgres-restore.sh --latest --confirm-not-production`).
 3. Run `pnpm db:migrate` only if the dump is from before current head (usually the dump already includes schema).
 4. Smoke: sign-in against a copy of identity tables, open a product slug, confirm entitlement rows exist for a known fixture user if you restore anonymized data.
 
-Perform this restore drill on a schedule (for example quarterly) and after any backup-system change.
+Perform this restore drill on a schedule (for example quarterly) and after any backup-system change. See `docs/DATA-SAFETY.md#restore-drill`.
 
 ## Seed policy
 

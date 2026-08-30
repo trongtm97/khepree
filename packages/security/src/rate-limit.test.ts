@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   authRateLimitPolicy,
   clientIp,
@@ -7,7 +7,13 @@ import {
   resetRateLimitStoreForTests,
 } from "./rate-limit";
 
+beforeEach(async () => {
+  process.env.REDIS_URL = "";
+  await resetRateLimitStoreForTests();
+});
+
 afterEach(async () => {
+  process.env.REDIS_URL = "";
   await resetRateLimitStoreForTests();
 });
 

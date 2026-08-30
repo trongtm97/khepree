@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+.github
+
+# Dependencies & build caches (rebuilt in image)
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/.cache
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+
+# Tests & E2E artifacts
+**/coverage
+**/test-results
+**/playwright-report
+**/*.test.ts
+**/*.test.tsx
+**/*.pg.test.ts
+apps/e2e
+
+# Editor & OS
+.cursor
+.vscode
+**/.DS_Store
+**/Thumbs.db
+
+# Local DB / temp
+**/*.db
+**/*.sqlite
+**/tmp
+**/*.log
+
+# Docs not needed at runtime
+docs
+**/*.md
+!README.md

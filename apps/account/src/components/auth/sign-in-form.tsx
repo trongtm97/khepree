@@ -9,9 +9,17 @@ import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-i
 import { PasswordInput } from "@/components/auth/password-input";
 import { authClient } from "@/lib/auth-client";
 import { mapAuthError, type AuthCopy } from "@/lib/auth-ui";
+import type { SupportedLocale } from "@khepree/config";
 import { AUTH_ROUTES } from "@/lib/routes";
 
-export function SignInForm({ copy, googleEnabled }: { copy: AuthCopy; googleEnabled: boolean }) {
+export function SignInForm({
+  copy,
+  googleEnabled,
+}: {
+  copy: AuthCopy;
+  googleEnabled: boolean;
+  locale: SupportedLocale;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeAccountNextPath(searchParams.get("next"));
@@ -76,9 +84,11 @@ export function SignInForm({ copy, googleEnabled }: { copy: AuthCopy; googleEnab
         label={copy.email}
         type="email"
         autoComplete="email"
+        inputMode="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        className="text-base md:text-sm"
       />
       <PasswordInput
         label={copy.password}

@@ -1,4 +1,5 @@
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { sql } from "drizzle-orm";
 import postgres from "postgres";
 import { isDatabaseConfigured, getEnv } from "@khepree/config";
 import { loadRootEnv } from "./lib/load-root-env";
@@ -17,7 +18,11 @@ export function getDb(): Database | null {
   }
 
   if (!dbInstance) {
-    client = postgres(env.DATABASE_URL!, { max: 10 });
+    client = postgres(env.DATABASE_URL!, {
+      max: env.DATABASE_POOL_MAX,
+      idle_timeout: env.DATABASE_IDLE_TIMEOUT,
+      connect_timeout: env.DATABASE_CONNECT_TIMEOUT,
+    });
     dbInstance = drizzle(client, { schema });
   }
 
@@ -32,6 +37,15 @@ export function requireDb(): Database {
     );
   }
   return db;
+}
+
+export async function pingDatabase(db: Database): Promise<boolean> {
+  try {
+    await db.execute(sql`select 1`);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function closeDb(): Promise<void> {

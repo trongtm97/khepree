@@ -1,4 +1,10 @@
-import { getEnv, isDatabaseConfigured, isEmailConfigured, isStorageConfigured } from "@khepree/config";
+import {
+  getEnv,
+  isDatabaseConfigured,
+  isEmailConfigured,
+  isGoogleAuthConfigured,
+  isStorageConfigured,
+} from "@khepree/config";
 import { ADMIN_PAGE_SIZE, listAdminSystemEvents } from "@khepree/db";
 import type { Metadata } from "next";
 import { AdminPageHeader, AdminSection, AdminTable, AdminTd } from "@/components/admin";
@@ -22,6 +28,10 @@ export default async function SystemPage({
     { label: "Cơ sở dữ liệu", value: isDatabaseConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình" },
     { label: "Lưu trữ", value: isStorageConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình" },
     { label: "Email", value: isEmailConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình" },
+    {
+      label: "Google Login",
+      value: isGoogleAuthConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình",
+    },
     {
       label: "MFA admin (prod)",
       value: "ADMIN và SUPER_ADMIN phải bật MFA trên production",

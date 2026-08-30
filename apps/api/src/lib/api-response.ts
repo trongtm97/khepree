@@ -1,4 +1,5 @@
 import type { ApiErrorBody } from "@khepree/types";
+import { getRequestIdFromHeaders } from "@khepree/config";
 
 export function jsonError(
   code: string,
@@ -17,5 +18,5 @@ export function jsonOk<T>(data: T, requestId?: string): Response {
 }
 
 export function getRequestId(request: Request): string {
-  return request.headers.get("x-request-id") ?? crypto.randomUUID();
+  return getRequestIdFromHeaders(request.headers);
 }

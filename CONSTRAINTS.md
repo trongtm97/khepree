@@ -1,6 +1,6 @@
 # Constraints
 
-Last reviewed: 2026-08-30 — Phase 17.1 visual design system
+Last reviewed: 2026-08-30 — Phase 21.0 production code gate
 
 Read this file before writing code. Do not weaken it to make a change pass.
 

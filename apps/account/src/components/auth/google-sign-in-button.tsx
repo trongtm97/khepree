@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@khepree/ui";
+import { buttonSizes, cn } from "@khepree/ui";
 import type { AuthCopy } from "@/lib/auth-ui";
 
 function GoogleIcon() {
@@ -41,8 +41,9 @@ export function GoogleSignInButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex h-11 w-full items-center justify-center gap-3 rounded-[var(--radius-button)] border border-[#dadce0] bg-white px-4 text-sm font-medium text-[#3c4043] shadow-sm",
-        "transition-colors hover:bg-[#f8f9fa] disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius-button)] font-semibold leading-[1.25] whitespace-nowrap",
+        buttonSizes.md,
+        "border border-[#dadce0] bg-white text-[#3c4043] shadow-sm transition-colors hover:bg-[#f8f9fa] disabled:cursor-not-allowed disabled:opacity-60",
       )}
     >
       <GoogleIcon />

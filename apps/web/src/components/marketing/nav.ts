@@ -1,8 +1,10 @@
-export const NAV_KEYS = ["products", "solutions", "pricing", "resources"] as const;
+export const RESOURCE_NAV_KEYS = ["blog", "docs", "productGuides", "security"] as const;
 
-export const NAV_PATHS: Record<(typeof NAV_KEYS)[number], string> = {
-  products: "/products",
-  solutions: "/solutions",
-  pricing: "/pricing",
-  resources: "/blog",
+export const RESOURCE_NAV_PATHS: Record<(typeof RESOURCE_NAV_KEYS)[number], string> = {
+  blog: "/blog",
+  docs: "/docs",
+  productGuides: "/docs",
+  security: "/security",
 };
+
+export const ABOUT_PATH = "/about";

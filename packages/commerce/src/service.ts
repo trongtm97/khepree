@@ -12,11 +12,13 @@ import {
   PollingOutboxDispatcher,
   outboxLockTimeoutMs,
   outboxMaxAttempts,
+  outboxBatchSize,
   type DomainEventHandler,
   type OutboxStore,
 } from "@khepree/events";
 import { parseMoneyMinor } from "@khepree/types";
 import { DrizzleCommerceRepository } from "./drizzle-store";
+import { runWithRequestId } from "./request-context";
 import { CommerceError } from "./errors";
 import { assertOrderTransition, assertPaymentTransition } from "./order-state";
 import {
@@ -90,6 +92,7 @@ export class CommerceService {
     return new OutboxWorker({
       store: this.options.dispatcher.store,
       dispatcher: this.options.dispatcher,
+      batchSize: outboxBatchSize(),
       lockTimeoutMs: outboxLockTimeoutMs(),
       now: this.now,
     });
@@ -335,6 +338,7 @@ export class CommerceService {
   }
 
   async processWebhook(input: WebhookRequest & { providerId: string }): Promise<WebhookProcessResult> {
+    return runWithRequestId(input.requestId, async () => {
     if (input.providerId !== this.options.provider.id) {
       throw new CommerceError("UNKNOWN_PROVIDER", `Unknown payment provider: ${input.providerId}`);
     }
@@ -388,6 +392,7 @@ export class CommerceService {
 
     await this.flushOutbox();
     return result;
+    });
   }
 
   async getBillingAccount(owner: CustomerOwner): Promise<BillingAccount> {

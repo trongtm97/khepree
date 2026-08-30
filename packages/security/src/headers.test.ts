@@ -5,7 +5,9 @@ describe("security headers", () => {
   it("sets CSP frame-ancestors none and nosniff", () => {
     const headers = new Headers();
     applySecurityHeaders(headers, { production: false, requestId: "req_1" });
-    expect(contentSecurityPolicy()).toContain("frame-ancestors 'none'");
+    expect(contentSecurityPolicy({ production: false })).toContain("unsafe-eval");
+    expect(contentSecurityPolicy({ production: true })).not.toContain("unsafe-eval");
+    expect(contentSecurityPolicy({ production: false })).toContain("frame-ancestors 'none'");
     expect(headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
     expect(headers.get("X-Frame-Options")).toBe("DENY");

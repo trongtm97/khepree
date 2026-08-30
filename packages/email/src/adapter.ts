@@ -1,5 +1,7 @@
-import { getEnv, isEmailConfigured } from "@khepree/config";
+import { getEnv, isEmailConfigured, emitAlert, createLogger } from "@khepree/config";
 import type { EmailAdapter, SendEmailInput } from "./index";
+
+const log = createLogger("email");
 
 /** Development-only — logs email content; never claims production delivery. */
 export class DevPreviewEmailAdapter implements EmailAdapter {
@@ -45,6 +47,8 @@ export class ResendEmailAdapter implements EmailAdapter {
       }),
     });
     if (!response.ok) {
+      emitAlert("error", "email_send_failed", { status: response.status, to: input.to });
+      log.error({ event: "email_send_failed", status: response.status, to: input.to });
       throw new Error(`Resend rejected email (${response.status})`);
     }
     const body = (await response.json()) as { id?: string };

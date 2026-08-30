@@ -13,6 +13,7 @@ describe("storage factory production fail-fast", () => {
     vi.stubEnv("BETTER_AUTH_SECRET", "prod-secret-with-enough-entropy-here");
     vi.stubEnv("BETTER_AUTH_URL", "https://account.example.com");
     vi.stubEnv("APP_URL", "https://example.com");
+    vi.stubEnv("WEB_URL", "https://example.com");
     vi.stubEnv("ACCOUNT_URL", "https://account.example.com");
     vi.stubEnv("ADMIN_URL", "https://admin.example.com");
     vi.stubEnv("PARTNER_URL", "https://partner.example.com");

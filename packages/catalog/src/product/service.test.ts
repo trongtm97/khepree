@@ -101,6 +101,16 @@ describe("parseProductMarketingMetadata", () => {
     expect(marketing.benefits?.[0]?.title).toBe("Fast");
     expect(marketing.faq?.[0]?.question).toBe("Is this real?");
   });
+
+  it("parses solution use-case cards", () => {
+    const marketing = parseProductMarketingMetadata({
+      marketing: {
+        solutions: [{ problem: "Too slow", helps: "Automates steps", result: "Done in minutes" }],
+      },
+    });
+    expect(marketing.solutions?.[0]?.problem).toBe("Too slow");
+    expect(marketing.solutions?.[0]?.result).toBe("Done in minutes");
+  });
 });
 
 describe("product public extras", () => {

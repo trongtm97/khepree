@@ -1,5 +1,5 @@
 const SENSITIVE_KEY =
-  /^(password|passwd|authorization|cookie|cookies|secret|token|access_token|refresh_token|id_token|api[_-]?key|private[_-]?key|license[_-]?key|credit[_-]?card|cardnumber|cvv|cvc|pan)$/i;
+  /^(password|passwd|authorization|cookie|cookies|secret|token|access_token|refresh_token|id_token|api[_-]?key|private[_-]?key|license[_-]?key|license_signing_private_key|sepay[_-]?secret|sepay[_-]?ipn|credit[_-]?card|cardnumber|cvv|cvc|pan)$/i;
 
 const REDACTED = "[REDACTED]";
 
@@ -33,6 +33,7 @@ export function createLogger(service: string) {
   function write(level: LogLevel, fields: LogFields, message?: string): void {
     if (level === "debug" && process.env.NODE_ENV === "production") return;
     const line = redact({
+      timestamp: new Date().toISOString(),
       ts: new Date().toISOString(),
       level,
       service,

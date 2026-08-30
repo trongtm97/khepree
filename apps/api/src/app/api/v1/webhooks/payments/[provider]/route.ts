@@ -1,5 +1,5 @@
 import { isCommerceError, MOCK_PROVIDER_ID } from "@khepree/commerce";
-import { createLogger } from "@khepree/config";
+import { createLogger, emitAlert } from "@khepree/config";
 import { RATE_LIMITS, enforceRateLimit } from "@khepree/security";
 import { jsonError, jsonOk, getRequestId } from "@/lib/api-response";
 import { getPlatform } from "@/lib/platform";
@@ -25,6 +25,7 @@ export async function POST(
       providerId: provider || MOCK_PROVIDER_ID,
       headers,
       rawBody,
+      requestId,
     });
     log.info({ event: "webhook_processed", requestId, provider, status: result.status });
     return jsonOk({ status: result.status }, requestId);
@@ -32,6 +33,7 @@ export async function POST(
     if (isCommerceError(error)) {
       log.warn({ event: "webhook_rejected", requestId, provider, code: error.code });
       if (error.code === "WEBHOOK_INVALID") {
+        emitAlert("warn", "webhook_invalid", { requestId, provider });
         return jsonError("WEBHOOK_INVALID", "Webhook could not be verified", 400, requestId);
       }
       if (error.code === "NOT_FOUND") {
@@ -42,6 +44,7 @@ export async function POST(
       }
     }
     log.error({ event: "webhook_failed", requestId, provider });
+    emitAlert("error", "webhook_processing_failed", { requestId, provider });
     return jsonError("WEBHOOK_FAILED", "Webhook could not be processed", 500, requestId);
   }
 }

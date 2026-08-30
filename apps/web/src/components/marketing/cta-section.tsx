@@ -1,4 +1,4 @@
-import { BodyText, Container, GradientMesh, HeroEnergyField, Title } from "@khepree/ui";
+import { BodyText, Container, GradientMesh, HeroEnergyField, Title, cn, ctaButtonGroupClass } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { accountSignUpUrl } from "@/lib/urls";
@@ -20,20 +20,11 @@ export function CtaSection({
         <BodyText className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
           {messages.cta.copy}
         </BodyText>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row max-[430px]:[&_a]:w-full max-[430px]:[&_a]:max-w-sm">
-          <ButtonLink
-            href={localePath(locale, "/products")}
-            size="lg"
-            className="motion-light-sweep min-h-11 bg-teal text-background hover:bg-teal/90"
-          >
+        <div className={cn(ctaButtonGroupClass, "mt-8 justify-center")}>
+          <ButtonLink href={localePath(locale, "/products")} variant="accent" showArrow fullWidthMobile>
             {messages.cta.button}
           </ButtonLink>
-          <ButtonLink
-            href={accountSignUpUrl()}
-            size="lg"
-            variant="secondary"
-            className="min-h-11 border-white/15 bg-white/5 text-foreground hover:bg-white/10"
-          >
+          <ButtonLink href={accountSignUpUrl()} variant="secondaryDark" showArrow fullWidthMobile>
             {messages.cta.signUp}
           </ButtonLink>
         </div>

@@ -112,6 +112,88 @@ export async function saveContentAction(_s: ActionState, formData: FormData): Pr
   }
 }
 
+function readIndexedRows(
+  formData: FormData,
+  prefix: string,
+  fields: string[],
+  max: number,
+): Array<Record<string, string>> {
+  const rows: Array<Record<string, string>> = [];
+  for (let index = 0; index < max; index += 1) {
+    const row: Record<string, string> = {};
+    for (const field of fields) {
+      row[field] = String(formData.get(`${prefix}_${index}_${field}`) ?? "").trim();
+    }
+    if (Object.values(row).some(Boolean)) rows.push(row);
+  }
+  return rows;
+}
+
+export async function saveMarketingAction(_s: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const session = await actor("catalog.write");
+    const productId = String(formData.get("productId") ?? "");
+    const snapshot = await getProductStudio().getSnapshot(productId);
+    if (!snapshot) return { error: "Không tìm thấy sản phẩm" };
+
+    const existing =
+      snapshot.metadata.marketing && typeof snapshot.metadata.marketing === "object"
+        ? (snapshot.metadata.marketing as Record<string, unknown>)
+        : {};
+
+    const solutions = readIndexedRows(formData, "solution", ["problem", "helps", "result"], 4)
+      .filter((row) => row.problem && row.helps)
+      .map((row) => ({ problem: row.problem, helps: row.helps, result: row.result ?? "" }));
+
+    const highlights = readIndexedRows(formData, "highlight", ["title", "description"], 6)
+      .filter((row) => row.title && row.description)
+      .map((row) => ({ title: row.title, description: row.description }));
+
+    const relatedContent = readIndexedRows(formData, "related", ["title", "href"], 6)
+      .filter((row) => row.title && row.href)
+      .map((row) => ({ title: row.title, href: row.href }));
+
+    const faq = readIndexedRows(formData, "faq", ["question", "answer"], 6)
+      .filter((row) => row.question && row.answer)
+      .map((row) => ({ question: row.question, answer: row.answer }));
+
+    const ctaHeadline = String(formData.get("cta_headline") ?? "").trim();
+    const ctaButtonLabel = String(formData.get("cta_buttonLabel") ?? "").trim();
+    const ctaButtonHref = String(formData.get("cta_buttonHref") ?? "").trim();
+    const ctaDescription = String(formData.get("cta_description") ?? "").trim();
+
+    const marketing: Record<string, unknown> = { ...existing };
+    if (solutions.length) marketing.solutions = solutions;
+    else delete marketing.solutions;
+    if (highlights.length) marketing.highlights = highlights;
+    else delete marketing.highlights;
+    if (relatedContent.length) marketing.relatedContent = relatedContent;
+    else delete marketing.relatedContent;
+    if (faq.length) marketing.faq = faq;
+    else delete marketing.faq;
+    if (ctaHeadline && ctaButtonLabel && ctaButtonHref) {
+      marketing.cta = {
+        headline: ctaHeadline,
+        ...(ctaDescription ? { description: ctaDescription } : {}),
+        buttonLabel: ctaButtonLabel,
+        buttonHref: ctaButtonHref,
+      };
+    } else {
+      delete marketing.cta;
+    }
+
+    await getProductStudio().updateMarketingMetadata({
+      productId,
+      marketing,
+      actorUserId: session.user.id,
+    });
+    revalidateStudio(productId);
+    return { notice: "Đã lưu trang thương mại" };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
 export async function saveSeoAction(_s: ActionState, formData: FormData): Promise<ActionState> {
   try {
     const session = await actor("catalog.write");

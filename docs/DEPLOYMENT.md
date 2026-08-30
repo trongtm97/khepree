@@ -26,7 +26,7 @@ Each app should use its own `BETTER_AUTH` / `*_URL` base so cookies do not colli
 4. Run each app’s `next start` (or the container equivalent) with that app’s URL and port.
 5. `validateRuntimeEnv()` runs on Node boot (not during `next build`). Production start fails if database, auth, both storage buckets, license signing keys, email env vars, or SePay credentials (`PAYMENT_PROVIDER=sepay`) are missing.
 
-CI (`.github/workflows/ci.yml`) runs install, lint, typecheck, test, and build. It does **not** deploy. Do not promote a build that failed those checks.
+CI (`.github/workflows/ci.yml`) runs on pull requests. **Production deploy** (`.github/workflows/production.yml`) runs on push to `main`: quality → integration → GHCR images → VPS SSH deploy. See `docs/VPS-CICD.md`.
 
 End-to-end Playwright is separate: `E2E=1 pnpm test:e2e` with apps listening on 3000–3003. Wire that to a staging environment, not to the default PR job, unless the runner provides the full stack.
 

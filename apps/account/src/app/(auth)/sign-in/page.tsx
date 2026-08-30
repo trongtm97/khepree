@@ -16,7 +16,7 @@ export default async function SignInPage() {
 
   return (
     <Suspense fallback={<p className="text-sm text-khepree-slate/70">{copy.auth.loading}</p>}>
-      <SignInForm copy={copy.auth} googleEnabled={isGoogleAuthConfigured()} />
+      <SignInForm copy={copy.auth} googleEnabled={isGoogleAuthConfigured()} locale={locale} />
     </Suspense>
   );
 }

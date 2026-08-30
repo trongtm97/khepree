@@ -1,6 +1,6 @@
 import type { PublicPlan } from "@khepree/catalog";
 import { isPurchasableBillingType } from "@khepree/catalog";
-import { Card, CardDescription, CardTitle, cn } from "@khepree/ui";
+import { buttonClassName, Card, CardDescription, CardTitle, cn } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { formatPublicPlanPrice, selectPublicDisplayPrice } from "@/lib/catalog-display";
@@ -86,7 +86,7 @@ export function PricingPlanCard({
         <div className="mt-auto pt-6">
           <a
             href={checkoutHref}
-            className="inline-flex h-11 w-full items-center justify-center rounded-[var(--radius-button)] bg-teal px-5 text-sm font-medium text-background transition-colors hover:bg-teal/90"
+            className={buttonClassName({ variant: "accent", size: "md", fullWidthMobile: true, className: "w-full" })}
           >
             {messages.catalog.checkout}
           </a>

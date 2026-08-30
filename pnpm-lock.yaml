@@ -769,6 +769,9 @@ importers:
       '@khepree/reseller':
         specifier: workspace:*
         version: link:../reseller
+      '@khepree/security':
+        specifier: workspace:*
+        version: link:../security
     devDependencies:
       '@khepree/eslint-config':
         specifier: workspace:*
@@ -776,6 +779,9 @@ importers:
       '@khepree/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
+      esbuild:
+        specifier: ^0.25.9
+        version: 0.25.12
       eslint:
         specifier: ^9.34.0
         version: 9.39.5(jiti@2.7.0)
