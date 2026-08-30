@@ -1,12 +1,12 @@
 import { getEnv, isDatabaseConfigured, isEmailConfigured, isStorageConfigured } from "@khepree/config";
 import { ADMIN_PAGE_SIZE, listAdminSystemEvents } from "@khepree/db";
 import type { Metadata } from "next";
-import { DataTable, Td } from "@/components/data-table";
+import { AdminPageHeader, AdminSection, AdminTable, AdminTd } from "@/components/admin";
 import { Pagination } from "@/components/search-form";
 import { requireAdmin } from "@/lib/admin-session";
 import { formatDate, parsePage } from "@/lib/format";
 
-export const metadata: Metadata = { title: "System" };
+export const metadata: Metadata = { title: "Hệ thống" };
 
 export default async function SystemPage({
   searchParams,
@@ -19,17 +19,18 @@ export default async function SystemPage({
   const rows = await listAdminSystemEvents({ page });
   const flags = [
     { label: "NODE_ENV", value: env.NODE_ENV },
-    { label: "Database", value: isDatabaseConfigured(env) ? "configured" : "not configured" },
-    { label: "Storage", value: isStorageConfigured(env) ? "configured" : "not configured" },
-    { label: "Email", value: isEmailConfigured(env) ? "configured" : "not configured" },
+    { label: "Cơ sở dữ liệu", value: isDatabaseConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình" },
+    { label: "Lưu trữ", value: isStorageConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình" },
+    { label: "Email", value: isEmailConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình" },
     {
-      label: "Admin MFA (prod)",
-      value: "ADMIN and SUPER_ADMIN must enable MFA in production",
+      label: "MFA admin (prod)",
+      value: "ADMIN và SUPER_ADMIN phải bật MFA trên production",
     },
   ];
+
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold tracking-tight">System</h1>
+      <AdminPageHeader title="Hệ thống" description="Trạng thái môi trường và sự kiện vận hành." />
       <ul className="space-y-1 text-sm">
         {flags.map((row) => (
           <li key={row.label}>
@@ -37,19 +38,18 @@ export default async function SystemPage({
           </li>
         ))}
       </ul>
-      <section className="space-y-3">
-        <h2 className="font-semibold">System events</h2>
-        <DataTable headers={["When", "Type", "Severity"]} empty={rows.length === 0}>
+      <AdminSection title="Sự kiện hệ thống">
+        <AdminTable headers={["Thời gian", "Loại", "Mức độ"]} empty={rows.length === 0}>
           {rows.map((row) => (
             <tr key={row.id}>
-              <Td>{formatDate(row.createdAt)}</Td>
-              <Td>{row.eventType}</Td>
-              <Td>{row.severity}</Td>
+              <AdminTd>{formatDate(row.createdAt)}</AdminTd>
+              <AdminTd>{row.eventType}</AdminTd>
+              <AdminTd>{row.severity}</AdminTd>
             </tr>
           ))}
-        </DataTable>
+        </AdminTable>
         <Pagination page={page} hasMore={rows.length >= ADMIN_PAGE_SIZE} />
-      </section>
+      </AdminSection>
     </div>
   );
 }

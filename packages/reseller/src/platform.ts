@@ -1,14 +1,19 @@
 import { createCommerceService, type CreateCommerceServiceOverrides } from "@khepree/commerce";
-import { getEnv } from "@khepree/config";
+import { DEFAULT_LOCALE, getEnv } from "@khepree/config";
 import {
-  createEntitlementCommerceHooks,
+  createEntitlementOrderHandlers,
   createEntitlementService,
   type CreateEntitlementServiceOverrides,
 } from "@khepree/entitlement";
-import { createLicensingService, type CreateLicensingServiceOverrides } from "@khepree/licensing";
-import { createPartnerCommerceHooks } from "./commerce-hooks";
+import {
+  createLicensingOrderHandlers,
+  createLicensingService,
+  type CreateLicensingServiceOverrides,
+} from "@khepree/licensing";
+import { createPartnerOrderHandlers } from "./order-handlers";
 import { createPartnerService, type CreatePartnerServiceOverrides } from "./service";
 
+/** @deprecated Use createKhepreePlatform from @khepree/platform. */
 export function createPartnerPlatform(
   overrides: {
     entitlement?: CreateEntitlementServiceOverrides;
@@ -21,25 +26,20 @@ export function createPartnerPlatform(
     overrides.licensing?.entitlement ?? createEntitlementService(overrides.entitlement);
   const licensing = createLicensingService({ ...overrides.licensing, entitlement });
   const env = getEnv();
+  const fallback = `${(env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "")}/${DEFAULT_LOCALE}`;
   const partner = createPartnerService({
     ...overrides.partner,
     entitlement,
-    referralBaseUrl: overrides.partner?.referralBaseUrl ?? env.APP_URL ?? "http://localhost:3000",
+    referralBaseUrl: overrides.partner?.referralBaseUrl ?? fallback,
   });
-  const entitlementHooks = createEntitlementCommerceHooks(entitlement);
-  const partnerHooks = createPartnerCommerceHooks(partner);
   const commerce = createCommerceService({
     ...overrides.commerce,
-    hooks: overrides.commerce?.hooks ?? {
-      async afterPaid(ctx) {
-        await entitlementHooks.afterPaid?.(ctx);
-        await partnerHooks.afterPaid(ctx);
-      },
-      async afterRefunded(ctx) {
-        await entitlementHooks.afterRefunded?.(ctx);
-        await partnerHooks.afterRefunded(ctx);
-      },
-    },
+    handlers: [
+      ...(overrides.commerce?.handlers ?? []),
+      ...createEntitlementOrderHandlers(entitlement),
+      ...createLicensingOrderHandlers(entitlement),
+      ...createPartnerOrderHandlers(partner),
+    ],
   });
   return { commerce, entitlement, licensing, partner };
 }

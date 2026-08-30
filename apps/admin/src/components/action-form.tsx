@@ -2,6 +2,7 @@
 
 import { Alert, Button } from "@khepree/ui";
 import { useActionState, type ReactNode } from "react";
+import { adminUi } from "@/lib/labels";
 
 export type ActionState = { error?: string; notice?: string };
 
@@ -28,7 +29,7 @@ export function ActionForm({
         variant={danger ? "secondary" : "primary"}
         className={danger ? "border-red-300 text-red-700" : undefined}
       >
-        {pending ? "Working…" : submitLabel}
+        {pending ? adminUi.working : submitLabel}
       </Button>
     </form>
   );

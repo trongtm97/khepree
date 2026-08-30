@@ -1,11 +1,11 @@
 import { listAdminOrganizations } from "@khepree/db";
 import type { Metadata } from "next";
-import { DataTable, Td } from "@/components/data-table";
+import { AdminPageHeader, AdminTable, AdminTd } from "@/components/admin";
 import { Pagination, SearchForm } from "@/components/search-form";
 import { requireAdmin } from "@/lib/admin-session";
 import { formatDate, parsePage } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Organizations" };
+export const metadata: Metadata = { title: "Tổ chức" };
 
 export default async function OrganizationsPage({
   searchParams,
@@ -17,19 +17,20 @@ export default async function OrganizationsPage({
   const page = parsePage(params.page);
   const q = params.q?.trim() ?? "";
   const rows = await listAdminOrganizations({ q, page });
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Organizations</h1>
+      <AdminPageHeader title="Tổ chức" description="Tổ chức khách hàng doanh nghiệp." />
       <SearchForm q={q} />
-      <DataTable headers={["Name", "Slug", "Created"]} empty={rows.length === 0}>
+      <AdminTable headers={["Tên", "Slug", "Ngày tạo"]} empty={rows.length === 0}>
         {rows.map((row) => (
           <tr key={row.id}>
-            <Td>{row.name}</Td>
-            <Td>{row.slug}</Td>
-            <Td>{formatDate(row.createdAt)}</Td>
+            <AdminTd>{row.name}</AdminTd>
+            <AdminTd>{row.slug}</AdminTd>
+            <AdminTd>{formatDate(row.createdAt)}</AdminTd>
           </tr>
         ))}
-      </DataTable>
+      </AdminTable>
       <Pagination page={page} hasMore={rows.length >= 50} q={q} />
     </div>
   );

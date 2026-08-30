@@ -1,14 +1,14 @@
 import { getEnv } from "@khepree/config";
 import { createIdentityDirectory } from "@khepree/auth";
 import { createCatalogAdminService, createContentService, createDownloadService } from "@khepree/catalog";
-import { createPartnerPlatform } from "@khepree/reseller";
+import { createKhepreePlatform } from "@khepree/platform";
 
 export function adminAuthBaseUrl(): string {
   return getEnv().ADMIN_URL || "http://localhost:3002";
 }
 
 export function getPlatform() {
-  return createPartnerPlatform();
+  return createKhepreePlatform();
 }
 
 export function getIdentityDirectory() {

@@ -1,12 +1,14 @@
-import { Card, CardDescription, CardTitle, EmptyState } from "@khepree/ui";
 import { getAdminDashboard } from "@khepree/db";
 import { hasPermission } from "@khepree/security";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AdminEmptyState } from "@/components/admin";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminSection } from "@/components/admin/admin-section";
+import { AdminStatCard } from "@/components/admin/admin-stat-card";
 import { requireAdmin } from "@/lib/admin-session";
 import { formatDate, formatMoney } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Tổng quan" };
 
 export default async function DashboardPage() {
   const session = await requireAdmin();
@@ -15,29 +17,27 @@ export default async function DashboardPage() {
   const revenue =
     data.revenueMinorByCurrency.length === 0
       ? "—"
-      : data.revenueMinorByCurrency
-          .map((row) => formatMoney(row.amountMinor, row.currency))
-          .join(" · ");
+      : data.revenueMinorByCurrency.map((row) => formatMoney(row.amountMinor, row.currency)).join(" · ");
 
   const cards = [
-    { href: "/users", title: "Users", value: String(data.userCount), show: true },
+    { href: "/users", title: "Người dùng", value: String(data.userCount), show: true },
     {
       href: "/entitlements",
-      title: "Active entitlements",
+      title: "Quyền sử dụng đang hoạt động",
       value: String(data.activeEntitlementCount),
       show: true,
     },
     {
       href: "/orders",
-      title: "Orders",
+      title: "Đơn hàng",
       value: canFinance ? `${data.orderCount} · ${revenue}` : String(data.orderCount),
       show: true,
     },
-    { href: "/licenses", title: "Licenses", value: String(data.licenseCount), show: true },
-    { href: "/partners", title: "Partners", value: String(data.partnerCount), show: true },
+    { href: "/licenses", title: "Bản quyền", value: String(data.licenseCount), show: true },
+    { href: "/partners", title: "Đại lý", value: String(data.partnerCount), show: true },
     {
-      href: "/system",
-      title: "Succeeded payments",
+      href: "/payments",
+      title: "Thanh toán thành công",
       value: String(data.succeededPaymentCount),
       show: canFinance,
     },
@@ -45,25 +45,24 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-khepree-slate/70">Live counts from the database. No placeholder metrics.</p>
-      </header>
+      <AdminPageHeader
+        title="Tổng quan"
+        description="Số liệu thực từ cơ sở dữ liệu. Không có số liệu giả lập."
+      />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
-          <Link key={card.title} href={card.href} className="group block">
-            <Card className="h-full">
-              <CardTitle>{card.title}</CardTitle>
-              <p className="mt-3 text-2xl font-semibold tabular-nums">{card.value}</p>
-              <CardDescription className="mt-2">Open {card.title.toLowerCase()}</CardDescription>
-            </Card>
-          </Link>
+          <AdminStatCard
+            key={card.title}
+            href={card.href}
+            title={card.title}
+            value={card.value}
+            description={`Mở ${card.title.toLowerCase()}`}
+          />
         ))}
       </div>
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Recent system events</h2>
+      <AdminSection title="Sự kiện hệ thống gần đây">
         {data.recentSystemEvents.length === 0 ? (
-          <EmptyState title="No system events" description="Operational events appear here when recorded." />
+          <AdminEmptyState title="Chưa có sự kiện" description="Sự kiện vận hành sẽ hiển thị tại đây." />
         ) : (
           <ul className="space-y-2 text-sm">
             {data.recentSystemEvents.map((row) => (
@@ -73,21 +72,20 @@ export default async function DashboardPage() {
             ))}
           </ul>
         )}
-      </section>
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Recent audit</h2>
+      </AdminSection>
+      <AdminSection title="Nhật ký hoạt động gần đây">
         {data.recentAudit.length === 0 ? (
-          <EmptyState title="No audit rows yet" />
+          <AdminEmptyState title="Chưa có nhật ký" />
         ) : (
           <ul className="space-y-2 text-sm">
             {data.recentAudit.map((row) => (
               <li key={row.id}>
-                {formatDate(row.createdAt)} · {row.action} · {row.resourceType} {row.resourceId ?? ""}
+                {formatDate(row.createdAt)} · {row.action} · {row.resourceType}
               </li>
             ))}
           </ul>
         )}
-      </section>
+      </AdminSection>
     </div>
   );
 }

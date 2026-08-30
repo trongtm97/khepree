@@ -2,6 +2,25 @@ export const AUTH_ROUTES = {
   signIn: "/sign-in",
 } as const;
 
+export const SELECT_ROUTE = "/select";
+
+export const PARTNER_PAGES = {
+  dashboard: "dashboard",
+  customers: "customers",
+  licenses: "licenses",
+  products: "products",
+  orders: "orders",
+  wallet: "wallet",
+  commissions: "commissions",
+  referrals: "referrals",
+  team: "team",
+  settings: "settings",
+} as const;
+
+export function partnerPath(partnerPublicId: string, page: keyof typeof PARTNER_PAGES): string {
+  return `/p/${partnerPublicId}/${PARTNER_PAGES[page]}`;
+}
+
 export const PROTECTED_ROUTES = {
   dashboard: "/dashboard",
   customers: "/customers",
@@ -14,6 +33,13 @@ export const PROTECTED_ROUTES = {
   team: "/team",
   settings: "/settings",
 } as const;
+
+export function partnerNav(partnerPublicId: string) {
+  return (Object.keys(PARTNER_PAGES) as Array<keyof typeof PARTNER_PAGES>).map((page) => ({
+    label: page[0]!.toUpperCase() + page.slice(1),
+    href: partnerPath(partnerPublicId, page),
+  }));
+}
 
 export const PARTNER_NAV = [
   { label: "Dashboard", href: PROTECTED_ROUTES.dashboard },
@@ -29,9 +55,10 @@ export const PARTNER_NAV = [
 ] as const;
 
 export const PUBLIC_AUTH_PATHS = Object.values(AUTH_ROUTES);
-export const PROTECTED_PATHS = Object.values(PROTECTED_ROUTES);
+export const PROTECTED_PATHS = [...Object.values(PROTECTED_ROUTES), SELECT_ROUTE];
 
 export function isProtectedPath(pathname: string): boolean {
+  if (pathname === SELECT_ROUTE || pathname.startsWith("/p/")) return true;
   return PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 

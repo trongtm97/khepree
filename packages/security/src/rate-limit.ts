@@ -10,9 +10,68 @@ export type RateLimitDecision =
 
 type Bucket = { timestamps: number[] };
 
-// ponytail: in-memory sliding window is per-process. Multi-instance production
-// is launch-restricted (docs/TODOS.md P1) until this Map is swapped for Redis.
-const buckets = new Map<string, Bucket>();
+export interface RateLimiter {
+  consume(key: string, policy: RateLimitPolicy): Promise<RateLimitDecision> | RateLimitDecision;
+}
+
+export class MemoryRateLimiter implements RateLimiter {
+  private readonly buckets = new Map<string, Bucket>();
+
+  consume(key: string, policy: RateLimitPolicy): RateLimitDecision {
+    try {
+      const now = Date.now();
+      const bucketKey = `${policy.name}:${key}`;
+      const bucket = this.buckets.get(bucketKey) ?? { timestamps: [] };
+      bucket.timestamps = bucket.timestamps.filter((ts) => now - ts < policy.windowMs);
+      if (bucket.timestamps.length >= policy.max) {
+        const oldest = bucket.timestamps[0] ?? now;
+        const retryAfterSeconds = Math.max(1, Math.ceil((oldest + policy.windowMs - now) / 1000));
+        this.buckets.set(bucketKey, bucket);
+        return { ok: false, retryAfterSeconds };
+      }
+      bucket.timestamps.push(now);
+      this.buckets.set(bucketKey, bucket);
+      return { ok: true };
+    } catch {
+      return { ok: false, retryAfterSeconds: 60 };
+    }
+  }
+
+  reset(): void {
+    this.buckets.clear();
+  }
+}
+
+/** Redis fixed-window limiter. Inject commands; do not add a Redis client dependency here. */
+export interface RedisCommands {
+  incr(key: string): Promise<number>;
+  pexpire(key: string, ms: number): Promise<unknown>;
+}
+
+export class RedisRateLimiter implements RateLimiter {
+  constructor(private readonly redis: RedisCommands) {}
+
+  async consume(key: string, policy: RateLimitPolicy): Promise<RateLimitDecision> {
+    try {
+      const bucketKey = `rl:${policy.name}:${key}`;
+      const count = await this.redis.incr(bucketKey);
+      if (count === 1) await this.redis.pexpire(bucketKey, policy.windowMs);
+      if (count > policy.max) {
+        return { ok: false, retryAfterSeconds: Math.max(1, Math.ceil(policy.windowMs / 1000)) };
+      }
+      return { ok: true };
+    } catch {
+      return { ok: false, retryAfterSeconds: 60 };
+    }
+  }
+}
+
+const memoryLimiter = new MemoryRateLimiter();
+
+export function createRateLimiter(redis?: RedisCommands): RateLimiter {
+  if (redis) return new RedisRateLimiter(redis);
+  return memoryLimiter;
+}
 
 export const RATE_LIMITS = {
   AUTH_SIGN_IN: { name: "auth.sign-in", windowMs: 15 * 60_000, max: 10 },
@@ -58,23 +117,7 @@ export function authRateLimitPolicy(pathname: string): RateLimitPolicy {
  * Record a hit. Fail closed: any unexpected limiter error is treated as deny.
  */
 export function consumeRateLimit(key: string, policy: RateLimitPolicy): RateLimitDecision {
-  try {
-    const now = Date.now();
-    const bucketKey = `${policy.name}:${key}`;
-    const bucket = buckets.get(bucketKey) ?? { timestamps: [] };
-    bucket.timestamps = bucket.timestamps.filter((ts) => now - ts < policy.windowMs);
-    if (bucket.timestamps.length >= policy.max) {
-      const oldest = bucket.timestamps[0] ?? now;
-      const retryAfterSeconds = Math.max(1, Math.ceil((oldest + policy.windowMs - now) / 1000));
-      buckets.set(bucketKey, bucket);
-      return { ok: false, retryAfterSeconds };
-    }
-    bucket.timestamps.push(now);
-    buckets.set(bucketKey, bucket);
-    return { ok: true };
-  } catch {
-    return { ok: false, retryAfterSeconds: 60 };
-  }
+  return memoryLimiter.consume(key, policy);
 }
 
 export function rateLimitedResponse(retryAfterSeconds: number, requestId?: string): Response {
@@ -106,5 +149,5 @@ export function enforceRateLimit(
 
 /** Test-only. */
 export function resetRateLimitStoreForTests(): void {
-  buckets.clear();
+  memoryLimiter.reset();
 }

@@ -5,6 +5,10 @@ const mockRedirect = vi.fn((url: string) => {
   throw new Error(`REDIRECT:${url}`);
 });
 
+vi.mock("react", () => ({
+  cache: (fn: unknown) => fn,
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => mockRedirect(url),
 }));

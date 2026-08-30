@@ -27,6 +27,24 @@ export function isNextBuildPhase(source: NodeJS.ProcessEnv = process.env): boole
   return source.NEXT_PHASE === "phase-production-build";
 }
 
+export function validatePaymentProviderConfiguration(env: Env = getEnv()): void {
+  if (env.PAYMENT_PROVIDER === "mock") {
+    if (env.NODE_ENV === "production") {
+      throw new EnvValidationError("PAYMENT_PROVIDER=mock is not allowed in production");
+    }
+    return;
+  }
+  if (env.PAYMENT_PROVIDER === "sepay") {
+    if (!isSePayConfigured(env)) {
+      throw new EnvValidationError(
+        "SEPAY_ENV, SEPAY_MERCHANT_ID, and SEPAY_SECRET_KEY are required when PAYMENT_PROVIDER=sepay",
+      );
+    }
+    return;
+  }
+  throw new EnvValidationError(`Unknown payment provider: ${env.PAYMENT_PROVIDER}`);
+}
+
 /** Fail fast when production-critical configuration is missing. Skips `next build`. */
 export function validateRuntimeEnv(env: Env = getEnv()): void {
   if (isNextBuildPhase()) return;
@@ -55,16 +73,11 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
     throw new EnvValidationError("LICENSE_SIGNING_PRIVATE_KEY and LICENSE_SIGNING_PUBLIC_KEY are required in production");
   }
 
-  if (!isEmailConfigured(env)) {
-    throw new EnvValidationError("EMAIL_FROM and EMAIL_PROVIDER_API_KEY are required in production");
-  }
-
-  if (env.PAYMENT_PROVIDER !== "sepay") {
-    throw new EnvValidationError("PAYMENT_PROVIDER=sepay is required in production");
-  }
-  if (!isSePayConfigured(env)) {
+  if (!isEmailConfigured(env) || env.EMAIL_PROVIDER === "dev") {
     throw new EnvValidationError(
-      "SEPAY_ENV, SEPAY_MERCHANT_ID, and SEPAY_SECRET_KEY are required when PAYMENT_PROVIDER=sepay",
+      "Production email requires EMAIL_PROVIDER=resend, EMAIL_FROM, and EMAIL_PROVIDER_API_KEY",
     );
   }
+
+  validatePaymentProviderConfiguration(env);
 }

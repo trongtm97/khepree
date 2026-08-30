@@ -11,6 +11,10 @@ export interface CreateDraftInput {
   seoTitle?: string | null;
   seoDescription?: string | null;
   body?: string | null;
+  featuredMediaPublicId?: string | null;
+  authorUserId?: string | null;
+  categoryId?: string | null;
+  scheduledAt?: Date | null;
 }
 
 export interface CreateDraftVersionInput {
@@ -21,6 +25,9 @@ export interface CreateDraftVersionInput {
   seoTitle?: string | null;
   seoDescription?: string | null;
   body?: string | null;
+  featuredMediaId?: string | null;
+  authorUserId?: string | null;
+  categoryId?: string | null;
 }
 
 export interface UpdateContentInput {
@@ -30,6 +37,10 @@ export interface UpdateContentInput {
   seoTitle?: string | null;
   seoDescription?: string | null;
   body?: string | null;
+  featuredMediaPublicId?: string | null;
+  authorUserId?: string | null;
+  categoryId?: string | null;
+  scheduledAt?: Date | null;
 }
 
 export interface ContentVersionRecord {
@@ -47,6 +58,13 @@ export interface ContentVersionRecord {
   bodyStorageProvider: string | null;
   bodyStorageBucket: string | null;
   bodyObjectKey: string | null;
+  featuredMediaId: string | null;
+  featuredMediaPublicId: string | null;
+  authorUserId: string | null;
+  authorName: string | null;
+  categoryId: string | null;
+  categoryName: string | null;
+  scheduledAt: Date | null;
   status: ContentStatus;
   publishedAt: Date | null;
   createdAt: Date;
@@ -64,6 +82,10 @@ export interface PublishedContent {
   seoTitle: string | null;
   seoDescription: string | null;
   bodyObjectKey: string | null;
+  featuredMediaPublicId: string | null;
+  authorUserId: string | null;
+  authorName: string | null;
+  categoryName: string | null;
   publishedAt: Date | null;
 }
 
@@ -96,6 +118,7 @@ export interface PrepareMediaUploadInput {
   altText?: string | null;
   ownerType?: string | null;
   ownerId?: string | null;
+  contentClass?: import("@khepree/storage").UploadContentClass;
 }
 
 export interface PrepareMediaUploadResult {
@@ -120,4 +143,5 @@ export interface CompleteMediaUploadInput {
   width?: number | null;
   height?: number | null;
   checksumSha256?: string | null;
+  contentClass?: import("@khepree/storage").UploadContentClass;
 }

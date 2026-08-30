@@ -7,7 +7,9 @@ describe("assertOrderTransition", () => {
     expect(canTransitionOrder("draft", "pending_payment")).toBe(true);
     expect(canTransitionOrder("pending_payment", "paid")).toBe(true);
     expect(canTransitionOrder("paid", "partially_refunded")).toBe(true);
-    expect(canTransitionOrder("partially_refunded", "refunded")).toBe(true);
+    expect(canTransitionOrder("pending_payment", "voided")).toBe(true);
+    expect(canTransitionOrder("paid", "voided")).toBe(true);
+    expect(canTransitionOrder("voided", "paid")).toBe(false);
   });
 
   it("blocks invalid transitions", () => {

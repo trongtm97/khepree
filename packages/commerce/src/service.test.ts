@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { AuditService } from "@khepree/db";
 import { CommerceError } from "./errors";
-import { assertOrderTransition } from "./order-state";
+import { assertOrderTransition, canTransitionOrder } from "./order-state";
 import {
   MOCK_SIGNATURE_HEADER,
   MockDevelopmentPaymentProvider,
   signMockWebhook,
+  type PaymentProvider,
 } from "./provider";
+import { SePayPaymentProvider } from "./sepay";
 import { createCommerceService, type CommerceService } from "./service";
 import { MemoryCommerceRepository } from "./store";
 import type { CatalogReader, PurchasableOffer } from "./types";
@@ -139,6 +141,9 @@ describe("order transitions", () => {
     expect(() => assertOrderTransition("paid", "pending_payment")).toThrow(CommerceError);
     expect(() => assertOrderTransition("cancelled", "paid")).toThrow(CommerceError);
     expect(() => assertOrderTransition("refunded", "paid")).toThrow(CommerceError);
+    expect(() => assertOrderTransition("voided", "paid")).toThrow(CommerceError);
+    expect(canTransitionOrder("pending_payment", "voided")).toBe(true);
+    expect(canTransitionOrder("paid", "voided")).toBe(true);
   });
 });
 
@@ -355,5 +360,251 @@ describe("commerce checkout and payments", () => {
     await postWebhook(commerce, "payment.succeeded", `mockpay_${intent.orderPublicId}`, 599000n, "evt_hook");
     await postWebhook(commerce, "payment.succeeded", `mockpay_${intent.orderPublicId}`, 599000n, "evt_hook");
     expect(paid).toEqual([intent.orderPublicId]);
+  });
+});
+
+const SEPAY_IPN_SECRET = "test-ipn-secret";
+
+function sepayProvider() {
+  return new SePayPaymentProvider({
+    env: "sandbox",
+    merchantId: "MERCHANT_123",
+    secretKey: "test-sepay-secret",
+    ipnSecret: SEPAY_IPN_SECRET,
+  });
+}
+
+function createSepayCommerce(hooks?: {
+  afterRefunded?: (ctx: { payment: { id: string } }) => Promise<void>;
+  afterVoided?: (ctx: { payment: { id: string } }) => Promise<void>;
+  afterPaid?: (ctx: { order: { publicId: string } }) => Promise<void>;
+}) {
+  const store = new MemoryCommerceRepository(() => NOW);
+  const { audit, records } = recordingAudit();
+  const provider = sepayProvider();
+  const commerce = createCommerceService({
+    store,
+    provider,
+    catalog: testCatalog(),
+    audit,
+    now: () => NOW,
+    hooks,
+  });
+  return { commerce, store, records, provider };
+}
+
+function sepayIpnBody(orderPublicId: string, notificationType: string, amount = "599000") {
+  return JSON.stringify({
+    timestamp: 1757058220,
+    notification_type: notificationType,
+    order: {
+      id: "order-1",
+      order_invoice_number: `KHP_${orderPublicId}`,
+      order_currency: "VND",
+      order_amount: amount,
+    },
+    transaction: {
+      transaction_id: `txn_${notificationType}_${orderPublicId}`,
+      transaction_amount: amount,
+      transaction_currency: "VND",
+      payment_method: "BANK_TRANSFER",
+    },
+  });
+}
+
+async function postSepayIpn(
+  commerce: CommerceService,
+  orderPublicId: string,
+  notificationType: string,
+) {
+  return commerce.processWebhook({
+    providerId: "sepay",
+    headers: { "X-Secret-Key": SEPAY_IPN_SECRET },
+    rawBody: sepayIpnBody(orderPublicId, notificationType),
+  });
+}
+
+describe("SePay refund, void, and one-time access", () => {
+  it("persists manual_required without changing payment, order, or access", async () => {
+    const refunded: string[] = [];
+    const { commerce, store } = createSepayCommerce({
+      afterRefunded: async (ctx) => {
+        refunded.push(ctx.payment.id);
+      },
+    });
+    const intent = await startCheckout(commerce);
+    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    const payment = store.payments[0];
+    if (!payment) throw new Error("missing payment");
+
+    const result = await commerce.requestRefund({
+      paymentId: payment.id,
+      amountMinor: 599000n,
+      actorUserId: OWNER.userId,
+      reason: "customer_request",
+    });
+
+    expect(result.outcome).toBe("manual_required");
+    expect(result.refund.status).toBe("manual_required");
+    expect(store.payments[0]?.status).toBe("succeeded");
+    expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("paid");
+    expect(refunded).toEqual([]);
+  });
+
+  it("confirms a manual refund once and is idempotent on duplicate confirmation", async () => {
+    const refunded: string[] = [];
+    const { commerce, store } = createSepayCommerce({
+      afterRefunded: async (ctx) => {
+        refunded.push(ctx.payment.id);
+      },
+    });
+    const intent = await startCheckout(commerce);
+    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    const payment = store.payments[0];
+    if (!payment) throw new Error("missing payment");
+
+    const requested = await commerce.requestRefund({
+      paymentId: payment.id,
+      amountMinor: 599000n,
+      actorUserId: OWNER.userId,
+    });
+    expect(requested.outcome).toBe("manual_required");
+
+    const first = await commerce.confirmManualRefund({
+      refundId: requested.refund.id,
+      actorUserId: OWNER.userId,
+      reason: "finance_confirmed",
+    });
+    expect(first.outcome).toBe("completed");
+    expect(first.refund.status).toBe("succeeded");
+    expect(store.payments[0]?.status).toBe("refunded");
+    expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("refunded");
+    expect(refunded).toHaveLength(1);
+
+    const second = await commerce.confirmManualRefund({
+      refundId: requested.refund.id,
+      actorUserId: OWNER.userId,
+      reason: "finance_confirmed",
+    });
+    expect(second.outcome).toBe("completed");
+    expect(refunded).toHaveLength(1);
+  });
+
+  it("does not create a refund ledger row for TRANSACTION_VOID", async () => {
+    const voided: string[] = [];
+    const refunded: string[] = [];
+    const { commerce, store, provider } = createSepayCommerce({
+      afterVoided: async (ctx) => {
+        voided.push(ctx.payment.id);
+      },
+      afterRefunded: async (ctx) => {
+        refunded.push(ctx.payment.id);
+      },
+    });
+    const refundSpy = { calls: 0 };
+    provider.refund = async () => {
+      refundSpy.calls += 1;
+      return { providerRefundId: "should-not-run" };
+    };
+    const intent = await startCheckout(commerce);
+    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    await postSepayIpn(commerce, intent.orderPublicId, "TRANSACTION_VOID");
+
+    expect(store.payments[0]?.status).toBe("voided");
+    expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("voided");
+    expect(store.refunds).toHaveLength(0);
+    expect(voided).toHaveLength(1);
+    expect(refunded).toHaveLength(0);
+    expect(refundSpy.calls).toBe(0);
+  });
+
+  it("does not repeat void hooks on duplicate TRANSACTION_VOID IPN", async () => {
+    const voided: string[] = [];
+    const { commerce, store } = createSepayCommerce({
+      afterVoided: async (ctx) => {
+        voided.push(ctx.payment.id);
+      },
+    });
+    const intent = await startCheckout(commerce);
+    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    const first = await postSepayIpn(commerce, intent.orderPublicId, "TRANSACTION_VOID");
+    const second = await postSepayIpn(commerce, intent.orderPublicId, "TRANSACTION_VOID");
+    expect(first.status).toBe("processed");
+    expect(second.status).toBe("duplicate");
+    expect(store.payments[0]?.status).toBe("voided");
+    expect(voided).toHaveLength(1);
+  });
+
+  it("does not create a provider subscription for a one-time annual SePay purchase", async () => {
+    const { commerce, store } = createSepayCommerce();
+    const intent = await startCheckout(commerce);
+    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("paid");
+    expect(store.subscriptions).toHaveLength(0);
+  });
+
+  it("does not treat providerPaymentId as a subscription id even if recurring is advertised", async () => {
+    const store = new MemoryCommerceRepository(() => NOW);
+    const { audit } = recordingAudit();
+    const provider = new MockDevelopmentPaymentProvider({
+      webhookSecret: "test-secret",
+      hostedBaseUrl: "http://localhost:3001",
+    });
+    provider.capabilities.supportsRecurring = true;
+    const commerce = createCommerceService({
+      store,
+      provider,
+      catalog: testCatalog(),
+      audit,
+      now: () => NOW,
+    });
+    const intent = await startCheckout(commerce);
+    await postWebhook(
+      commerce,
+      "payment.succeeded",
+      `mockpay_${intent.orderPublicId}`,
+      599000n,
+      "evt_recurring_trap",
+    );
+    expect(store.subscriptions).toHaveLength(0);
+  });
+
+  it("creates a subscription only when checkout returns providerSubscriptionId", async () => {
+    const store = new MemoryCommerceRepository(() => NOW);
+    const { audit } = recordingAudit();
+    const inner = new MockDevelopmentPaymentProvider({
+      webhookSecret: "test-secret",
+      hostedBaseUrl: "http://localhost:3001",
+    });
+    const provider: PaymentProvider = {
+      ...inner,
+      id: inner.id,
+      capabilities: { ...inner.capabilities, supportsRecurring: true },
+      createCheckout: async (input) => {
+        const result = await inner.createCheckout(input);
+        return { ...result, providerSubscriptionId: "sub_real_sepay_agreement" };
+      },
+      verifyWebhook: (request) => inner.verifyWebhook(request),
+      normalizeWebhookEvent: (verified) => inner.normalizeWebhookEvent(verified),
+      refund: (input) => inner.refund(input),
+    };
+    const commerce = createCommerceService({
+      store,
+      provider,
+      catalog: testCatalog(),
+      audit,
+      now: () => NOW,
+    });
+    const intent = await startCheckout(commerce);
+    await postWebhook(
+      commerce,
+      "payment.succeeded",
+      `mockpay_${intent.orderPublicId}`,
+      599000n,
+      "evt_real_sub",
+    );
+    expect(store.subscriptions).toHaveLength(1);
+    expect(store.subscriptions[0]?.providerSubscriptionId).toBe("sub_real_sepay_agreement");
+    expect(store.payments[0]?.providerSubscriptionId).toBe("sub_real_sepay_agreement");
   });
 });

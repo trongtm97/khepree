@@ -64,6 +64,7 @@ export function articleJsonLd(input: {
   url: string;
   datePublished?: Date | string | null;
   inLanguage: string;
+  author?: string;
 }) {
   const payload: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -78,6 +79,9 @@ export function articleJsonLd(input: {
       url: siteUrl(),
     },
   };
+  if (input.author) {
+    payload.author = { "@type": "Person", name: input.author };
+  }
   if (input.datePublished) {
     payload.datePublished =
       input.datePublished instanceof Date

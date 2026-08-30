@@ -3,6 +3,7 @@ import { parseDecimalToMinor, parseMoneyMinor } from "@khepree/types";
 import { CommerceError } from "./errors";
 import type { PaymentProvider, PaymentProviderCapabilities } from "./provider";
 import type {
+  CheckoutFormField,
   CreateCheckoutInput,
   CreateCheckoutResult,
   NormalizedCommerceEvent,
@@ -14,7 +15,8 @@ import type {
 
 export const SEPAY_PROVIDER_ID = "sepay";
 
-const SIGN_FIELD_ORDER = [
+/** Official SePay checkout field order. Signature is last. Do not derive this from object insertion. */
+export const SEPAY_FORM_FIELD_ORDER = [
   "order_amount",
   "merchant",
   "currency",
@@ -26,7 +28,26 @@ const SIGN_FIELD_ORDER = [
   "success_url",
   "error_url",
   "cancel_url",
+  "signature",
 ] as const;
+
+export type SepayFormFieldName = (typeof SEPAY_FORM_FIELD_ORDER)[number];
+
+const SIGN_FIELD_ORDER = SEPAY_FORM_FIELD_ORDER.filter((name) => name !== "signature");
+
+export type SepayCheckoutFieldValues = {
+  order_amount: string;
+  merchant: string;
+  currency: string;
+  operation: string;
+  order_description: string;
+  order_invoice_number: string;
+  customer_id?: string;
+  payment_method?: string;
+  success_url: string;
+  error_url: string;
+  cancel_url: string;
+};
 
 const CHECKOUT_HOSTS = {
   sandbox: "https://pay-sandbox.sepay.vn/v1/checkout/init",
@@ -82,23 +103,49 @@ export function sepayCheckoutInitUrl(env: "sandbox" | "production"): string {
  * Source: https://developer.sepay.vn/en/cong-thanh-toan/API/don-hang/form-thanh-toan
  */
 export function signSepayFields(fields: Record<string, string>, secretKey: string): string {
-  const signed: string[] = [];
-  for (const field of SIGN_FIELD_ORDER) {
-    const value = fields[field];
-    if (value === undefined) continue;
-    signed.push(`${field}=${value}`);
-  }
-  return createHmac("sha256", secretKey).update(signed.join(",")).digest("base64");
+  return createHmac("sha256", secretKey).update(sepaySigningString(fields)).digest("base64");
 }
 
 export function sepaySigningString(fields: Record<string, string>): string {
   const signed: string[] = [];
   for (const field of SIGN_FIELD_ORDER) {
     const value = fields[field];
-    if (value === undefined) continue;
+    if (value === undefined || value === "") continue;
     signed.push(`${field}=${value}`);
   }
   return signed.join(",");
+}
+
+/**
+ * Build checkout inputs in official SePay order. Optional fields are omitted
+ * without shifting remaining names. Signature is always last.
+ */
+export function buildSepayCheckoutFields(
+  values: SepayCheckoutFieldValues,
+  secretKey: string,
+): CheckoutFormField[] {
+  const present: Record<string, string> = {};
+  for (const name of SIGN_FIELD_ORDER) {
+    const value = values[name];
+    if (value === undefined || value === "") continue;
+    present[name] = value;
+  }
+  const signature = signSepayFields(present, secretKey);
+  const ordered: CheckoutFormField[] = [];
+  for (const name of SEPAY_FORM_FIELD_ORDER) {
+    if (name === "signature") {
+      ordered.push({ name: "signature", value: signature });
+      continue;
+    }
+    const value = present[name];
+    if (value === undefined) continue;
+    ordered.push({ name, value });
+  }
+  return ordered;
+}
+
+export function sepayFormFieldNames(fields: CheckoutFormField[]): string[] {
+  return fields.map((field) => field.name);
 }
 
 function headerValue(headers: Record<string, string>, name: string): string | undefined {
@@ -221,19 +268,22 @@ export class SePayPaymentProvider implements PaymentProvider {
     }
 
     const invoice = sepayInvoiceNumber(input.orderPublicId);
-    const fields: Record<string, string> = {
-      order_amount: input.amountMinor.toString(),
-      merchant: this.options.merchantId,
-      currency: "VND",
-      operation: "PURCHASE",
-      order_description: input.description ?? `Khepree ${input.orderPublicId}`,
-      order_invoice_number: invoice,
-      success_url: input.successUrl,
-      error_url: input.errorUrl ?? input.cancelUrl,
-      cancel_url: input.cancelUrl,
-    };
-    if (input.customerId) fields.customer_id = input.customerId;
-    fields.signature = signSepayFields(fields, this.options.secretKey);
+    const fields = buildSepayCheckoutFields(
+      {
+        order_amount: input.amountMinor.toString(),
+        merchant: this.options.merchantId,
+        currency: "VND",
+        operation: "PURCHASE",
+        order_description: input.description ?? `Khepree ${input.orderPublicId}`,
+        order_invoice_number: invoice,
+        customer_id: input.customerId,
+        payment_method: input.paymentMethod,
+        success_url: input.successUrl,
+        error_url: input.errorUrl ?? input.cancelUrl,
+        cancel_url: input.cancelUrl,
+      },
+      this.options.secretKey,
+    );
 
     return {
       providerCheckoutId: invoice,
@@ -297,7 +347,7 @@ export class SePayPaymentProvider implements PaymentProvider {
       notificationType === "ORDER_PAID"
         ? "payment_succeeded"
         : notificationType === "TRANSACTION_VOID"
-          ? "payment_refunded"
+          ? "payment_voided"
           : null;
     if (!type) return null;
 

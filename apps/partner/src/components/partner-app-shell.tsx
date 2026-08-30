@@ -5,21 +5,25 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { authClient } from "@/lib/auth-client";
-import { PARTNER_NAV } from "@/lib/routes";
+import { PARTNER_NAV, partnerNav } from "@/lib/routes";
 
 export function PartnerAppShell({
   children,
   userName,
   userEmail,
   partnerName,
+  partnerPublicId,
 }: {
   children: ReactNode;
   userName: string;
   userEmail: string;
   partnerName: string | null;
+  partnerPublicId?: string | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const nav = partnerPublicId ? partnerNav(partnerPublicId) : PARTNER_NAV;
+  const homeHref = partnerPublicId ? `/p/${partnerPublicId}/dashboard` : "/select";
 
   async function signOut() {
     await authClient.signOut();
@@ -31,7 +35,7 @@ export function PartnerAppShell({
     <div className="flex min-h-screen flex-col bg-khepree-cloud">
       <header className="border-b border-khepree-mist bg-khepree-white">
         <Container className="flex h-14 items-center justify-between gap-4">
-          <Link href="/dashboard">
+          <Link href={homeHref}>
             <BrandLogo size="sm" />
           </Link>
           <div className="hidden items-center gap-3 text-sm sm:flex">
@@ -51,8 +55,8 @@ export function PartnerAppShell({
           className="hidden w-56 shrink-0 border-r border-khepree-mist bg-khepree-white p-4 md:block"
         >
           <nav className="flex flex-col gap-1">
-            {PARTNER_NAV.map((item) => {
-              const active = pathname === item.href;
+            {nav.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}

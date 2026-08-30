@@ -13,6 +13,7 @@
     "@khepree/catalog": "workspace:*",
     "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
+    "@khepree/events": "workspace:*",
     "@khepree/types": "workspace:*",
     "drizzle-orm": "^0.44.5"
   },

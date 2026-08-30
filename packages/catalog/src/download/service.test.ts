@@ -85,6 +85,22 @@ describe("defaultDownloadAccessPolicy", () => {
       }),
     ).toBe(true);
   });
+
+  it("requires entitlement for release-bound private media", () => {
+    const media = privateMedia({ context: "release:rel_sample" });
+    expect(
+      defaultDownloadAccessPolicy.canDownloadPrivateMedia(media, {
+        purpose: "download",
+        actorUserId: "user-1",
+      }),
+    ).toBe(false);
+    expect(
+      defaultDownloadAccessPolicy.canDownloadPrivateMedia(media, {
+        purpose: "download",
+        entitled: true,
+      }),
+    ).toBe(true);
+  });
 });
 
 describe("DownloadService.authorizePrivateDownload", () => {

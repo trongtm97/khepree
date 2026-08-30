@@ -27,6 +27,9 @@ const envSchema = z.object({
 
   EMAIL_FROM: z.string().optional(),
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
+  EMAIL_PROVIDER: z.enum(["dev", "resend"]).default("dev"),
+
+  REDIS_URL: z.string().optional(),
 
   PAYMENT_PROVIDER: z.enum(["mock", "sepay"]).default("mock"),
   MOCK_PAYMENT_WEBHOOK_SECRET: z.string().optional(),

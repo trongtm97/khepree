@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./content": "./src/content/service.ts",
+    "./markdown": "./src/content/markdown.ts",
     "./media": "./src/media/service.ts",
     "./product": "./src/product/service.ts"
   },

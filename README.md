@@ -39,7 +39,8 @@ pnpm dev:web      # Marketing → http://localhost:3000
 | `pnpm build`      | Production build all apps      |
 | `pnpm typecheck`  | TypeScript strict check        |
 | `pnpm lint`       | ESLint                         |
-| `pnpm test`       | Unit tests                     |
+| `pnpm test`       | Unit tests (DB-less). Postgres `skipIf` tests run in CI integration. |
+| `pnpm test:e2e`   | Playwright smoke (`E2E=1`). Not in the unit PR job. |
 | `pnpm db:migrate` | Apply Drizzle migrations       |
 | `pnpm db:seed`    | Idempotent development seed    |
 
@@ -59,9 +60,12 @@ pnpm dev:web      # Marketing → http://localhost:3000
 | 01–06 | ✅ Complete |
 | **06.5** | ✅ Architecture hardening |
 | 07–11 | ✅ Complete |
-| **12** | ✅ Production readiness (docs + CI + public IA). Not a go-live certificate. |
+| **12** | ✅ Production readiness docs + CI + public IA. Not a go-live certificate. |
+| **13** | ✅ Vietnam-first locale, VND, SePay. Not production-ready — B1 sandbox proof open. |
+| **13.1** | ✅ SePay form field order, manual refund commit, `payment_voided`. B1 still open. |
+| **14** | ✅ Platform reliability (outbox, composition root, partner/CMS/CI). **Not production-ready.** |
 
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) and [docs/PRODUCTION-STATUS.md](./docs/PRODUCTION-STATUS.md).
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), [docs/PRODUCTION-STATUS.md](./docs/PRODUCTION-STATUS.md), and [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Environment
 

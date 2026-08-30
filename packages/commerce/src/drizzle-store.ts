@@ -4,6 +4,7 @@ import {
   customers,
   orderItems,
   orders,
+  outboxEvents,
   payments,
   refunds,
   subscriptions,
@@ -11,6 +12,7 @@ import {
   withTransaction,
   type Database,
 } from "@khepree/db";
+import type { NewOutboxEvent } from "@khepree/events";
 import { CommerceError } from "./errors";
 import type { CommerceRepository, NewOrderInput, NewOrderItemInput, NewPaymentInput, NewSubscriptionInput } from "./store";
 import type {
@@ -30,8 +32,27 @@ import type {
 export class DrizzleCommerceRepository implements CommerceRepository {
   constructor(private readonly db: Database) {}
 
+  get connection(): Database {
+    return this.db;
+  }
+
   async withTransaction<T>(fn: (repo: CommerceRepository) => Promise<T>): Promise<T> {
     return withTransaction(this.db, async (tx) => fn(new DrizzleCommerceRepository(tx)));
+  }
+
+  async enqueueOutbox(input: NewOutboxEvent): Promise<void> {
+    try {
+      await this.db.insert(outboxEvents).values({
+        publicId: input.publicId,
+        eventType: input.eventType,
+        aggregateType: input.aggregateType,
+        aggregateId: input.aggregateId,
+        payload: input.payload,
+        status: "PENDING",
+      });
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+    }
   }
 
   async getOrCreateCustomer(owner: CustomerOwner): Promise<CustomerRecord> {
@@ -147,6 +168,7 @@ export class DrizzleCommerceRepository implements CommerceRepository {
         currency: input.currency,
         status: input.status ?? "pending",
         method: input.method ?? null,
+        providerSubscriptionId: input.providerSubscriptionId ?? null,
       })
       .returning();
     if (!row) throw new CommerceError("CONFLICT", "Could not create payment");
@@ -183,7 +205,12 @@ export class DrizzleCommerceRepository implements CommerceRepository {
 
   async updatePayment(
     id: string,
-    patch: { status?: PaymentStatus; providerPaymentId?: string | null; method?: string | null },
+    patch: {
+      status?: PaymentStatus;
+      providerPaymentId?: string | null;
+      method?: string | null;
+      providerSubscriptionId?: string | null;
+    },
   ): Promise<PaymentRecord> {
     const [row] = await this.db
       .update(payments)
@@ -250,6 +277,11 @@ export class DrizzleCommerceRepository implements CommerceRepository {
       .returning();
     if (!row) throw new CommerceError("CONFLICT", "Could not create refund");
     return mapRefund(row);
+  }
+
+  async getRefundById(id: string): Promise<RefundRecord | null> {
+    const [row] = await this.db.select().from(refunds).where(eq(refunds.id, id)).limit(1);
+    return row ? mapRefund(row) : null;
   }
 
   async listRefundsByPayment(paymentId: string): Promise<RefundRecord[]> {
@@ -356,6 +388,7 @@ function mapPayment(row: typeof payments.$inferSelect): PaymentRecord {
     amountMinor: row.amountMinor,
     currency: row.currency,
     method: row.method ?? null,
+    providerSubscriptionId: row.providerSubscriptionId ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

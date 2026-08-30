@@ -1,5 +1,6 @@
 import { accountPublicUrl } from "@/lib/urls";
-import { createPartnerPlatform, newVisitorId } from "@khepree/reseller";
+import { createKhepreePlatform } from "@khepree/platform";
+import { newVisitorId } from "@khepree/reseller";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -13,7 +14,7 @@ export async function GET(
   const jar = await cookies();
   const visitorId = jar.get(VISITOR_COOKIE)?.value || newVisitorId();
   try {
-    await createPartnerPlatform().partner.recordClick({ code, visitorId });
+    await createKhepreePlatform().partner.recordClick({ code, visitorId });
   } catch {
     // Invalid code or missing DB still lands on sign-up with the ref query.
   }

@@ -13,6 +13,7 @@ export {
   type PartnerActor,
 } from "./service";
 export { createPartnerCommerceHooks } from "./commerce-hooks";
+export { createPartnerOrderHandlers } from "./order-handlers";
 export { createPartnerPlatform } from "./platform";
 export { hasMode } from "./types";
 export type {

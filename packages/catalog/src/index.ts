@@ -7,6 +7,18 @@ export {
   type ContentStatus,
 } from "./content/service";
 export {
+  renderContentMarkdown,
+  expandProductBlocks,
+  type ProductCtaBlock,
+} from "./content/markdown";
+export { sanitizeContentHtml, escapeHtml, stripUnsafeMarkdownSource } from "./content/sanitize";
+export {
+  createContentPreviewToken,
+  verifyContentPreviewToken,
+  contentPreviewUrl,
+} from "./content/preview-token";
+export { suggestContentSlug } from "./content/slug";
+export {
   buildContentRevalidationPlan,
   contentRevalidationPaths,
   contentRevalidationTags,
@@ -33,10 +45,29 @@ export {
   DownloadService,
   createDownloadService,
   defaultDownloadAccessPolicy,
+  isReleaseMediaContext,
   type DownloadAccessPolicy,
   type DownloadAuthorizationContext,
   productIdFromMediaContext,
 } from "./download/service";
+
+export {
+  ReleaseService,
+  createReleaseService,
+  releasePlatformLabel,
+} from "./release/service";
+export {
+  compareReleaseVersions,
+  isReleaseVersionNewer,
+  meetsMinimumVersion,
+  parseReleaseVersion,
+} from "./release/version";
+export type {
+  CreateReleaseDraftInput,
+  LatestReleaseQuery,
+  PrepareReleaseUploadInput,
+  ReleaseRecord,
+} from "./release/types";
 
 export {
   ProductService,
@@ -67,6 +98,7 @@ export {
   selectDisplayPrice,
   currencyMinorUnits,
 } from "./product/pricing";
+export { defaultMarket, isPriceAllowedForMarket, type MarketContext } from "./product/market";
 export { parseProductMarketingMetadata } from "./product/metadata";
 export type {
   LicensingMode,
@@ -83,3 +115,17 @@ export type {
   PurchasableOffer,
 } from "./product/types";
 export { isPurchasableBillingType } from "./product/types";
+export {
+  ProductStudioService,
+  computeProductReadiness,
+  createProductStudioService,
+} from "./product/studio/service";
+export { suggestProductSlug } from "./product/slug";
+export { createProductPreviewToken, verifyProductPreviewToken } from "./product/preview-token";
+export type {
+  ProductStudioSnapshot,
+  ReadinessResult,
+  ReadinessItem,
+  StudioListRow,
+  StudioPlan,
+} from "./product/studio/types";

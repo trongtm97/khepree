@@ -1,4 +1,7 @@
 {
   "extends": "@khepree/typescript-config/base.json",
+  "compilerOptions": {
+    "types": ["node", "react"]
+  },
   "include": ["src/**/*.ts"]
 }

@@ -1,8 +1,10 @@
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import {
   createPublicId,
   mediaAssets,
+  products,
   requireDb,
+  softwareReleases,
   type Database,
 } from "@khepree/db";
 import {
@@ -63,6 +65,7 @@ export class MediaService {
       mimeType: input.mimeType,
       sizeBytes: input.sizeBytes,
       bucket: input.visibility,
+      contentClass: input.contentClass,
     });
 
     const storage = this.storageFor(input.visibility);
@@ -93,10 +96,30 @@ export class MediaService {
   }
 
   async completeUpload(input: CompleteMediaUploadInput): Promise<MediaRecord> {
+    const contentClass =
+      input.contentClass ??
+      (input.bucket === "private" && input.context?.startsWith("release")
+        ? "software_release"
+        : undefined);
+
+    if (
+      input.bucket === "public" &&
+      input.mimeType.startsWith("image/") &&
+      input.mimeType !== "image/svg+xml" &&
+      !input.altText?.trim()
+    ) {
+      throw new Error("Alt text is required for public images");
+    }
+
     validateUpload({
       mimeType: input.mimeType,
       sizeBytes: input.expectedSizeBytes,
       bucket: input.bucket,
+      contentClass,
+      requireChecksum:
+        input.bucket === "private" &&
+        Boolean(input.checksumSha256 || input.context?.startsWith("release")),
+      checksumSha256: input.checksumSha256,
     });
 
     const storage = this.storageFor(input.bucket);
@@ -149,6 +172,44 @@ export class MediaService {
       .limit(1);
 
     return row ? mapMedia(row, this.publicStorage) : null;
+  }
+
+  async updateAltText(publicId: string, altText: string | null): Promise<MediaRecord> {
+    const [row] = await this.db
+      .update(mediaAssets)
+      .set({ altText: altText?.trim() || null, updatedAt: new Date() })
+      .where(eq(mediaAssets.publicId, publicId))
+      .returning();
+    if (!row) throw new Error("Media not found");
+    return mapMedia(row, this.publicStorage);
+  }
+
+  async getReferenceCounts(mediaId: string): Promise<{ productIcons: number; releases: number }> {
+    const [[iconRow], [releaseRow]] = await Promise.all([
+      this.db.select({ n: count() }).from(products).where(eq(products.iconMediaId, mediaId)),
+      this.db
+        .select({ n: count() })
+        .from(softwareReleases)
+        .where(eq(softwareReleases.mediaAssetId, mediaId)),
+    ]);
+    return {
+      productIcons: Number(iconRow?.n ?? 0),
+      releases: Number(releaseRow?.n ?? 0),
+    };
+  }
+
+  async deleteIfUnreferenced(publicId: string): Promise<void> {
+    const [row] = await this.db
+      .select()
+      .from(mediaAssets)
+      .where(eq(mediaAssets.publicId, publicId))
+      .limit(1);
+    if (!row) throw new Error("Media not found");
+    const refs = await this.getReferenceCounts(row.id);
+    if (refs.productIcons + refs.releases > 0) {
+      throw new Error("Media is referenced and cannot be deleted");
+    }
+    await this.db.delete(mediaAssets).where(eq(mediaAssets.id, row.id));
   }
 }
 

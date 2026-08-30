@@ -1,37 +1,43 @@
 import { ADMIN_PAGE_SIZE, listAdminSubscriptions } from "@khepree/db";
 import type { Metadata } from "next";
-import { DataTable, Td } from "@/components/data-table";
-import { Pagination } from "@/components/search-form";
+import { AdminPageHeader, AdminStatusBadge, AdminTable, AdminTd, statusTone } from "@/components/admin";
+import { Pagination, SearchForm } from "@/components/search-form";
 import { requireAdmin } from "@/lib/admin-session";
+import { labelStatus } from "@/lib/labels";
 import { formatDate, parsePage } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Subscriptions" };
+export const metadata: Metadata = { title: "Đăng ký" };
 
 export default async function SubscriptionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
   await requireAdmin("finance.read");
   const params = await searchParams;
   const page = parsePage(params.page);
-  const rows = await listAdminSubscriptions({ page });
+  const q = params.q?.trim() ?? "";
+  const rows = await listAdminSubscriptions({ q, page });
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Subscriptions</h1>
-      <DataTable headers={["ID", "Status", "Provider", "Period"]} empty={rows.length === 0}>
+      <AdminPageHeader title="Đăng ký" description="Đăng ký định kỳ đang hoạt động và lịch sử." />
+      <SearchForm q={q} />
+      <AdminTable headers={["Mã", "Trạng thái", "Cổng", "Chu kỳ"]} empty={rows.length === 0}>
         {rows.map((row) => (
           <tr key={row.id}>
-            <Td>{row.publicId}</Td>
-            <Td>{row.status}</Td>
-            <Td>{row.provider ?? "—"}</Td>
-            <Td>
+            <AdminTd>{row.publicId}</AdminTd>
+            <AdminTd>
+              <AdminStatusBadge label={labelStatus(row.status)} tone={statusTone(row.status)} />
+            </AdminTd>
+            <AdminTd>{row.provider ?? "—"}</AdminTd>
+            <AdminTd>
               {formatDate(row.currentPeriodStart)} → {formatDate(row.currentPeriodEnd)}
-            </Td>
+            </AdminTd>
           </tr>
         ))}
-      </DataTable>
-      <Pagination page={page} hasMore={rows.length >= ADMIN_PAGE_SIZE} />
+      </AdminTable>
+      <Pagination page={page} hasMore={rows.length >= ADMIN_PAGE_SIZE} q={q} />
     </div>
   );
 }

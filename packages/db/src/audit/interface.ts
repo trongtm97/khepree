@@ -10,4 +10,6 @@ export interface AuditRecordInput {
 /** Append-only audit trail — implementations must never update or delete rows. */
 export interface AuditService {
   record(input: AuditRecordInput): Promise<void>;
+  /** Bind writes to a transaction connection so audit rolls back with the business state. */
+  bind?(db: unknown): AuditService;
 }

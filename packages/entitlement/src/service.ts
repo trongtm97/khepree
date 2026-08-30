@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   createDrizzleAuditService,
   getDb,
@@ -46,6 +47,43 @@ export class EntitlementService {
   async grantEntitlement(input: GrantEntitlementInput): Promise<GrantResult> {
     return this.options.store.withPrincipalLock(input.principal, input.productId, (repo) =>
       this.grantOn(repo, input),
+    );
+  }
+
+  private auditOn(db?: Database): AuditService {
+    if (db && this.options.audit.bind) return this.options.audit.bind(db);
+    return this.options.audit;
+  }
+
+  /** Same grant as grantEntitlement, on an existing Postgres transaction (partner issue atomicity). */
+  async grantInTransaction(db: Database, input: GrantEntitlementInput): Promise<GrantResult> {
+    const repo = new DrizzleEntitlementRepository(db);
+    await db.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtext(${`${input.principal.type}:${input.principal.id}`}), hashtext(${input.productId}))`,
+    );
+    return this.grantOn(repo, input, this.auditOn(db));
+  }
+
+  async updateInTransaction(db: Database, input: UpdateEntitlementInput): Promise<EntitlementRecord> {
+    const repo = new DrizzleEntitlementRepository(db);
+    return this.updateOn(repo, input, this.auditOn(db));
+  }
+
+  async provisionLicenseIfRequired(entitlementId: string): Promise<GrantResult> {
+    const entitlement = await this.requireEntitlement(entitlementId);
+    const snapshot = entitlement.planId
+      ? await this.snapshotForPlan(entitlement.planId)
+      : null;
+    if (!snapshot || !requiresLicense(snapshot.licensingMode)) {
+      return {
+        entitlement,
+        license: await this.options.store.getLicenseByEntitlementId(entitlement.id),
+      };
+    }
+    return this.options.store.withPrincipalLock(
+      { type: entitlement.principalType, id: entitlement.principalId },
+      entitlement.productId,
+      (repo) => this.ensureLicenseOn(repo, entitlement),
     );
   }
 
@@ -105,18 +143,27 @@ export class EntitlementService {
   }
 
   async updateEntitlement(input: UpdateEntitlementInput): Promise<EntitlementRecord> {
-    const existing = await this.requireEntitlement(input.entitlementId);
+    return this.updateOn(this.options.store, input);
+  }
+
+  private async updateOn(
+    repo: EntitlementRepository,
+    input: UpdateEntitlementInput,
+    audit: AuditService = this.options.audit,
+  ): Promise<EntitlementRecord> {
+    const existing = await repo.getEntitlementById(input.entitlementId);
+    if (!existing) throw new EntitlementError("NOT_FOUND", "Entitlement not found");
     const planId = input.planId ?? existing.planId;
     if (!planId) throw new EntitlementError("PRODUCT_NOT_ALLOWED", "Plan is required");
     const snapshot = await this.snapshotForPlan(planId);
-    const updated = await this.options.store.updateEntitlement(existing.id, {
+    const updated = await repo.updateEntitlement(existing.id, {
       planId,
       expiresAt: input.expiresAt === undefined ? existing.expiresAt : input.expiresAt,
       metadata: input.metadata ? { ...existing.metadata, ...input.metadata } : existing.metadata,
       featureSnapshot: snapshot.featureSnapshot,
       featureSnapshotVersion: snapshot.featureSnapshot.version,
     });
-    await this.options.audit.record({
+    await audit.record({
       actorUserId: input.actorUserId ?? null,
       action: "entitlement.updated",
       resourceType: "entitlement",
@@ -237,7 +284,11 @@ export class EntitlementService {
     return { productSlug, planSlug };
   }
 
-  private async grantOn(repo: EntitlementRepository, input: GrantEntitlementInput): Promise<GrantResult> {
+  private async grantOn(
+    repo: EntitlementRepository,
+    input: GrantEntitlementInput,
+    audit: AuditService = this.options.audit,
+  ): Promise<GrantResult> {
     const snapshot = await this.snapshotForPlan(input.planId);
     if (snapshot.productId !== input.productId) {
       throw new EntitlementError("PRODUCT_NOT_ALLOWED", "Plan does not belong to product");
@@ -279,8 +330,8 @@ export class EntitlementService {
         featureSnapshotVersion: snapshot.featureSnapshot.version,
         revokedAt: null,
       });
-      if (!requiresLicense(snapshot.licensingMode)) {
-        await this.options.audit.record({
+      if (!requiresLicense(snapshot.licensingMode) || input.provisionLicense === false) {
+        await audit.record({
           actorUserId: input.actorUserId ?? null,
           action: "entitlement.updated",
           resourceType: "entitlement",
@@ -291,7 +342,7 @@ export class EntitlementService {
       }
       const license = await this.ensureLicense(repo, updated.id);
       await repo.updateLicense(license.id, { status: "active", revokedAt: null, revokedReason: null });
-      await this.options.audit.record({
+      await audit.record({
         actorUserId: input.actorUserId ?? null,
         action: "entitlement.updated",
         resourceType: "entitlement",
@@ -312,8 +363,8 @@ export class EntitlementService {
       featureSnapshot: snapshot.featureSnapshot,
       featureSnapshotVersion: snapshot.featureSnapshot.version,
     });
-    if (!requiresLicense(snapshot.licensingMode)) {
-      await this.options.audit.record({
+    if (!requiresLicense(snapshot.licensingMode) || input.provisionLicense === false) {
+      await audit.record({
         actorUserId: input.actorUserId ?? null,
         action: "entitlement.granted",
         resourceType: "entitlement",
@@ -329,7 +380,7 @@ export class EntitlementService {
       keyPrefix: issued.keyPrefix,
       keyLast4: issued.keyLast4,
     });
-    await this.options.audit.record({
+    await audit.record({
       actorUserId: input.actorUserId ?? null,
       action: "entitlement.granted",
       resourceType: "entitlement",
@@ -391,6 +442,28 @@ export class EntitlementService {
       revokedAt: status === "revoked" ? this.now() : license.revokedAt,
       revokedReason: reason ?? license.revokedReason,
     });
+  }
+
+  private async ensureLicenseOn(
+    repo: EntitlementRepository,
+    entitlement: EntitlementRecord,
+  ): Promise<GrantResult> {
+    const existing = await repo.getLicenseByEntitlementId(entitlement.id);
+    if (existing) return { entitlement, license: existing };
+    const issued = createHumanLicenseKey();
+    const license = await repo.insertLicense({
+      entitlementId: entitlement.id,
+      keyHash: issued.keyHash,
+      keyPrefix: issued.keyPrefix,
+      keyLast4: issued.keyLast4,
+    });
+    await this.options.audit.record({
+      action: "license.issued",
+      resourceType: "license",
+      resourceId: license.publicId,
+      metadata: { keyPrefix: issued.keyPrefix },
+    });
+    return { entitlement, license, licenseKey: issued.plaintext };
   }
 
   private async ensureLicense(repo: EntitlementRepository, entitlementId: string): Promise<LicenseRecord> {

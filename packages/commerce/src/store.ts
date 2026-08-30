@@ -1,4 +1,6 @@
 import { createPublicId } from "@khepree/db";
+import type { Database } from "@khepree/db";
+import { MemoryOutboxStore, type NewOutboxEvent } from "@khepree/events";
 import { CommerceError } from "./errors";
 import type {
   CustomerOwner,
@@ -44,6 +46,7 @@ export interface NewPaymentInput {
   currency: string;
   status?: PaymentStatus;
   method?: string | null;
+  providerSubscriptionId?: string | null;
 }
 
 export interface NewSubscriptionInput {
@@ -60,6 +63,10 @@ export interface NewSubscriptionInput {
 
 export interface CommerceRepository {
   withTransaction<T>(fn: (repo: CommerceRepository) => Promise<T>): Promise<T>;
+  /** Drizzle transaction connection; undefined for the memory store. */
+  connection?: Database;
+
+  enqueueOutbox(input: NewOutboxEvent): Promise<void>;
 
   getOrCreateCustomer(owner: CustomerOwner): Promise<CustomerRecord>;
   getCustomerById(id: string): Promise<CustomerRecord | null>;
@@ -82,7 +89,12 @@ export interface CommerceRepository {
   listPaymentsForOrders(orderIds: string[]): Promise<PaymentRecord[]>;
   updatePayment(
     id: string,
-    patch: { status?: PaymentStatus; providerPaymentId?: string | null; method?: string | null },
+    patch: {
+      status?: PaymentStatus;
+      providerPaymentId?: string | null;
+      method?: string | null;
+      providerSubscriptionId?: string | null;
+    },
   ): Promise<PaymentRecord>;
 
   insertRefund(input: {
@@ -95,6 +107,7 @@ export interface CommerceRepository {
     reason?: string | null;
     initiatedBy?: string | null;
   }): Promise<RefundRecord>;
+  getRefundById(id: string): Promise<RefundRecord | null>;
   listRefundsByPayment(paymentId: string): Promise<RefundRecord[]>;
   updateRefund(
     id: string,
@@ -131,8 +144,15 @@ export class MemoryCommerceRepository implements CommerceRepository {
   subscriptions: SubscriptionRecord[] = [];
   refunds: RefundRecord[] = [];
   webhooks: MemoryWebhook[] = [];
+  readonly outbox: MemoryOutboxStore;
 
-  constructor(private readonly now: () => Date = () => new Date()) {}
+  constructor(private readonly now: () => Date = () => new Date()) {
+    this.outbox = new MemoryOutboxStore(now);
+  }
+
+  async enqueueOutbox(input: NewOutboxEvent): Promise<void> {
+    await this.outbox.enqueue(input);
+  }
 
   async withTransaction<T>(fn: (repo: CommerceRepository) => Promise<T>): Promise<T> {
     // ponytail: no isolation/rollback in memory; use Drizzle transactions in production.
@@ -242,6 +262,7 @@ export class MemoryCommerceRepository implements CommerceRepository {
       amountMinor: input.amountMinor,
       currency: input.currency,
       method: input.method ?? null,
+      providerSubscriptionId: input.providerSubscriptionId ?? null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -275,12 +296,20 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async updatePayment(
     id: string,
-    patch: { status?: PaymentStatus; providerPaymentId?: string | null; method?: string | null },
+    patch: {
+      status?: PaymentStatus;
+      providerPaymentId?: string | null;
+      method?: string | null;
+      providerSubscriptionId?: string | null;
+    },
   ): Promise<PaymentRecord> {
     const row = requireRow(this.payments.find((item) => item.id === id), "Payment");
     if (patch.status) row.status = patch.status;
     if (patch.providerPaymentId !== undefined) row.providerPaymentId = patch.providerPaymentId;
     if (patch.method !== undefined) row.method = patch.method;
+    if (patch.providerSubscriptionId !== undefined) {
+      row.providerSubscriptionId = patch.providerSubscriptionId;
+    }
     row.updatedAt = this.now();
     return row;
   }
@@ -338,6 +367,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     };
     this.refunds.push(row);
     return row;
+  }
+
+  async getRefundById(id: string): Promise<RefundRecord | null> {
+    return this.refunds.find((row) => row.id === id) ?? null;
   }
 
   async listRefundsByPayment(paymentId: string): Promise<RefundRecord[]> {

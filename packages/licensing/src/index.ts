@@ -16,6 +16,7 @@ export {
   DEFAULT_DEACTIVATE_COOLDOWN_SECONDS,
 } from "./service";
 export { createLicensingPlatform } from "./platform";
+export { createLicensingOrderHandlers } from "./order-handlers";
 export type { ActivationResult, CreateLicensingServiceOverrides } from "./service";
 export type {
   ActivateInput,

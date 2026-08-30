@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 import { CommerceError } from "./errors";
 import {
   SePayPaymentProvider,
+  SEPAY_FORM_FIELD_ORDER,
+  buildSepayCheckoutFields,
   sepayCheckoutInitUrl,
+  sepayFormFieldNames,
   sepayInvoiceNumber,
   sepaySigningString,
   signSepayFields,
   sanitizeSepayIpnPayload,
   parseSepayIpn,
 } from "./sepay";
+import type { CheckoutFormField } from "./types";
 
 const SECRET = "test-sepay-secret";
 const IPN_SECRET = "test-ipn-secret";
@@ -34,6 +38,20 @@ const officialFields = {
   cancel_url: "https://yoursite.com/payment/cancel",
 };
 
+function fieldValue(fields: CheckoutFormField[], name: string): string | undefined {
+  return fields.find((field) => field.name === name)?.value;
+}
+
+function assertSignatureMatchesOrder(fields: CheckoutFormField[]) {
+  expect(fields.at(-1)?.name).toBe("signature");
+  const withoutSignature = fields.filter((field) => field.name !== "signature");
+  const record = Object.fromEntries(withoutSignature.map((field) => [field.name, field.value]));
+  expect(signSepayFields(record, SECRET)).toBe(fieldValue(fields, "signature"));
+  expect(sepaySigningString(record)).toBe(
+    withoutSignature.map((field) => `${field.name}=${field.value}`).join(","),
+  );
+}
+
 describe("SePay signing and checkout", () => {
   it("builds the official HMAC signing string in field order", () => {
     expect(sepaySigningString(officialFields)).toBe(
@@ -57,7 +75,7 @@ describe("SePay signing and checkout", () => {
     expect(sepayCheckoutInitUrl("production")).toBe("https://pay.sepay.vn/v1/checkout/init");
   });
 
-  it("creates a VND form_post checkout and rejects other currencies", async () => {
+  it("serializes canonical field order when optional fields are absent", async () => {
     const result = await provider().createCheckout({
       orderPublicId: "ord_abc",
       amountMinor: 599000n,
@@ -69,11 +87,23 @@ describe("SePay signing and checkout", () => {
     expect(result.checkoutAction.mode).toBe("form_post");
     if (result.checkoutAction.mode !== "form_post") throw new Error("expected form_post");
     expect(result.checkoutAction.action).toContain("pay-sandbox.sepay.vn");
-    expect(result.checkoutAction.fields.currency).toBe("VND");
-    expect(result.checkoutAction.fields.order_amount).toBe("599000");
-    expect(result.checkoutAction.fields.order_invoice_number).toBe("KHP_ord_abc");
-    expect(result.checkoutAction.fields.signature).toBeTruthy();
+    expect(sepayFormFieldNames(result.checkoutAction.fields)).toEqual([
+      "order_amount",
+      "merchant",
+      "currency",
+      "operation",
+      "order_description",
+      "order_invoice_number",
+      "success_url",
+      "error_url",
+      "cancel_url",
+      "signature",
+    ]);
+    expect(fieldValue(result.checkoutAction.fields, "currency")).toBe("VND");
+    expect(fieldValue(result.checkoutAction.fields, "order_amount")).toBe("599000");
+    expect(fieldValue(result.checkoutAction.fields, "order_invoice_number")).toBe("KHP_ord_abc");
     expect(JSON.stringify(result.checkoutAction.fields)).not.toContain(SECRET);
+    assertSignatureMatchesOrder(result.checkoutAction.fields);
 
     await expect(
       provider().createCheckout({
@@ -84,6 +114,88 @@ describe("SePay signing and checkout", () => {
         cancelUrl: "https://example.com/cancel",
       }),
     ).rejects.toMatchObject({ code: "INVALID_AMOUNT" });
+  });
+
+  it("places customer_id before callback URLs", () => {
+    const fields = buildSepayCheckoutFields(
+      { ...officialFields, customer_id: "user_1" },
+      SECRET,
+    );
+    expect(sepayFormFieldNames(fields)).toEqual([
+      "order_amount",
+      "merchant",
+      "currency",
+      "operation",
+      "order_description",
+      "order_invoice_number",
+      "customer_id",
+      "success_url",
+      "error_url",
+      "cancel_url",
+      "signature",
+    ]);
+    assertSignatureMatchesOrder(fields);
+  });
+
+  it("places payment_method before callback URLs when customer_id is absent", () => {
+    const fields = buildSepayCheckoutFields(
+      { ...officialFields, payment_method: "BANK_TRANSFER" },
+      SECRET,
+    );
+    expect(sepayFormFieldNames(fields)).toEqual([
+      "order_amount",
+      "merchant",
+      "currency",
+      "operation",
+      "order_description",
+      "order_invoice_number",
+      "payment_method",
+      "success_url",
+      "error_url",
+      "cancel_url",
+      "signature",
+    ]);
+    assertSignatureMatchesOrder(fields);
+  });
+
+  it("keeps official order when both optional fields are present", async () => {
+    const result = await provider().createCheckout({
+      orderPublicId: "ord_abc",
+      amountMinor: 599000n,
+      currency: "VND",
+      successUrl: "https://account.khepree.com/ok",
+      cancelUrl: "https://account.khepree.com/cancel",
+      errorUrl: "https://account.khepree.com/error",
+      customerId: "user_1",
+      paymentMethod: "BANK_TRANSFER",
+    });
+    if (result.checkoutAction.mode !== "form_post") throw new Error("expected form_post");
+    expect(sepayFormFieldNames(result.checkoutAction.fields)).toEqual([...SEPAY_FORM_FIELD_ORDER]);
+    expect(fieldValue(result.checkoutAction.fields, "customer_id")).toBe("user_1");
+    expect(fieldValue(result.checkoutAction.fields, "payment_method")).toBe("BANK_TRANSFER");
+    assertSignatureMatchesOrder(result.checkoutAction.fields);
+  });
+
+  it("does not use object insertion order for optional fields", () => {
+    const insertionTrap = {
+      order_amount: "100000",
+      merchant: "MERCHANT_123",
+      currency: "VND",
+      operation: "PURCHASE",
+      order_description: "x",
+      order_invoice_number: "INV",
+      success_url: "https://ok",
+      error_url: "https://err",
+      cancel_url: "https://cancel",
+      customer_id: "late",
+    };
+    expect(Object.keys(insertionTrap).indexOf("customer_id")).toBeGreaterThan(
+      Object.keys(insertionTrap).indexOf("success_url"),
+    );
+    const fields = buildSepayCheckoutFields(insertionTrap, SECRET);
+    expect(sepayFormFieldNames(fields).indexOf("customer_id")).toBeLessThan(
+      sepayFormFieldNames(fields).indexOf("success_url"),
+    );
   });
 
   it("fails fast without credentials", () => {
@@ -182,7 +294,7 @@ describe("SePay IPN", () => {
     );
   });
 
-  it("normalizes TRANSACTION_VOID as payment_refunded", () => {
+  it("normalizes TRANSACTION_VOID as payment_voided, not a refund", () => {
     const parsed = parseSepayIpn({
       ...rawOrderPaid,
       notification_type: "TRANSACTION_VOID",
@@ -199,7 +311,7 @@ describe("SePay IPN", () => {
         currency: "VND",
       },
     };
-    expect(provider().normalizeWebhookEvent(verified)?.type).toBe("payment_refunded");
+    expect(provider().normalizeWebhookEvent(verified)?.type).toBe("payment_voided");
   });
 
   it("ignores unknown notification types", () => {

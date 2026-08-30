@@ -1,6 +1,6 @@
-# Production status (Phase 13)
+# Production status (Phase 14)
 
-This is an inventory, not a launch certificate. **Khepree is not production-ready** while any BLOCKER in `docs/TODOS.md` remains open. Compiling Phase 13 does not mean go-live.
+This is an inventory, not a launch certificate. **Khepree is not production-ready** while any BLOCKER in `docs/TODOS.md` remains open. Compiling Phase 14 does not mean go-live. SePay B1 sandbox proof is **not** resolved. Real email delivery is **not** verified. Production infrastructure and backup/restore drills do not exist in this repo.
 
 ## 1. Current architecture tree
 
@@ -9,36 +9,38 @@ apps/
   web          khepree.com           marketing, catalog, blog, docs, legal (vi default)
   account      account.khepree.com   identity, checkout, licenses, billing
   admin        admin.khepree.com     staff RBAC, domain commands, audit
-  partner      partner.khepree.com   referral / reseller
+  partner      partner.khepree.com   referral / reseller (`/p/{partnerPublicId}/…`)
   api          api.khepree.com       HTTP APIs (SePay IPN: /api/v1/webhooks/payments/sepay)
   e2e          Playwright            optional, E2E=1
 packages/
+  platform     createKhepreePlatform() composition root
+  events       domain contracts + outbox dispatcher
   auth         Better Auth (identity only)
-  catalog      products, plans, features, CMS, media
-  commerce     orders, payments, refunds ledger, mock + SePay adapters
+  catalog      products, plans, features, CMS, media, market policy
+  commerce     orders, payments, refunds ledger, mock + SePay, same-tx outbox
   config       env, domains, logger, validation
-  db           Drizzle schema + migrations 0000–0008
-  email        adapter (dev preview only) + VI/EN templates
-  entitlement  feature grants (source of truth for access)
+  db           Drizzle schema + migrations 0000–0010
+  email        DevPreview + Resend HTTP adapter + VI/EN templates
+  entitlement   feature grants (source of truth for access)
   licensing    keys, devices, Ed25519 leases (only when licensingMode requires)
-  reseller     partners, wallet, referrals
+  reseller     partners, wallet, referrals (domain only)
   sdk          client-neutral types
-  security     RBAC, rate limit, trusted-proxy IP
-  storage      public/private object storage
+  security     RBAC, RateLimiter (memory + Redis interface), trusted-proxy IP
+  storage      public/private object storage + upload content classes
   types        money (VND exponent 0) and shared contracts
   ui           design system
 ```
 
 ## 2. Implemented capabilities
 
-- Vietnam-first public IA: `/` 308 → `/vi`; English at `/en`. hreflang `vi-VN` / `en`, `x-default` Vietnamese.
-- Catalog + CMS with `DEFAULT_LOCALE=vi` fallback. English content is kept.
-- Default currency VND (USD prices still supported). Money uses integer minor units + `currencyExponent`.
-- Commerce: provider-neutral `CheckoutAction` (`redirect` | `form_post`). SePay one-time VND checkout. Mock remains development-only.
-- IPN: `X-Secret-Key`, sanitized payload, amount/currency match, duplicate events do not re-run hooks.
-- Entitlement term from access policy (not provider subscription). License issued only for `DEVICE_LEASE` / `LICENSE_KEY_DEVICE`.
-- Rate limits (in-memory, single-instance launch restriction). `TRUSTED_PROXY=none|cloudflare`.
-- CI: install, lint, typecheck, test, build — no deploy.
+- Transactional outbox: payment/order transition and `outbox_events` insert share one PostgreSQL transaction. Paid-order provisioning is retryable; duplicate webhooks do not lose the event.
+- Apps compose via `@khepree/platform`. `@khepree/reseller` is partner domain behavior.
+- Audit writers can `bind(tx)` so audit rows roll back with the business transaction.
+- Partner: VND wallets, `/vi` referral URLs, `accessTermDays`, explicit partner context, drizzle atomic issue.
+- CMS: version allocation retries unique conflicts; compensating delete after failed metadata write; `media_assets.size_bytes` is BIGINT.
+- Server-side `MarketPolicy` (default VN/VND). Production payment env is provider-extensible; mock is forbidden.
+- Email: `ResendEmailAdapter` behind the existing interface. Production fails closed on `EMAIL_PROVIDER=dev`. Delivery is not proven.
+- CI: unit job (no DB) + Postgres integration job (migrate from empty + tests). E2E is a separate workflow_dispatch workflow. Turbo lint/typecheck/test do not require `^build`.
 
 ## 3. Missing production credentials
 
@@ -48,8 +50,9 @@ Must be created **outside** the repo (never committed):
 - `BETTER_AUTH_SECRET`, production `BETTER_AUTH_URL`
 - `LICENSE_SIGNING_PRIVATE_KEY` / `LICENSE_SIGNING_PUBLIC_KEY` (see `docs/LICENSE-SIGNING.md`)
 - R2 (or S3-compatible) account, keys, `R2_BUCKET_PUBLIC`, `R2_BUCKET_PRIVATE`, `R2_PUBLIC_BASE_URL`
-- `EMAIL_FROM`, `EMAIL_PROVIDER_API_KEY` **and** a real email adapter (env alone is not enough today)
-- SePay production credentials after B1 sandbox proof: `SEPAY_ENV`, `SEPAY_MERCHANT_ID`, `SEPAY_SECRET_KEY` (optional `SEPAY_IPN_SECRET`)
+- `EMAIL_PROVIDER=resend`, `EMAIL_FROM`, `EMAIL_PROVIDER_API_KEY` **and** a passing live send test
+- SePay production credentials after B1 sandbox proof
+- Optional `REDIS_URL` for multi-instance rate limits
 - OAuth client secrets if Google sign-in is enabled
 
 ## 4. Required external configuration
@@ -64,35 +67,36 @@ Must be created **outside** the repo (never committed):
 
 ## 5. Database migrations status
 
-Applied set in repo: `0000` … `0008_phase13_vietnam_sepay`. Production is **not** migrated until an operator runs `pnpm db:migrate` against the production URL. Do not `pnpm db:seed` in production.
+Applied set in repo: `0000` … `0010_phase14_reliability`. Production is **not** migrated until an operator runs `pnpm db:migrate` against the production URL. Do not `pnpm db:seed` in production.
 
 ## 6. Security status
 
-Addressed through Phase 13: SePay IPN secret comparison, sanitized webhook persistence, amount/currency mismatch rejection, success URL is UX-only, mock checkout blocked in production, trusted-proxy IP, env validation requires SePay in production.
+Addressed through Phase 14: same-tx outbox, tx-bound audit, upload content classes, market price gate, request-scoped session memo, Redis rate-limit interface, production email fail-closed, provider-extensible payment env validation.
 
-Still open for launch: B1–B6 and P1–P3 in `docs/TODOS.md`. In-memory rate limits are per process (single instance until Redis). Email adapter does not send. CSP allows unsafe-inline. SePay recurring and automated refunds are **not** implemented.
+Still open for launch: B1–B6 and P1–P10 in `docs/TODOS.md`. Redis limiter is an interface until `REDIS_URL` is wired at composition. Email adapter is not proven against Resend. CSP allows unsafe-inline. SePay recurring and automated refunds are **not** implemented.
 
 ## 7. Test status
 
-`pnpm test` passed locally (2026-08-30, Phase 13): catalog 41, commerce 29, reseller 15, licensing 11, entitlement 11, config 11, security 20, plus db/storage/auth/account/api/email. Playwright is **not** in this run (`E2E=1 pnpm test:e2e`). SePay Sandbox live IPN is **not** proven (`docs/SEPAY-SANDBOX.md`).
+`pnpm test` is the unit gate (no database). CI `integration` job applies migrations from empty Postgres and re-runs tests so Postgres `skipIf` cases execute (`INTEGRATION` and `DATABASE_URL` are turbo test env so unit and integration caches stay distinct). Playwright: `E2E=1 pnpm test:e2e` or `.github/workflows/e2e.yml` (workflow_dispatch). SePay Sandbox live IPN is **not** proven. B1 remains open.
 
 ## 8. Build status
 
-`pnpm typecheck`, `pnpm lint` (warnings only on anonymous eslint config exports, no errors), and `pnpm build` passed locally on 2026-08-30. CI workflow: `.github/workflows/ci.yml`.
+`pnpm typecheck`, `pnpm lint`, and `pnpm build` are the Phase 14 quality gate with the unit CI job.
 
 ## 9. Deployment checklist
 
 - [ ] BLOCKERs B1–B6 closed or explicitly accepted in writing (accepting B1 means no paid production)
 - [ ] SePay Sandbox checklist in `docs/SEPAY-SANDBOX.md` observed end-to-end
 - [ ] Production secrets in secret store; signing key never in git
-- [ ] Production DB migrated through `0008`; backup + restore drill done
+- [ ] Production DB migrated through `0010`; backup + restore drill done
 - [ ] Public + private buckets; CDN and download DNS
 - [ ] App URLs and `BETTER_AUTH_URL` match public hostnames
-- [ ] CI green on the revision
+- [ ] Live Resend (or chosen provider) send test passed
+- [ ] CI green on the revision (quality + integration)
 - [ ] Smoke: home `/` → `/vi`, product, 404, sign-in, entitled download (if files exist)
 - [ ] `MAINTENANCE_MODE` documented for cutover
-- [ ] Single-instance until Redis (P1)
+- [ ] Single instance until Redis, or `REDIS_URL` configured
 
 ## 10. Remaining BEFORE PRODUCTION items
 
-See **BEFORE PRODUCTION** in `docs/TODOS.md` (P1–P10). Highest leverage after BLOCKERs: SePay sandbox proof (B1), staging isolation, Redis rate limits if more than one instance, real email adapter, restore drill, staging E2E.
+See **BEFORE PRODUCTION** in `docs/TODOS.md`. Highest leverage after BLOCKERs: SePay sandbox proof (B1), live email proof (B2), staging isolation, Redis if more than one instance, restore drill, staging E2E.

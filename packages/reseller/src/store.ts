@@ -31,6 +31,7 @@ export interface PartnerRepository {
 
   insertPartner(input: Omit<PartnerRecord, "createdAt" | "updatedAt"> & { createdAt?: Date }): Promise<PartnerRecord>;
   getPartnerById(id: string): Promise<PartnerRecord | null>;
+  getPartnerByPublicId(publicId: string): Promise<PartnerRecord | null>;
   getPartnerBySlug(slug: string): Promise<PartnerRecord | null>;
   updatePartner(
     id: string,
@@ -135,6 +136,10 @@ export class MemoryPartnerRepository implements PartnerRepository {
     return this.partners.find((row) => row.id === id) ?? null;
   }
 
+  async getPartnerByPublicId(publicId: string): Promise<PartnerRecord | null> {
+    return this.partners.find((row) => row.publicId === publicId) ?? null;
+  }
+
   async getPartnerBySlug(slug: string): Promise<PartnerRecord | null> {
     return this.partners.find((row) => row.slug === slug) ?? null;
   }
@@ -168,7 +173,12 @@ export class MemoryPartnerRepository implements PartnerRepository {
 
   async getOrCreateWallet(partnerId: string, currency: string): Promise<WalletRecord> {
     const existing = await this.getWalletByPartner(partnerId);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.currency !== currency) {
+        throw new PartnerError("CONFLICT", "Wallet currency does not match partner default");
+      }
+      return existing;
+    }
     const row: WalletRecord = { id: crypto.randomUUID(), partnerId, balanceMinor: 0n, currency };
     this.wallets.push(row);
     return row;

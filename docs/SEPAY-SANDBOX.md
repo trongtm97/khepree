@@ -33,7 +33,7 @@ Localhost is not sufficient unless you expose that path with a tunnel.
 1. Open marketing `/` → land on `/vi`.
 2. Open a product / pricing page. Choose a **VND** plan (region VN).
 3. Sign in on account. Checkout review shows Vietnamese copy.
-4. Submit checkout → account `/checkout/pay/{orderPublicId}` auto-POSTs signed fields to `pay-sandbox.sepay.vn`.
+4. Submit checkout → account `/checkout/pay/{orderPublicId}` auto-POSTs signed fields to `pay-sandbox.sepay.vn` in official order (`order_amount` … `signature` last; optional `customer_id` / `payment_method` do not move callback URLs).
 5. Complete the sandbox payment.
 6. Confirm IPN: payment `succeeded`, order `paid`, entitlement active.
 7. License exists **only** if the product `licensingMode` is `LICENSE_KEY_DEVICE` or `DEVICE_LEASE`.
@@ -45,6 +45,7 @@ Localhost is not sufficient unless you expose that path with a tunnel.
 |------|----------|
 | Success redirect arrives before IPN | Billing shows “Đang xác nhận thanh toán”. No entitlement yet. |
 | Duplicate IPN | HTTP 200, `duplicate`, no second entitlement/email/commission. |
+| `TRANSACTION_VOID` | Payment and order become `voided` (UI: “Đã hủy giao dịch” / “Voided”). No refunds-ledger row. Access reversed once. Not “Hoàn tiền”. |
 | Invalid `X-Secret-Key` | HTTP 400. Order stays unpaid. |
 | Amount mismatch | HTTP 400. Order stays unpaid. |
 | Currency mismatch | HTTP 400. Order stays unpaid. |
@@ -53,5 +54,6 @@ Localhost is not sufficient unless you expose that path with a tunnel.
 
 - Production `SEPAY_ENV=production`
 - SePay recurring / subscriptions
-- Automated SePay refunds
+- Automated SePay refunds (manual finance via `manual_required` + `confirmManualRefund`)
 - Marking the project production-ready
+- Treating `TRANSACTION_VOID` as a refund

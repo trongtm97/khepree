@@ -1,6 +1,6 @@
 import { requireSession } from "@khepree/auth/session";
 import { createProductService, formatBillingInterval, formatPriceAmount } from "@khepree/catalog";
-import { DEFAULT_LOCALE, getEnv } from "@khepree/config";
+import { DEFAULT_LOCALE, DEFAULT_CURRENCY, DEFAULT_MARKET_REGION, getEnv } from "@khepree/config";
 import { Alert, Button, Card, CardDescription, CardTitle } from "@khepree/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -30,6 +30,7 @@ export default async function CheckoutPage({
     planPublicId && pricePublicId
       ? await createProductService().getPurchasableOffer(planPublicId, pricePublicId, {
           locale,
+          market: { currency: DEFAULT_CURRENCY, region: DEFAULT_MARKET_REGION },
         })
       : null;
 

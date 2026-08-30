@@ -17,6 +17,7 @@
     "@khepree/db": "workspace:*",
     "@khepree/entitlement": "workspace:*",
     "@khepree/licensing": "workspace:*",
+    "@khepree/platform": "workspace:*",
     "@khepree/reseller": "workspace:*",
     "@khepree/security": "workspace:*",
     "@khepree/types": "workspace:*",

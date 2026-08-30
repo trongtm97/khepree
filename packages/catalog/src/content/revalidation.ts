@@ -28,8 +28,8 @@ export function contentRevalidationPaths(input: {
     case "legal":
       return [`${base}/${input.slug}`];
     case "page":
+      return [`${base}/pages/${input.slug}`];
     case "product_page":
-      return [`${base}/${input.slug}`];
     default:
       return [`${base}/${input.slug}`];
   }

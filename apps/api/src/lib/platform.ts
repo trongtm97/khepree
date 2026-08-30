@@ -1,5 +1,5 @@
-import { createPartnerPlatform } from "@khepree/reseller";
+import { createKhepreePlatform } from "@khepree/platform";
 
 export function getPlatform() {
-  return createPartnerPlatform();
+  return createKhepreePlatform();
 }

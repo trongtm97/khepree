@@ -7,14 +7,23 @@ import {
   revokeEntitlementAction,
   suspendEntitlementAction,
 } from "@/app/(admin)/actions";
+import {
+  AdminFormSection,
+  AdminPageHeader,
+  AdminStatusBadge,
+  AdminTable,
+  AdminTd,
+  AdminTechnicalDetails,
+  statusTone,
+} from "@/components/admin";
 import { ActionForm } from "@/components/action-form";
 import { DangerFields } from "@/components/danger-fields";
-import { DataTable, Td } from "@/components/data-table";
 import { Pagination, SearchForm } from "@/components/search-form";
 import { requireAdmin } from "@/lib/admin-session";
+import { labelStatus } from "@/lib/labels";
 import { formatDate, parsePage } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Entitlements" };
+export const metadata: Metadata = { title: "Quyền sử dụng" };
 
 export default async function EntitlementsPage({
   searchParams,
@@ -28,77 +37,83 @@ export default async function EntitlementsPage({
   const q = params.q?.trim() ?? "";
   const [rows, products, plans] = await Promise.all([
     listAdminEntitlements({ q, page }),
-    listAdminProducts(),
-    listAdminPlans(),
+    listAdminProducts({ page: 1 }),
+    listAdminPlans({ page: 1 }),
   ]);
+
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold tracking-tight">Entitlements</h1>
-      <p className="text-sm text-khepree-slate/70">
-        Grants go through the entitlement service. The UI never writes the entitlements table.
-      </p>
+      <AdminPageHeader
+        title="Quyền sử dụng"
+        description="Cấp quyền qua dịch vụ entitlement. Giao diện không ghi trực tiếp vào bảng entitlements."
+      />
       {canWrite ? (
-        <ActionForm action={grantEntitlementAction} submitLabel="Grant complimentary">
-          <Select
-            name="principalType"
-            label="Principal"
-            options={[
-              { value: "USER", label: "USER" },
-              { value: "ORGANIZATION", label: "ORGANIZATION" },
-            ]}
-          />
-          <Input name="principalId" label="Principal ID" required />
-          <Select
-            name="productId"
-            label="Product"
-            options={products.map((row) => ({ value: row.id, label: row.slug }))}
-          />
-          <Select
-            name="planId"
-            label="Plan"
-            options={plans.map((row) => ({ value: row.id, label: `${row.productSlug}/${row.slug}` }))}
-          />
-          <Select
-            name="source"
-            label="Source"
-            options={[
-              { value: "complimentary", label: "complimentary" },
-              { value: "admin_grant", label: "admin_grant" },
-            ]}
-          />
-          <Input name="startsAt" label="Start (ISO)" type="datetime-local" />
-          <Input name="expiresAt" label="End (ISO)" type="datetime-local" />
-          <DangerFields reasonLabel="Grant reason" />
-        </ActionForm>
+        <AdminFormSection title="Cấp quyền miễn phí">
+          <ActionForm action={grantEntitlementAction} submitLabel="Cấp quyền">
+            <Select
+              name="principalType"
+              label="Đối tượng"
+              options={[
+                { value: "USER", label: "Người dùng" },
+                { value: "ORGANIZATION", label: "Tổ chức" },
+              ]}
+            />
+            <Input name="principalId" label="ID đối tượng" required />
+            <Select
+              name="productId"
+              label="Sản phẩm"
+              options={products.map((row) => ({ value: row.id, label: row.slug }))}
+            />
+            <Select
+              name="planId"
+              label="Gói"
+              options={plans.map((row) => ({ value: row.id, label: `${row.productSlug}/${row.slug}` }))}
+            />
+            <Select
+              name="source"
+              label="Nguồn"
+              options={[
+                { value: "complimentary", label: "complimentary" },
+                { value: "admin_grant", label: "admin_grant" },
+              ]}
+            />
+            <Input name="startsAt" label="Bắt đầu (ISO)" type="datetime-local" />
+            <Input name="expiresAt" label="Kết thúc (ISO)" type="datetime-local" />
+            <DangerFields reasonLabel="Lý do cấp quyền" />
+          </ActionForm>
+        </AdminFormSection>
       ) : null}
       <SearchForm q={q} />
-      <DataTable headers={["ID", "Principal", "Status", "Source", "Expires", ""]} empty={rows.length === 0}>
+      <AdminTable headers={["Mã", "Đối tượng", "Trạng thái", "Nguồn", "Hết hạn", ""]} empty={rows.length === 0}>
         {rows.map((row) => (
           <tr key={row.id}>
-            <Td>{row.publicId}</Td>
-            <Td>
-              {row.principalType}:{row.principalId.slice(0, 8)}
-            </Td>
-            <Td>{row.status}</Td>
-            <Td>{row.source}</Td>
-            <Td>{formatDate(row.expiresAt)}</Td>
-            <Td>
+            <AdminTd>{row.publicId}</AdminTd>
+            <AdminTd>
+              {row.principalType}
+              <AdminTechnicalDetails>{row.principalId}</AdminTechnicalDetails>
+            </AdminTd>
+            <AdminTd>
+              <AdminStatusBadge label={labelStatus(row.status)} tone={statusTone(row.status)} />
+            </AdminTd>
+            <AdminTd>{row.source}</AdminTd>
+            <AdminTd>{formatDate(row.expiresAt)}</AdminTd>
+            <AdminTd>
               {canWrite ? (
                 <div className="space-y-3">
-                  <ActionForm action={suspendEntitlementAction} submitLabel="Suspend" danger>
+                  <ActionForm action={suspendEntitlementAction} submitLabel="Tạm dừng" danger>
                     <input type="hidden" name="entitlementId" value={row.id} />
                     <DangerFields />
                   </ActionForm>
-                  <ActionForm action={revokeEntitlementAction} submitLabel="Revoke" danger>
+                  <ActionForm action={revokeEntitlementAction} submitLabel="Thu hồi" danger>
                     <input type="hidden" name="entitlementId" value={row.id} />
                     <DangerFields />
                   </ActionForm>
                 </div>
               ) : null}
-            </Td>
+            </AdminTd>
           </tr>
         ))}
-      </DataTable>
+      </AdminTable>
       <Pagination page={page} hasMore={rows.length >= ADMIN_PAGE_SIZE} q={q} />
     </div>
   );

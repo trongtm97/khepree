@@ -13,6 +13,7 @@
     "@khepree/auth": "workspace:*",
     "@khepree/catalog": "workspace:*",
     "@khepree/config": "workspace:*",
+    "@khepree/platform": "workspace:*",
     "@khepree/reseller": "workspace:*",
     "@khepree/security": "workspace:*",
     "@khepree/ui": "workspace:*",

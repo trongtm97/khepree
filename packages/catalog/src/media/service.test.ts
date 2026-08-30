@@ -29,3 +29,36 @@ describe("MediaService.prepareUpload", () => {
     expect(result.upload.headers["Content-Length"]).toBe("4096");
   });
 });
+
+describe("MediaService.completeUpload validation", () => {
+  it("requires alt text for public raster images", async () => {
+    const publicStorage = new MockObjectStorage();
+    const privateStorage = new MockObjectStorage();
+    const objectKey = "pub/marketing/test.webp";
+    await publicStorage.putObject({
+      key: objectKey,
+      bucket: "public",
+      contentType: "image/webp",
+      body: Buffer.alloc(100),
+    });
+
+    const service = new MediaService(
+      {
+        insert: () => ({
+          values: () => ({ returning: async () => [{}] }),
+        }),
+      } as never,
+      publicStorage,
+      privateStorage,
+    );
+
+    await expect(
+      service.completeUpload({
+        objectKey,
+        bucket: "public",
+        mimeType: "image/webp",
+        expectedSizeBytes: 100,
+      }),
+    ).rejects.toThrow(/alt text/i);
+  });
+});

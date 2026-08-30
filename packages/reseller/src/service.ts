@@ -1,11 +1,14 @@
+import { DEFAULT_CURRENCY } from "@khepree/config";
 import {
   createDrizzleAuditService,
   getDb,
+  withTransaction,
   type AuditService,
   type Database,
   type PartnerMode,
 } from "@khepree/db";
-import type { PaidOrderContext, RefundedOrderContext } from "@khepree/commerce";
+import { sql } from "drizzle-orm";
+import { nextExpiresAt } from "@khepree/entitlement";
 import type { EntitlementService } from "@khepree/entitlement";
 import { hasPermission, type Permission } from "@khepree/security";
 import type { PartnerRole } from "@khepree/types";
@@ -23,8 +26,6 @@ import {
   type WalletTxType,
 } from "./types";
 
-const RECURRING_TERM_MS = 30 * 24 * 60 * 60 * 1000;
-
 export interface PartnerActor {
   partner: PartnerRecord;
   role: PartnerRole;
@@ -38,6 +39,7 @@ export interface PartnerServiceOptions {
   audit?: AuditService;
   now?: () => Date;
   referralBaseUrl?: string;
+  database?: Database;
 }
 
 export class PartnerService {
@@ -47,13 +49,22 @@ export class PartnerService {
     this.now = options.now ?? (() => new Date());
   }
 
-  async resolveForUser(userId: string): Promise<PartnerActor | null> {
+  async listActorsForUser(userId: string): Promise<PartnerActor[]> {
     const memberships = await this.options.store.listMembershipsForUser(userId);
-    const first = memberships[0];
-    if (!first) return null;
-    const partner = await this.options.store.getPartnerById(first.partnerId);
+    const actors: PartnerActor[] = [];
+    for (const membership of memberships) {
+      const partner = await this.options.store.getPartnerById(membership.partnerId);
+      if (partner) actors.push({ partner, role: membership.role });
+    }
+    return actors;
+  }
+
+  async resolveForUser(userId: string, partnerPublicId: string): Promise<PartnerActor | null> {
+    const partner = await this.options.store.getPartnerByPublicId(partnerPublicId);
     if (!partner) return null;
-    return { partner, role: first.role };
+    const membership = await this.options.store.getMembership(partner.id, userId);
+    if (!membership) return null;
+    return { partner, role: membership.role };
   }
 
   async assertMember(actorUserId: string, partnerId: string, permission: Permission = "partner.access"): Promise<PartnerActor> {
@@ -70,7 +81,7 @@ export class PartnerService {
   }
 
   async overview(actorUserId: string, partnerId: string) {
-    await this.assertMember(actorUserId, partnerId);
+    const { partner } = await this.assertMember(actorUserId, partnerId);
     const [customers, issues, wallet, commissions, referrals, attributions] = await Promise.all([
       this.options.store.listCustomers(partnerId),
       this.options.store.listIssues(partnerId),
@@ -89,7 +100,7 @@ export class PartnerService {
       issueCount: issues.length,
       activeLicenseCount: activeLicenses,
       walletBalanceMinor: wallet?.balanceMinor ?? 0n,
-      walletCurrency: wallet?.currency ?? "USD",
+      walletCurrency: wallet?.currency ?? partner.defaultCurrency ?? DEFAULT_CURRENCY,
       pendingCommissionCount: commissions.filter((row) => row.status === "pending").length,
       availableCommissionMinor: commissions
         .filter((row) => row.status === "available")
@@ -145,8 +156,11 @@ export class PartnerService {
   }
 
   async listWallet(actorUserId: string, partnerId: string) {
-    await this.assertMember(actorUserId, partnerId);
-    const wallet = await this.options.store.getOrCreateWallet(partnerId, "USD");
+    const { partner } = await this.assertMember(actorUserId, partnerId);
+    const wallet = await this.options.store.getOrCreateWallet(
+      partnerId,
+      partner.defaultCurrency ?? DEFAULT_CURRENCY,
+    );
     const transactions = await this.options.store.listWalletTx(wallet.id);
     return { wallet, transactions };
   }
@@ -256,7 +270,10 @@ export class PartnerService {
     return { attribution: result, replayed: false as const };
   }
 
-  async onPaidOrder(ctx: PaidOrderContext): Promise<void> {
+  async onPaidOrder(ctx: {
+    customer: { userId: string | null; organizationId: string | null };
+    order: { id: string; publicId: string; currency: string; totalMinor: bigint };
+  }): Promise<void> {
     const userId = ctx.customer.userId;
     if (!userId) return;
     const signup = await this.options.store.getSignupAttribution(userId);
@@ -287,11 +304,11 @@ export class PartnerService {
     });
   }
 
-  async onRefunded(ctx: RefundedOrderContext): Promise<void> {
+  async onRefunded(ctx: { orderId: string; full: boolean }): Promise<void> {
     if (!ctx.full) return;
-    const attribution = await this.options.store.getOrderAttribution(ctx.order.id);
+    const attribution = await this.options.store.getOrderAttribution(ctx.orderId);
     if (!attribution) return;
-    const commission = await this.options.store.getCommissionByOrder(attribution.partnerId, ctx.order.id);
+    const commission = await this.options.store.getCommissionByOrder(attribution.partnerId, ctx.orderId);
     if (!commission) return;
     await this.reverseCommission({ commissionId: commission.id });
   }
@@ -429,7 +446,10 @@ export class PartnerService {
     }
     const partner = await this.options.store.getPartnerById(input.partnerId);
     if (!partner) throw new PartnerError("NOT_FOUND", "Partner not found");
-    const wallet = await this.options.store.getOrCreateWallet(input.partnerId, "USD");
+    const wallet = await this.options.store.getOrCreateWallet(
+      input.partnerId,
+      partner.defaultCurrency ?? DEFAULT_CURRENCY,
+    );
     const result = await this.options.store.withWalletLock(wallet.id, (repo) =>
       this.postLedgerOn(repo, partner, wallet.id, input),
     );
@@ -463,6 +483,45 @@ export class PartnerService {
     const plan = await this.options.catalog.getPlan(input.planId);
     if (!plan) throw new PartnerError("NOT_FOUND", "Plan not found");
 
+    const grantInput = {
+      principal: { type: "USER" as const, id: input.customerUserId },
+      productId: plan.productId,
+      planId: plan.id,
+      source: "reseller" as const,
+      expiresAt: expiresAtForPlan(plan.accessTermDays, this.now()),
+      actorUserId: input.actorUserId,
+      metadata: { partnerId: input.partnerId, issueKey: input.idempotencyKey },
+    };
+
+    const ledgerInput = {
+      type: "DEBIT" as const,
+      amountMinor: price.amountMinor,
+      idempotencyKey: `issue:${input.idempotencyKey}`,
+      referenceType: "partner_issue",
+      referenceId: input.idempotencyKey,
+    };
+
+    if (this.options.database) {
+      return withTransaction(this.options.database, async (tx) => {
+        const repo = new DrizzlePartnerRepository(tx);
+        const wallet = await repo.getOrCreateWallet(input.partnerId, partner.defaultCurrency);
+        await tx.execute(sql`SELECT id FROM wallets WHERE id = ${wallet.id} FOR UPDATE`);
+        const debit = await this.postLedgerOn(repo, partner, wallet.id, ledgerInput);
+        const granted = await this.options.entitlement.grantInTransaction(tx, grantInput);
+        const issue = await repo.insertIssue({
+          partnerId: input.partnerId,
+          customerUserId: input.customerUserId,
+          entitlementId: granted.entitlement.id,
+          planId: plan.id,
+          amountMinor: price.amountMinor,
+          currency: price.currency,
+          kind: "issue",
+          idempotencyKey: input.idempotencyKey,
+        });
+        return { issue, replayed: false as const, debit };
+      });
+    }
+
     const debit = await this.postLedger({
       partnerId: input.partnerId,
       type: "DEBIT",
@@ -474,15 +533,7 @@ export class PartnerService {
     });
 
     try {
-      const granted = await this.options.entitlement.grantEntitlement({
-        principal: { type: "USER", id: input.customerUserId },
-        productId: plan.productId,
-        planId: plan.id,
-        source: "reseller",
-        expiresAt: expiresAtForPlan(plan.billingType, this.now()),
-        actorUserId: input.actorUserId,
-        metadata: { partnerId: input.partnerId, issueKey: input.idempotencyKey },
-      });
+      const granted = await this.options.entitlement.grantEntitlement(grantInput);
       const issue = await this.options.store.insertIssue({
         partnerId: input.partnerId,
         customerUserId: input.customerUserId,
@@ -535,25 +586,40 @@ export class PartnerService {
       privileged: true,
     });
 
-    const base = entitlement.expiresAt && entitlement.expiresAt > this.now() ? entitlement.expiresAt : this.now();
-    await this.options.entitlement.updateEntitlement({
-      entitlementId: entitlement.id,
-      expiresAt: expiresAtForPlan(plan.billingType, base) ?? null,
-      actorUserId: input.actorUserId,
-      metadata: { renewedByPartnerId: input.partnerId },
-    });
+    try {
+      await this.options.entitlement.updateEntitlement({
+        entitlementId: entitlement.id,
+        expiresAt: expiresAtForPlan(plan.accessTermDays, this.now(), {
+          existingExpiresAt: entitlement.expiresAt,
+          existingStatus: entitlement.status,
+        }),
+        actorUserId: input.actorUserId,
+        metadata: { renewedByPartnerId: input.partnerId },
+      });
 
-    const issue = await this.options.store.insertIssue({
-      partnerId: input.partnerId,
-      customerUserId: previous.customerUserId,
-      entitlementId: entitlement.id,
-      planId: previous.planId,
-      amountMinor: price.amountMinor,
-      currency: price.currency,
-      kind: "renew",
-      idempotencyKey: input.idempotencyKey,
-    });
-    return { issue, replayed: false as const };
+      const issue = await this.options.store.insertIssue({
+        partnerId: input.partnerId,
+        customerUserId: previous.customerUserId,
+        entitlementId: entitlement.id,
+        planId: previous.planId,
+        amountMinor: price.amountMinor,
+        currency: price.currency,
+        kind: "renew",
+        idempotencyKey: input.idempotencyKey,
+      });
+      return { issue, replayed: false as const };
+    } catch (error) {
+      await this.postLedger({
+        partnerId: input.partnerId,
+        type: "REFUND",
+        amountMinor: price.amountMinor,
+        idempotencyKey: `renew-rollback:${input.idempotencyKey}`,
+        referenceType: "partner_issue",
+        referenceId: input.idempotencyKey,
+        privileged: true,
+      });
+      throw error;
+    }
   }
 
   private async postLedgerOn(
@@ -628,12 +694,17 @@ export class PartnerService {
   }
 }
 
-export function expiresAtForPlan(billingType: string, from: Date): Date | null {
-  if (billingType === "recurring") {
-    // ponytail: 30-day reseller term; upgrade: read the partner price interval
-    return new Date(from.getTime() + RECURRING_TERM_MS);
-  }
-  return null;
+export function expiresAtForPlan(
+  accessTermDays: number | null | undefined,
+  from: Date,
+  existing?: { existingExpiresAt?: Date | null; existingStatus?: string },
+): Date | null {
+  return nextExpiresAt({
+    accessTermDays,
+    now: from,
+    existingExpiresAt: existing?.existingExpiresAt,
+    existingStatus: existing?.existingStatus,
+  });
 }
 
 export interface CreatePartnerServiceOverrides {
@@ -665,5 +736,6 @@ export function createPartnerService(overrides: CreatePartnerServiceOverrides): 
     audit,
     now: overrides.now,
     referralBaseUrl: overrides.referralBaseUrl,
+    database: db ?? undefined,
   });
 }

@@ -21,7 +21,7 @@ export class MockEmailAdapter implements EmailAdapter {
   }
 }
 
-export { createEmailAdapter, DevPreviewEmailAdapter } from "./adapter";
+export { createEmailAdapter, DevPreviewEmailAdapter, ResendEmailAdapter } from "./adapter";
 export {
   renderTransactionalEmail,
   transactionalTemplate,

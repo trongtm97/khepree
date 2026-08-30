@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -26,7 +27,9 @@ export interface AuthenticatedSession {
   orgIds: string[];
 }
 
-export async function getSession(authBaseURL?: string): Promise<AuthenticatedSession | null> {
+export const getSession = cache(async function getSession(
+  authBaseURL?: string,
+): Promise<AuthenticatedSession | null> {
   const auth = getAuth(authBaseURL);
   const headerStore = await headers();
   const result = await auth.api.getSession({ headers: headerStore });
@@ -61,7 +64,7 @@ export async function getSession(authBaseURL?: string): Promise<AuthenticatedSes
     locale: isSupportedLocale(profile?.locale) ? profile.locale : DEFAULT_LOCALE,
     orgIds: orgRows.map((row) => row.organizationId),
   };
-}
+});
 
 export async function requireSession(
   redirectTo = "/sign-in",

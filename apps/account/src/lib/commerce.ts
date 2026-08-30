@@ -1,9 +1,9 @@
 import { getEnv } from "@khepree/config";
-import { createPartnerPlatform } from "@khepree/reseller";
+import { createKhepreePlatform } from "@khepree/platform";
 
 export function getPlatform() {
   const env = getEnv();
-  return createPartnerPlatform({
+  return createKhepreePlatform({
     commerce: { checkoutBaseUrl: env.ACCOUNT_URL || "http://localhost:3001" },
   });
 }

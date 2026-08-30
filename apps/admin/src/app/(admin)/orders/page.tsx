@@ -1,11 +1,18 @@
 import { ADMIN_PAGE_SIZE, listAdminOrders } from "@khepree/db";
 import type { Metadata } from "next";
-import { DataTable, Td } from "@/components/data-table";
+import {
+  AdminPageHeader,
+  AdminStatusBadge,
+  AdminTable,
+  AdminTd,
+  AdminTechnicalDetails,
+  statusTone,
+} from "@/components/admin";
 import { Pagination, SearchForm } from "@/components/search-form";
 import { requireAdminAny } from "@/lib/admin-session";
-import { formatDate, formatMoney, parsePage } from "@/lib/format";
+import { formatCommerceStatus, formatDate, formatMoney, parsePage } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Orders" };
+export const metadata: Metadata = { title: "Đơn hàng" };
 
 export default async function OrdersPage({
   searchParams,
@@ -17,21 +24,27 @@ export default async function OrdersPage({
   const page = parsePage(params.page);
   const q = params.q?.trim() ?? "";
   const rows = await listAdminOrders({ q, page });
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
+      <AdminPageHeader title="Đơn hàng" description="Danh sách đơn hàng. Tìm theo mã đơn công khai." />
       <SearchForm q={q} />
-      <DataTable headers={["Order", "Status", "Total", "Customer", "Created"]} empty={rows.length === 0}>
+      <AdminTable headers={["Đơn hàng", "Trạng thái", "Tổng", "Khách hàng", "Ngày tạo"]} empty={rows.length === 0}>
         {rows.map((row) => (
           <tr key={row.id}>
-            <Td>{row.publicId}</Td>
-            <Td>{row.status}</Td>
-            <Td>{formatMoney(row.totalMinor, row.currency)}</Td>
-            <Td>{row.userId ?? row.customerPublicId}</Td>
-            <Td>{formatDate(row.createdAt)}</Td>
+            <AdminTd>{row.publicId}</AdminTd>
+            <AdminTd>
+              <AdminStatusBadge label={formatCommerceStatus(row.status)} tone={statusTone(row.status)} />
+            </AdminTd>
+            <AdminTd>{formatMoney(row.totalMinor, row.currency)}</AdminTd>
+            <AdminTd>
+              {row.customerPublicId ?? "—"}
+              {row.userId ? <AdminTechnicalDetails>{row.userId}</AdminTechnicalDetails> : null}
+            </AdminTd>
+            <AdminTd>{formatDate(row.createdAt)}</AdminTd>
           </tr>
         ))}
-      </DataTable>
+      </AdminTable>
       <Pagination page={page} hasMore={rows.length >= ADMIN_PAGE_SIZE} q={q} />
     </div>
   );

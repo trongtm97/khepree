@@ -9,9 +9,10 @@ export type OrderStatus =
   | "paid"
   | "cancelled"
   | "refunded"
-  | "partially_refunded";
+  | "partially_refunded"
+  | "voided";
 
-export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded";
+export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "voided";
 
 export type SubscriptionStatus = "trialing" | "active" | "past_due" | "cancelled" | "expired";
 
@@ -23,7 +24,8 @@ export type CommerceEventType =
   | "payment_succeeded"
   | "payment_failed"
   | "payment_refunded"
-  | "payment_partially_refunded";
+  | "payment_partially_refunded"
+  | "payment_voided";
 
 export interface NormalizedCommerceEvent {
   type: CommerceEventType;
@@ -82,6 +84,7 @@ export interface PaymentRecord {
   amountMinor: MoneyMinor;
   currency: string;
   method: string | null;
+  providerSubscriptionId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -102,9 +105,11 @@ export interface SubscriptionRecord {
   updatedAt: Date;
 }
 
+export type CheckoutFormField = { name: string; value: string };
+
 export type CheckoutAction =
   | { mode: "redirect"; url: string }
-  | { mode: "form_post"; action: string; fields: Record<string, string> };
+  | { mode: "form_post"; action: string; fields: CheckoutFormField[] };
 
 export interface CheckoutIntentResult {
   orderPublicId: string;
@@ -154,11 +159,14 @@ export interface CreateCheckoutInput {
   errorUrl?: string;
   customerId?: string;
   description?: string;
+  paymentMethod?: string;
 }
 
 export interface CreateCheckoutResult {
   providerCheckoutId: string;
   checkoutAction: CheckoutAction;
+  /** Present only when the provider created a real recurring agreement. Not a payment id. */
+  providerSubscriptionId?: string;
 }
 
 export interface RefundProviderInput {
@@ -207,7 +215,12 @@ export interface RefundedOrderContext {
   full: boolean;
 }
 
+export type RefundRequestResult =
+  | { outcome: "completed"; payment: PaymentRecord; refund: RefundRecord }
+  | { outcome: "manual_required"; payment: PaymentRecord; refund: RefundRecord };
+
 export interface CommerceLifecycleHooks {
   afterPaid?(ctx: PaidOrderContext): Promise<void>;
   afterRefunded?(ctx: RefundedOrderContext): Promise<void>;
+  afterVoided?(ctx: RefundedOrderContext): Promise<void>;
 }

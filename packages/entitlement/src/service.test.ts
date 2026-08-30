@@ -183,43 +183,107 @@ describe("commerce entitlement hooks", () => {
       amountMinor: 1900n,
       currency: "USD",
       method: null,
-      createdAt: NOW,
-      updatedAt: NOW,
-    };
-    const subscription = {
-      id: "sub-1",
-      publicId: "sub_1",
-      customerId: customer.id,
-      planId: item.planId,
-      productId: item.productId,
-      priceId: item.priceId,
-      provider: "mock",
-      providerSubscriptionId: payment.providerPaymentId,
-      status: "active" as const,
-      currentPeriodStart: NOW,
-      currentPeriodEnd: new Date("2026-09-29T12:00:00.000Z"),
+      providerSubscriptionId: null,
       createdAt: NOW,
       updatedAt: NOW,
     };
 
     await hooks.afterPaid({
-      order,
-      items: [item],
-      customer,
-      payment,
-      subscriptions: [subscription],
+      order: { publicId: order.publicId },
+      items: [
+        {
+          id: item.id,
+          productId: item.productId,
+          planId: item.planId,
+          accessTermDaysSnapshot: item.accessTermDaysSnapshot,
+        },
+      ],
+      customer: { userId: customer.userId, organizationId: customer.organizationId },
+      payment: { publicId: payment.publicId },
     });
     expect(store.entitlements[0]?.source).toBe("subscription");
     expect(store.entitlements[0]?.expiresAt).toEqual(new Date("2027-08-29T12:00:00.000Z"));
 
     await hooks.afterRefunded({
-      order: { ...order, status: "refunded" },
-      items: [item],
-      customer,
-      payment: { ...payment, status: "refunded" },
       full: true,
+      customer: { userId: customer.userId, organizationId: customer.organizationId },
+      items: [{ id: item.id }],
     });
     expect(store.entitlements).toHaveLength(1);
+    expect(store.entitlements[0]?.status).toBe("suspended");
+  });
+
+  it("suspends entitlement exactly once on afterVoided", async () => {
+    const { service, store } = createService();
+    const hooks = createEntitlementCommerceHooks(service);
+    const granted = await service.grantEntitlement({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      planId: "plan-1",
+      source: "perpetual",
+      orderPublicId: "ord_void",
+      orderItemId: "item-void",
+    });
+    const ctx = {
+      order: {
+        id: "ord-void",
+        publicId: "ord_void",
+        customerId: "cus-1",
+        status: "voided" as const,
+        currency: "VND",
+        totalMinor: 599000n,
+        createdAt: NOW,
+        updatedAt: NOW,
+      },
+      items: [
+        {
+          id: "item-void",
+          orderId: "ord-void",
+          productId: "prod-1",
+          planId: "plan-1",
+          priceId: null,
+          quantity: 1,
+          unitAmountMinor: 599000n,
+          currency: "VND",
+          productNameSnapshot: "Sample",
+          planNameSnapshot: "Pro",
+          billingIntervalSnapshot: "year",
+          accessTermDaysSnapshot: 365,
+        },
+      ],
+      customer: {
+        id: "cus-1",
+        publicId: "cus_1",
+        userId: PRINCIPAL.id,
+        organizationId: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      },
+      payment: {
+        id: "pay-void",
+        publicId: "pay_void",
+        orderId: "ord-void",
+        provider: "sepay",
+        providerPaymentId: "KHP_ord_void",
+        status: "voided" as const,
+        amountMinor: 599000n,
+        currency: "VND",
+        method: null,
+        providerSubscriptionId: null,
+        createdAt: NOW,
+        updatedAt: NOW,
+      },
+      full: true as const,
+    };
+    await hooks.afterVoided({
+      customer: { userId: ctx.customer.userId, organizationId: ctx.customer.organizationId },
+      items: ctx.items.map((row) => ({ id: row.id })),
+    });
+    await hooks.afterVoided({
+      customer: { userId: ctx.customer.userId, organizationId: ctx.customer.organizationId },
+      items: ctx.items.map((row) => ({ id: row.id })),
+    });
+    expect(granted.entitlement.id).toBe(store.entitlements[0]?.id);
     expect(store.entitlements[0]?.status).toBe("suspended");
   });
 
@@ -235,54 +299,9 @@ describe("commerce entitlement hooks", () => {
       orderItemId: "item-1",
     });
     await hooks.afterRefunded({
-      order: {
-        id: "ord-1",
-        publicId: "ord_1",
-        customerId: "cus-1",
-        status: "partially_refunded",
-        currency: "USD",
-        totalMinor: 19900n,
-        createdAt: NOW,
-        updatedAt: NOW,
-      },
-      items: [
-        {
-          id: "item-1",
-          orderId: "ord-1",
-          productId: "prod-1",
-          planId: "plan-1",
-          priceId: null,
-          quantity: 1,
-          unitAmountMinor: 19900n,
-          currency: "USD",
-          productNameSnapshot: "Sample",
-          planNameSnapshot: "Life",
-          billingIntervalSnapshot: null,
-          accessTermDaysSnapshot: null,
-        },
-      ],
-      customer: {
-        id: "cus-1",
-        publicId: "cus_1",
-        userId: PRINCIPAL.id,
-        organizationId: null,
-        createdAt: NOW,
-        updatedAt: NOW,
-      },
-      payment: {
-        id: "pay-1",
-        publicId: "pay_1",
-        orderId: "ord-1",
-        provider: "mock",
-        providerPaymentId: "x",
-        status: "succeeded",
-        amountMinor: 19900n,
-        currency: "USD",
-        method: null,
-        createdAt: NOW,
-        updatedAt: NOW,
-      },
       full: false,
+      customer: { userId: PRINCIPAL.id, organizationId: null },
+      items: [{ id: "item-1" }],
     });
     expect(store.entitlements[0]?.status).toBe("active");
   });

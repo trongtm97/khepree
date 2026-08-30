@@ -52,6 +52,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "cancelled",
   "refunded",
   "partially_refunded",
+  "voided",
 ]);
 
 export const orders = pgTable(
@@ -106,6 +107,7 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "succeeded",
   "failed",
   "refunded",
+  "voided",
 ]);
 
 export const payments = pgTable(
@@ -122,6 +124,7 @@ export const payments = pgTable(
     amountMinor: bigint("amount_minor", { mode: "bigint" }).notNull(),
     currency: text("currency").notNull(),
     method: text("method"),
+    providerSubscriptionId: text("provider_subscription_id"),
     ...timestamps,
   },
   (table) => [
@@ -226,16 +229,18 @@ export const refunds = pgTable(
 /** Valid order transitions — enforced by `@khepree/commerce`. */
 export const ORDER_STATUS_TRANSITIONS = {
   draft: ["pending_payment", "cancelled"],
-  pending_payment: ["paid", "cancelled"],
-  paid: ["refunded", "partially_refunded"],
+  pending_payment: ["paid", "cancelled", "voided"],
+  paid: ["refunded", "partially_refunded", "voided"],
   partially_refunded: ["refunded"],
   cancelled: [],
   refunded: [],
+  voided: [],
 } as const;
 
 export const PAYMENT_STATUS_TRANSITIONS = {
-  pending: ["succeeded", "failed"],
-  succeeded: ["refunded"],
+  pending: ["succeeded", "failed", "voided"],
+  succeeded: ["refunded", "voided"],
   failed: [],
   refunded: [],
+  voided: [],
 } as const;

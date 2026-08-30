@@ -16,6 +16,7 @@ export interface PartnerRecord {
   status: PartnerStatus;
   modes: PartnerMode[];
   allowNegativeBalance: boolean;
+  defaultCurrency: string;
   commissionBps: number;
   createdAt: Date;
   updatedAt: Date;
@@ -103,6 +104,7 @@ export interface PlanCatalog {
     productId: string;
     productSlug: string;
     billingType: string;
+    accessTermDays: number | null;
   } | null>;
 }
 

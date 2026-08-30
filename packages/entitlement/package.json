@@ -10,8 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@khepree/commerce": "workspace:*",
     "@khepree/db": "workspace:*",
+    "@khepree/events": "workspace:*",
     "@khepree/types": "workspace:*",
     "drizzle-orm": "^0.44.5"
   },

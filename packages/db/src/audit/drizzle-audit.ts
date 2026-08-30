@@ -14,5 +14,8 @@ export function createDrizzleAuditService(db: Database): AuditService {
         ipAddress: input.ipAddress ?? null,
       });
     },
+    bind(next: unknown): AuditService {
+      return createDrizzleAuditService(next as Database);
+    },
   };
 }

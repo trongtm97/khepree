@@ -16,6 +16,15 @@ import {
   getPlatform,
 } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-session";
+import { DEFAULT_CURRENCY } from "@khepree/config";
+
+function resolveLocalizedNames(formData: FormData): { nameEn: string; nameVi?: string } {
+  const nameVi = String(formData.get("nameVi") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const primary = nameVi || nameEn;
+  if (!primary) throw new Error("Tên tiếng Việt hoặc tiếng Anh là bắt buộc");
+  return { nameEn: nameEn || nameVi, nameVi: nameVi || undefined };
+}
 
 function isKnownActionError(error: unknown): error is { message: string } {
   return (
@@ -100,10 +109,10 @@ export async function revokeUserSessionAction(_s: ActionState, formData: FormDat
 export async function createProductAction(_s: ActionState, formData: FormData): Promise<ActionState> {
   try {
     const session = await actor("catalog.write");
+    const names = resolveLocalizedNames(formData);
     await getCatalogAdmin().createProduct({
       slug: String(formData.get("slug") ?? ""),
-      nameEn: String(formData.get("nameEn") ?? ""),
-      nameVi: String(formData.get("nameVi") ?? "") || undefined,
+      ...names,
       actorUserId: session.user.id,
     });
     revalidatePath("/products");
@@ -155,8 +164,7 @@ export async function createPlanAction(_s: ActionState, formData: FormData): Pro
         | "recurring"
         | "perpetual"
         | "custom",
-      nameEn: String(formData.get("nameEn") ?? ""),
-      nameVi: String(formData.get("nameVi") ?? "") || undefined,
+      ...resolveLocalizedNames(formData),
       actorUserId: session.user.id,
     });
     revalidatePath("/plans");
@@ -202,8 +210,7 @@ export async function createFeatureAction(_s: ActionState, formData: FormData): 
     await getCatalogAdmin().createFeature({
       key: String(formData.get("key") ?? ""),
       valueType: String(formData.get("valueType") ?? "boolean") as "boolean" | "integer" | "string",
-      nameEn: String(formData.get("nameEn") ?? ""),
-      nameVi: String(formData.get("nameVi") ?? "") || undefined,
+      ...resolveLocalizedNames(formData),
       actorUserId: session.user.id,
     });
     revalidatePath("/features");
@@ -233,7 +240,7 @@ export async function createPriceAction(_s: ActionState, formData: FormData): Pr
     const session = await actor("catalog.write");
     await getCatalogAdmin().createPrice({
       planId: String(formData.get("planId") ?? ""),
-      currency: String(formData.get("currency") ?? "USD"),
+      currency: String(formData.get("currency") ?? DEFAULT_CURRENCY),
       amountMinor: BigInt(String(formData.get("amountMinor") ?? "0")),
       interval: String(formData.get("interval") ?? "") || null,
       actorUserId: session.user.id,
@@ -518,6 +525,34 @@ export async function signDownloadAction(_s: ActionState, formData: FormData): P
       },
     });
     return { notice: `Signed URL (expires ${result.expiresAt.toISOString()}): ${result.url}` };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function signReleaseDownloadAction(
+  _s: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const session = await requireAdmin();
+    if (
+      !hasPermission({ globalRole: session.globalRole }, "content.read") &&
+      !hasPermission({ globalRole: session.globalRole }, "content.write")
+    ) {
+      throw new Error("Forbidden");
+    }
+    const result = await getDownloadService().authorizeReleaseDownload({
+      releasePublicId: String(formData.get("releasePublicId") ?? ""),
+      context: {
+        purpose: "admin",
+        actorUserId: session.user.id,
+        adminAuthorized: true,
+      },
+    });
+    return {
+      notice: `Release URL (expires ${result.expiresAt.toISOString()}): ${result.url}`,
+    };
   } catch (error) {
     return fail(error);
   }

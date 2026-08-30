@@ -26,9 +26,11 @@
 | `@khepree/licensing` | License keys, device activation, Ed25519 leases |
 | `@khepree/reseller` | Partner org, referral attribution, wallet ledger, reseller issue/renew |
 | `@khepree/sdk` | Client-neutral types and error codes (no secrets) |
-| `@khepree/commerce` | Orders, payments, subscriptions, provider adapters |
-| `@khepree/catalog` | Products, plans, features, CMS content, media |
-| `@khepree/storage` | R2 adapter — public/private buckets isolated |
+| `@khepree/commerce` | Orders, payments, subscriptions, provider adapters, same-tx outbox enqueue |
+| `@khepree/events` | Versioned domain event DTOs, outbox store, polling dispatcher |
+| `@khepree/platform` | Composition root `createKhepreePlatform()` — apps must not wire domains ad hoc |
+| `@khepree/catalog` | Products, plans, features, CMS content, media, market/price policy |
+| `@khepree/storage` | R2 adapter — public/private buckets isolated; upload content classes |
 | `@khepree/ui` | Design system |
 
 ## Core principles
@@ -41,26 +43,52 @@
 6. **Server Components first** — client only when interaction requires it
 7. **Private storage never falls back to public bucket**
 
+## Dependency direction
+
+```
+apps (web, account, admin, partner, api)
+  → @khepree/platform
+      → catalog, commerce, entitlement, licensing, reseller, events, db
+@khepree/reseller  → entitlement, events, db   (partner domain only; does not import platform)
+@khepree/commerce → catalog, events, db
+@khepree/entitlement / licensing → events, db     (not commerce implementations)
+```
+
+Do not reverse these arrows. `@khepree/reseller` must not compose commerce/entitlement/licensing.
+
+## Durable outbox
+
+Payment/order transitions insert `outbox_events` in the **same PostgreSQL transaction** as the commerce row updates. Statuses: `PENDING` → `PROCESSING` → `PROCESSED` (or `FAILED` for non-immortal types). `commerce.order.paid|refunded|voided` never stay `FAILED` — they retry with backoff.
+
+Handlers (entitlement, licensing, partner) are idempotent. Immediate `dispatchPending()` after commit is a development optimization; durability is the row.
+
 ## Storage consistency (CMS)
 
-Content body uploads happen **outside** database transactions. Each content version gets an immutable object key (`prv/content/{entryId}/{locale}/v{versionNumber}.md`). Failed metadata writes may leave orphan objects — acceptable in pre-production; cleanup is operational.
+Content body uploads happen **outside** database transactions. Each content version gets an immutable object key (`prv/content/{entryId}/{locale}/v{versionNumber}.md`). Published bodies are never overwritten.
+
+Version allocation: `max(version)+1` plus **retry on unique `(entry_id, locale, version_number)`** (PostgreSQL `23505`). Unique constraints remain the integrity backstop.
+
+If upload succeeds and the version row insert/update fails, the service **compensating-deletes** the object. Remaining orphans are operational garbage collection — there is no distributed transaction with R2.
 
 ## Order state machine
 
 | Status | Valid next states |
 |--------|---------------------|
 | `draft` | `pending_payment`, `cancelled` |
-| `pending_payment` | `paid`, `cancelled` |
-| `paid` | `refunded`, `partially_refunded` |
+| `pending_payment` | `paid`, `cancelled`, `voided` |
+| `paid` | `refunded`, `partially_refunded`, `voided` |
 | `partially_refunded` | `refunded` |
 | `cancelled` | — |
 | `refunded` | — |
+| `voided` | — |
 
-Payment records keep their own status lifecycle (`pending` → `succeeded` | `failed`; `succeeded` → `refunded`). Partial refunds change the **order** status only.
+Payment records: `pending` → `succeeded` | `failed` | `voided`; `succeeded` → `refunded` | `voided`. Partial refunds change the **order** status only.
 
-Checkout intent creates a draft order, a provider-hosted checkout session, then a pending payment. Access is granted later by the entitlement engine from **normalized commerce events** — never from a success redirect URL. Full refunds **suspend** entitlements; they are never deleted.
+`voided` is **not** a refund. SePay `TRANSACTION_VOID` is a pre-settlement card reversal: mark payment and order `voided`, reverse access once, and **do not** insert a refunds-ledger row. Manual SePay refunds persist `refunds.status = manual_required` and commit; finance then runs `confirmManualRefund()` after money actually returns.
 
-Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`). Verify provider authenticity (`X-Secret-Key` for SePay), persist sanitized `(provider, eventId)` uniquely, apply idempotently inside a transaction, audit, then run entitlement hooks **only** for newly processed events. Checkout result is a provider-neutral `CheckoutAction` (`redirect` or `form_post`). Adapters: `MockDevelopmentPaymentProvider` (dev) and `SePayPaymentProvider`. Stripe is not in this repo.
+Checkout intent creates a draft order, a provider-hosted checkout session, then a pending payment. Access is granted later by the entitlement engine from **normalized commerce events** — never from a success redirect URL. Full refunds and voids **suspend** entitlements; they are never deleted. A provider payment id is not a subscription id — subscriptions are created only when checkout/IPN carries an explicit `providerSubscriptionId`.
+
+Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`). Verify provider authenticity (`X-Secret-Key` for SePay), persist sanitized `(provider, eventId)` uniquely, apply idempotently inside a transaction, enqueue outbox events, audit on the **same connection**, COMMIT, then dispatch. Duplicate webhooks do not re-enqueue. Access is granted by outbox consumers, not by post-commit hooks. Checkout result is a provider-neutral `CheckoutAction` (`redirect` or `form_post`). Adapters: `MockDevelopmentPaymentProvider` (dev) and `SePayPaymentProvider`. Stripe is not in this repo.
 
 ## Entitlement, licenses, devices (Phase 08)
 
@@ -79,7 +107,9 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`
 - Referral attribution is **first-touch signup**, not last-click. Clicks store `sha256(visitorId)` only. Order commission requires a signup attribution for the paying user.
 - Commissions: `pending` → `approved` → `available` → `paid` (wallet CREDIT) or `reversed`. Full refund reverses unpaid rows without a wallet move; paid rows post `REVERSAL`.
 - Admin uses `setPartnerStatus`, `setPartnerTier`, `setPartnerPrice`, commission approve-pay, and privileged wallet `ADJUSTMENT` (reason + audit required).
-- App: `apps/partner` (`partner.khepree.com`, :3003). Public landing: `apps/web` `/[locale]/r/[code]`.
+- App: `apps/partner` (`partner.khepree.com`, :3003). Explicit partner context: `/p/{partnerPublicId}/{page}`. Unscoped `/dashboard` etc. redirect into that prefix. Multi-membership users pick on `/select`. Server code verifies membership; it does not use `memberships[0]` as implicit active partner.
+- Referral URLs use `DEFAULT_LOCALE` (`/vi`). Wallets use partner `defaultCurrency` / `DEFAULT_CURRENCY` (VND). Reseller issue/renew uses `plan.accessTermDays` via `nextExpiresAt`.
+- Drizzle partner issue: wallet debit + entitlement grant + issue row share one PostgreSQL transaction. Memory tests keep compensating refunds.
 - Partner auth uses `PARTNER_URL` as Better Auth `baseURL` so localhost ports do not share account cookies. Identity is still the same user table.
 
 ## Admin control center (Phase 10)
@@ -92,10 +122,11 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`
 
 ## Production hardening (Phase 11)
 
-- Rate limits live in `@khepree/security` (in-memory sliding window, fail closed). Auth, license activate/refresh, webhooks, media, and admin/partner POSTs are covered. Multi-instance needs Redis.
+- Rate limits: `RateLimiter` interface; `MemoryRateLimiter` (dev) and `RedisRateLimiter` (inject `RedisCommands` when `REDIS_URL` is set). `TRUSTED_PROXY=none|cloudflare`. Do not trust raw `X-Forwarded-For`.
+- `validateRuntimeEnv()` runs from `instrumentation.ts` on Node boot (skipped during `next build`). Production requires license signing keys, `EMAIL_PROVIDER=resend`, R2, and `validatePaymentProviderConfiguration` (mock forbidden; SePay credentials when `PAYMENT_PROVIDER=sepay`).
+- Session: `getSession` is request-scoped via React `cache()`. Roles are not cached across requests.
 - Security headers (CSP `frame-ancestors 'none'`, Referrer-Policy, nosniff, Permissions-Policy, HSTS in production) are applied from each app `proxy.ts`.
 - Structured JSON logs via `createLogger` in `@khepree/config` redact password, authorization, cookies, secrets, tokens, and private keys.
-- `validateRuntimeEnv()` runs from `instrumentation.ts` on Node boot (skipped during `next build`). Production requires license signing keys, email provider env, R2, and SePay credentials.
 - Private product downloads (`media.context = product:<id>`) require entitlement before a presigned URL is issued. Media upload/complete require a session; owner is not client-supplied.
 - Mock checkout is development-only. Playwright critical flows: `E2E=1 pnpm test:e2e` with apps running.
 - Findings: `docs/SPEC-phase-11-security.md`.
@@ -118,6 +149,8 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`
 | **11** | ✅ Complete | Production security, rate limits, headers, logging, E2E, error UX |
 | **12** | ✅ Complete | Public IA/SEO audit, CI quality gate, deployment/env/DB/R2/signing docs. **Not production-ready** — see `docs/PRODUCTION-STATUS.md` |
 | **13** | ✅ Complete | Vietnam-first locale, VND, SePay adapter, commerce hardening. **Not production-ready** — B1 sandbox proof still open |
+| **13.1** | ✅ Complete | SePay form field order, manual refund commit, `payment_voided`. **Not production-ready** — B1 still open; do not go-live |
+| **14** | ✅ Complete | Outbox, platform composition root, partner/CMS/auth/email/CI hardening. **Not production-ready** — B1, unverified email delivery, no production infra |
 
 Each phase inherits project constraints in `CONSTRAINTS.md`. Do not skip phases.
 

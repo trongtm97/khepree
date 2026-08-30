@@ -1,0 +1,34 @@
+name: E2E
+
+# Staging/preview smoke. Not run on every unit PR.
+# Dispatch against a running stack (local or staging). SePay sandbox stays manual.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    name: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      E2E: "1"
+      TURBO_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm --filter @khepree/e2e exec playwright install --with-deps chromium
+
+      - name: Smoke
+        run: pnpm test:e2e

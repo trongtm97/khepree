@@ -1,6 +1,7 @@
-import { index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigint, index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { softDelete, timestamps } from "./_shared";
+import { user } from "./identity";
 
 export const contentTypeEnum = pgEnum("content_type", [
   "page",
@@ -15,6 +16,34 @@ export const contentStatusEnum = pgEnum("content_status", ["DRAFT", "PUBLISHED",
 export const storageProviderEnum = pgEnum("storage_provider", ["r2", "mock"]);
 
 export const mediaVisibilityEnum = pgEnum("media_visibility", ["public", "private"]);
+
+export const contentCategories = pgTable(
+  "content_categories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    publicId: text("public_id").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    ...timestamps,
+  },
+  (table) => [index("content_categories_slug_idx").on(table.slug)],
+);
+
+export const contentCategoryTranslations = pgTable(
+  "content_category_translations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "cascade" }),
+    locale: text("locale").notNull(),
+    name: text("name").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    unique("content_category_translation_unique").on(table.categoryId, table.locale),
+    index("content_category_translations_category_id_idx").on(table.categoryId),
+  ],
+);
 
 export const contentEntries = pgTable(
   "content_entries",
@@ -49,6 +78,12 @@ export const contentVersions = pgTable(
     bodyStorageProvider: storageProviderEnum("body_storage_provider"),
     bodyStorageBucket: text("body_storage_bucket"),
     bodyObjectKey: text("body_object_key"),
+    featuredMediaId: uuid("featured_media_id").references(() => mediaAssets.id, {
+      onDelete: "set null",
+    }),
+    authorUserId: text("author_user_id").references(() => user.id, { onDelete: "set null" }),
+    categoryId: uuid("category_id").references(() => contentCategories.id, { onDelete: "set null" }),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     status: contentStatusEnum("status").notNull().default("DRAFT"),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     ...timestamps,
@@ -77,7 +112,8 @@ export const mediaAssets = pgTable(
     bucket: text("bucket").notNull(),
     objectKey: text("object_key").notNull().unique(),
     mimeType: text("mime_type").notNull(),
-    sizeBytes: integer("size_bytes").notNull(),
+    /** BIGINT in Postgres (no 2GB int4 cap). JS number is safe below Number.MAX_SAFE_INTEGER. */
+    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
     checksumSha256: text("checksum_sha256"),
     width: integer("width"),
     height: integer("height"),

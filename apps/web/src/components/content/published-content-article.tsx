@@ -2,8 +2,14 @@ import { notFound } from "next/navigation";
 import type { ContentType } from "@khepree/catalog";
 import { MarketingPageLayout } from "@/components/marketing/marketing-page-layout";
 import { JsonLd } from "@/components/seo/json-ld";
-import { contentParagraphs } from "@/lib/content-body";
-import { getPublishedBody, getPublishedContent } from "@/lib/content";
+import {
+  buildProductBlocks,
+  getContentPreview,
+  getFeaturedImageUrl,
+  getPublishedBody,
+  getPublishedContent,
+  renderArticleHtml,
+} from "@/lib/content";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { articleJsonLd } from "@/lib/seo/json-ld";
 import { createPageMetadata, siteUrl } from "@/lib/seo/metadata";
@@ -23,12 +29,17 @@ export async function publishedContentMetadata({
   slug,
   contentType,
   pathPrefix,
+  preview,
 }: {
   locale: string;
   slug: string;
-  contentType: Extract<ContentType, "article" | "doc">;
-  pathPrefix: "/blog" | "/docs";
+  contentType: Extract<ContentType, "article" | "doc" | "page">;
+  pathPrefix: "/blog" | "/docs" | "/pages";
+  preview?: boolean;
 }) {
+  if (preview) {
+    return { robots: { index: false, follow: false, noarchive: true } };
+  }
   if (!isSupportedLocale(raw)) return {};
   const entry = await getPublishedContent(contentType, slug, raw);
   if (!entry) return { robots: { index: false, follow: false } };
@@ -47,21 +58,37 @@ export async function PublishedContentArticle({
   slug,
   contentType,
   pathPrefix,
+  previewToken,
+  previewVersionId,
 }: {
   locale: string;
   slug: string;
-  contentType: Extract<ContentType, "article" | "doc">;
-  pathPrefix: "/blog" | "/docs";
+  contentType: Extract<ContentType, "article" | "doc" | "page">;
+  pathPrefix: "/blog" | "/docs" | "/pages";
+  previewToken?: string;
+  previewVersionId?: string;
 }) {
   if (!isSupportedLocale(raw)) notFound();
   const locale: SupportedLocale = raw;
-  const entry = await getPublishedContent(contentType, slug, locale);
-  if (!entry) notFound();
+  const isPreview = Boolean(previewToken && previewVersionId);
+
+  const entry = isPreview
+    ? await getContentPreview(previewVersionId!, previewToken!)
+    : await getPublishedContent(contentType, slug, locale);
+
+  if (!entry || entry.slug !== slug) notFound();
 
   const messages = getMessages(locale);
-  const index = contentType === "article" ? messages.pages.blog : messages.pages.docs;
+  const index =
+    contentType === "article"
+      ? messages.pages.blog
+      : contentType === "doc"
+        ? messages.pages.docs
+        : { title: "Trang", description: entry.excerpt ?? entry.title };
   const body = await getPublishedBody(entry.bodyObjectKey);
-  const paragraphs = body ? contentParagraphs(body) : [];
+  const productBlocks = body ? await buildProductBlocks(body, locale) : {};
+  const html = body ? renderArticleHtml(body, productBlocks) : "";
+  const featuredImageUrl = await getFeaturedImageUrl(entry.featuredMediaPublicId);
   const path = localePath(locale, `${pathPrefix}/${slug}`);
 
   return (
@@ -73,6 +100,7 @@ export async function PublishedContentArticle({
           url: siteUrl(path),
           datePublished: entry.publishedAt,
           inLanguage: locale === "vi" ? "vi" : "en",
+          author: entry.authorName ?? undefined,
         })}
       />
       <MarketingPageLayout
@@ -84,8 +112,19 @@ export async function PublishedContentArticle({
           { label: entry.title },
         ]}
       >
-        {paragraphs.length > 0 ? (
-          paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
+        {isPreview ? (
+          <p className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            Bản xem trước — chưa xuất bản (noindex)
+          </p>
+        ) : null}
+        {entry.authorName ? <p className="mb-4 text-sm text-khepree-slate/70">Tác giả: {entry.authorName}</p> : null}
+        {entry.categoryName ? <p className="mb-4 text-sm text-khepree-slate/70">Danh mục: {entry.categoryName}</p> : null}
+        {featuredImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- CMS featured hero from public R2 URL
+          <img src={featuredImageUrl} alt="" className="mb-6 w-full rounded-lg object-cover" />
+        ) : null}
+        {html ? (
+          <div className="prose prose-neutral max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
         ) : (
           <p>{entry.excerpt}</p>
         )}

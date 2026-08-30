@@ -56,6 +56,9 @@ importers:
       '@khepree/licensing':
         specifier: workspace:*
         version: link:../../packages/licensing
+      '@khepree/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@khepree/reseller':
         specifier: workspace:*
         version: link:../../packages/reseller
@@ -138,6 +141,9 @@ importers:
       '@khepree/licensing':
         specifier: workspace:*
         version: link:../../packages/licensing
+      '@khepree/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@khepree/reseller':
         specifier: workspace:*
         version: link:../../packages/reseller
@@ -220,6 +226,9 @@ importers:
       '@khepree/licensing':
         specifier: workspace:*
         version: link:../../packages/licensing
+      '@khepree/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@khepree/reseller':
         specifier: workspace:*
         version: link:../../packages/reseller
@@ -299,6 +308,9 @@ importers:
       '@khepree/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@khepree/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@khepree/reseller':
         specifier: workspace:*
         version: link:../../packages/reseller
@@ -366,6 +378,9 @@ importers:
       '@khepree/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@khepree/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@khepree/reseller':
         specifier: workspace:*
         version: link:../../packages/reseller
@@ -442,6 +457,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.7(kysely@0.29.5)(postgres@3.4.9)
+      react:
+        specifier: ^19.1.1
+        version: 19.2.8
     devDependencies:
       '@khepree/eslint-config':
         specifier: workspace:*
@@ -449,6 +467,9 @@ importers:
       '@khepree/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
+      '@types/react':
+        specifier: ^19.1.12
+        version: 19.2.18
       eslint:
         specifier: ^9.34.0
         version: 9.39.5(jiti@2.7.0)
@@ -507,6 +528,9 @@ importers:
       '@khepree/db':
         specifier: workspace:*
         version: link:../db
+      '@khepree/events':
+        specifier: workspace:*
+        version: link:../events
       '@khepree/types':
         specifier: workspace:*
         version: link:../types
@@ -619,15 +643,40 @@ importers:
 
   packages/entitlement:
     dependencies:
-      '@khepree/commerce':
-        specifier: workspace:*
-        version: link:../commerce
       '@khepree/db':
         specifier: workspace:*
         version: link:../db
+      '@khepree/events':
+        specifier: workspace:*
+        version: link:../events
       '@khepree/types':
         specifier: workspace:*
         version: link:../types
+      drizzle-orm:
+        specifier: ^0.44.5
+        version: 0.44.7(kysely@0.29.5)(postgres@3.4.9)
+    devDependencies:
+      '@khepree/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@khepree/typescript-config':
+        specifier: workspace:*
+        version: link:../../tooling/typescript-config
+      eslint:
+        specifier: ^9.34.0
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.12)
+
+  packages/events:
+    dependencies:
+      '@khepree/db':
+        specifier: workspace:*
+        version: link:../db
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.7(kysely@0.29.5)(postgres@3.4.9)
@@ -662,9 +711,55 @@ importers:
       '@khepree/entitlement':
         specifier: workspace:*
         version: link:../entitlement
+      '@khepree/events':
+        specifier: workspace:*
+        version: link:../events
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.7(kysely@0.29.5)(postgres@3.4.9)
+    devDependencies:
+      '@khepree/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@khepree/typescript-config':
+        specifier: workspace:*
+        version: link:../../tooling/typescript-config
+      eslint:
+        specifier: ^9.34.0
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.12)
+
+  packages/platform:
+    dependencies:
+      '@khepree/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      '@khepree/commerce':
+        specifier: workspace:*
+        version: link:../commerce
+      '@khepree/config':
+        specifier: workspace:*
+        version: link:../config
+      '@khepree/db':
+        specifier: workspace:*
+        version: link:../db
+      '@khepree/entitlement':
+        specifier: workspace:*
+        version: link:../entitlement
+      '@khepree/events':
+        specifier: workspace:*
+        version: link:../events
+      '@khepree/licensing':
+        specifier: workspace:*
+        version: link:../licensing
+      '@khepree/reseller':
+        specifier: workspace:*
+        version: link:../reseller
     devDependencies:
       '@khepree/eslint-config':
         specifier: workspace:*
@@ -696,6 +791,9 @@ importers:
       '@khepree/entitlement':
         specifier: workspace:*
         version: link:../entitlement
+      '@khepree/events':
+        specifier: workspace:*
+        version: link:../events
       '@khepree/licensing':
         specifier: workspace:*
         version: link:../licensing

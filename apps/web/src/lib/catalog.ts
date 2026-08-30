@@ -40,3 +40,13 @@ export async function getPricingGroups(locale: string) {
     },
   )();
 }
+
+export async function getProductPreviewBySlug(slug: string, locale: string, previewToken: string) {
+  const { getEnv } = await import("@khepree/config");
+  const secret = getEnv().BETTER_AUTH_SECRET ?? "dev-local-preview-secret-32chars!";
+  return getProductService().getProductPreviewBySlug(slug, {
+    locale,
+    previewToken,
+    previewSecret: secret,
+  });
+}

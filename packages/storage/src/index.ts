@@ -15,7 +15,7 @@ export {
   objectKeyOwnerSegment,
   sanitizeClientFilename,
 } from "./keys";
-export { extensionForMime, validateUpload, UploadValidationError, UPLOAD_SIZE_LIMITS } from "./validation";
+export { extensionForMime, validateUpload, UploadValidationError, UPLOAD_SIZE_LIMITS, sniffMagicMime, type UploadContentClass } from "./validation";
 export { MockObjectStorage } from "./mock-storage";
 export { S3ObjectStorage } from "./s3-storage";
 export {

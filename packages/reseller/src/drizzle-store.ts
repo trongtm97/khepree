@@ -50,6 +50,7 @@ function mapPartner(
     status: row.status,
     modes: row.modes ?? ["REFERRAL"],
     allowNegativeBalance: row.allowNegativeBalance,
+    defaultCurrency: row.defaultCurrency,
     commissionBps,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -100,6 +101,7 @@ export class DrizzlePartnerRepository implements PartnerRepository {
         status: input.status,
         modes: input.modes,
         allowNegativeBalance: input.allowNegativeBalance,
+        defaultCurrency: input.defaultCurrency,
       })
       .returning();
     if (!row) throw new PartnerError("CONFLICT", "Could not create partner");
@@ -108,6 +110,11 @@ export class DrizzlePartnerRepository implements PartnerRepository {
 
   async getPartnerById(id: string): Promise<PartnerRecord | null> {
     const [row] = await this.db.select().from(partners).where(eq(partners.id, id)).limit(1);
+    return row ? this.loadPartner(row) : null;
+  }
+
+  async getPartnerByPublicId(publicId: string): Promise<PartnerRecord | null> {
+    const [row] = await this.db.select().from(partners).where(eq(partners.publicId, publicId)).limit(1);
     return row ? this.loadPartner(row) : null;
   }
 
@@ -176,7 +183,12 @@ export class DrizzlePartnerRepository implements PartnerRepository {
 
   async getOrCreateWallet(partnerId: string, currency: string): Promise<WalletRecord> {
     const existing = await this.getWalletByPartner(partnerId);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.currency !== currency) {
+        throw new PartnerError("CONFLICT", "Wallet currency does not match partner default");
+      }
+      return existing;
+    }
     const [row] = await this.db.insert(wallets).values({ partnerId, currency }).returning();
     if (!row) throw new PartnerError("CONFLICT", "Could not create wallet");
     return { id: row.id, partnerId: row.partnerId, balanceMinor: row.balanceMinor, currency: row.currency };
@@ -589,6 +601,7 @@ export class DrizzlePlanCatalog implements PlanCatalog {
         productId: plans.productId,
         productSlug: products.slug,
         billingType: plans.billingType,
+        accessTermDays: plans.accessTermDays,
       })
       .from(plans)
       .innerJoin(products, eq(products.id, plans.productId))

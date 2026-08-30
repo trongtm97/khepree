@@ -1,9 +1,11 @@
-import { and, count, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 import { requireDb, type Database } from "../client";
 import {
   activations,
   auditLogs,
   commissions,
+  contentCategories,
+  contentCategoryTranslations,
   contentEntries,
   contentVersions,
   customers,
@@ -22,7 +24,9 @@ import {
   plans,
   prices,
   products,
+  productTranslations,
   session,
+  softwareReleases,
   subscriptions,
   systemEvents,
   user,
@@ -251,11 +255,27 @@ export async function listAdminOrganizations(
     .offset(offset);
 }
 
-export async function listAdminProducts(db: Database = requireDb()) {
-  return db.select().from(products).orderBy(desc(products.createdAt)).limit(200);
+export async function listAdminProducts(
+  input: { q?: string; page?: number } = {},
+  db: Database = requireDb(),
+) {
+  const offset = adminOffset(input.page ?? 1);
+  const where = input.q?.trim() ? ilike(products.slug, `%${input.q.trim()}%`) : undefined;
+  return db
+    .select()
+    .from(products)
+    .where(where)
+    .orderBy(desc(products.createdAt))
+    .limit(ADMIN_PAGE_SIZE)
+    .offset(offset);
 }
 
-export async function listAdminPlans(db: Database = requireDb()) {
+export async function listAdminPlans(
+  input: { q?: string; page?: number } = {},
+  db: Database = requireDb(),
+) {
+  const offset = adminOffset(input.page ?? 1);
+  const where = input.q?.trim() ? ilike(plans.slug, `%${input.q.trim()}%`) : undefined;
   return db
     .select({
       id: plans.id,
@@ -268,15 +288,27 @@ export async function listAdminPlans(db: Database = requireDb()) {
     })
     .from(plans)
     .innerJoin(products, eq(plans.productId, products.id))
+    .where(where)
     .orderBy(desc(plans.createdAt))
-    .limit(200);
+    .limit(ADMIN_PAGE_SIZE)
+    .offset(offset);
 }
 
-export async function listAdminFeatures(db: Database = requireDb()) {
-  return db.select().from(features).orderBy(features.key).limit(200);
+export async function listAdminFeatures(
+  input: { q?: string; page?: number } = {},
+  db: Database = requireDb(),
+) {
+  const offset = adminOffset(input.page ?? 1);
+  const where = input.q?.trim() ? ilike(features.key, `%${input.q.trim()}%`) : undefined;
+  return db.select().from(features).where(where).orderBy(features.key).limit(ADMIN_PAGE_SIZE).offset(offset);
 }
 
-export async function listAdminPrices(db: Database = requireDb()) {
+export async function listAdminPrices(
+  input: { q?: string; page?: number } = {},
+  db: Database = requireDb(),
+) {
+  const offset = adminOffset(input.page ?? 1);
+  const where = input.q?.trim() ? ilike(plans.slug, `%${input.q.trim()}%`) : undefined;
   return db
     .select({
       id: prices.id,
@@ -291,8 +323,10 @@ export async function listAdminPrices(db: Database = requireDb()) {
     })
     .from(prices)
     .innerJoin(plans, eq(prices.planId, plans.id))
+    .where(where)
     .orderBy(desc(prices.createdAt))
-    .limit(200);
+    .limit(ADMIN_PAGE_SIZE)
+    .offset(offset);
 }
 
 export async function listAdminOrders(
@@ -336,13 +370,15 @@ export async function listAdminPayments(
 }
 
 export async function listAdminSubscriptions(
-  input: { page?: number } = {},
+  input: { q?: string; page?: number } = {},
   db: Database = requireDb(),
 ) {
   const offset = adminOffset(input.page ?? 1);
+  const where = input.q?.trim() ? ilike(subscriptions.publicId, `%${input.q.trim()}%`) : undefined;
   return db
     .select()
     .from(subscriptions)
+    .where(where)
     .orderBy(desc(subscriptions.createdAt))
     .limit(ADMIN_PAGE_SIZE)
     .offset(offset);
@@ -424,11 +460,14 @@ export async function getAdminLicense(publicId: string, db: Database = requireDb
 }
 
 export async function listAdminDevices(
-  input: { principalId?: string; page?: number } = {},
+  input: { q?: string; principalId?: string; page?: number } = {},
   db: Database = requireDb(),
 ) {
   const offset = adminOffset(input.page ?? 1);
-  const where = input.principalId ? eq(devices.principalId, input.principalId) : undefined;
+  const filters: SQL[] = [];
+  if (input.principalId) filters.push(eq(devices.principalId, input.principalId));
+  if (input.q?.trim()) filters.push(ilike(devices.publicId, `%${input.q.trim()}%`));
+  const where = filters.length ? and(...filters) : undefined;
   return db
     .select()
     .from(devices)
@@ -493,10 +532,11 @@ export async function getAdminPartner(id: string, db: Database = requireDb()) {
 }
 
 export async function listAdminCommissions(
-  input: { page?: number } = {},
+  input: { q?: string; page?: number } = {},
   db: Database = requireDb(),
 ) {
   const offset = adminOffset(input.page ?? 1);
+  const where = input.q?.trim() ? ilike(commissions.publicId, `%${input.q.trim()}%`) : undefined;
   return db
     .select({
       id: commissions.id,
@@ -510,17 +550,33 @@ export async function listAdminCommissions(
     })
     .from(commissions)
     .innerJoin(partners, eq(commissions.partnerId, partners.id))
+    .where(where)
     .orderBy(desc(commissions.createdAt))
     .limit(ADMIN_PAGE_SIZE)
     .offset(offset);
 }
 
 export async function listAdminContent(
-  input: { locale?: string; page?: number } = {},
+  input: {
+    q?: string;
+    locale?: string;
+    contentType?: string;
+    status?: string;
+    page?: number;
+  } = {},
   db: Database = requireDb(),
 ) {
   const offset = adminOffset(input.page ?? 1);
-  const where = input.locale ? eq(contentVersions.locale, input.locale) : undefined;
+  const filters: SQL[] = [isNull(contentEntries.deletedAt)];
+  if (input.locale) filters.push(eq(contentVersions.locale, input.locale));
+  if (input.contentType) filters.push(eq(contentEntries.contentType, input.contentType as "article" | "page" | "doc"));
+  if (input.status) filters.push(eq(contentVersions.status, input.status as "DRAFT" | "PUBLISHED" | "ARCHIVED"));
+  if (input.q?.trim()) {
+    const term = `%${input.q.trim()}%`;
+    const search = or(ilike(contentVersions.title, term), ilike(contentEntries.slug, term));
+    if (search) filters.push(search);
+  }
+  const where = and(...filters);
   return db
     .select({
       versionId: contentVersions.id,
@@ -532,21 +588,70 @@ export async function listAdminContent(
       status: contentVersions.status,
       versionNumber: contentVersions.versionNumber,
       updatedAt: contentVersions.updatedAt,
+      publishedAt: contentVersions.publishedAt,
+      seoTitle: contentVersions.seoTitle,
+      seoDescription: contentVersions.seoDescription,
+      excerpt: contentVersions.excerpt,
+      authorName: user.name,
+      scheduledAt: contentVersions.scheduledAt,
     })
     .from(contentVersions)
     .innerJoin(contentEntries, eq(contentVersions.entryId, contentEntries.id))
+    .leftJoin(user, eq(contentVersions.authorUserId, user.id))
     .where(where)
     .orderBy(desc(contentVersions.updatedAt))
     .limit(ADMIN_PAGE_SIZE)
     .offset(offset);
 }
 
+export async function listAdminContentCategories(locale: string, db: Database = requireDb()) {
+  const rows = await db.select().from(contentCategories).orderBy(contentCategories.slug);
+  if (rows.length === 0) return [];
+  const translations = await db
+    .select()
+    .from(contentCategoryTranslations)
+    .where(eq(contentCategoryTranslations.locale, locale));
+  return rows.map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    name: translations.find((t) => t.categoryId === row.id)?.name ?? row.slug,
+  }));
+}
+
+export type AdminMediaFilter =
+  | "all"
+  | "images"
+  | "product"
+  | "content"
+  | "release"
+  | "private";
+
 export async function listAdminMedia(
-  input: { context?: string; page?: number } = {},
+  input: { q?: string; context?: string; filter?: AdminMediaFilter; page?: number } = {},
   db: Database = requireDb(),
 ) {
   const offset = adminOffset(input.page ?? 1);
-  const where = input.context ? eq(mediaAssets.context, input.context) : undefined;
+  const filters: SQL[] = [];
+  if (input.context) filters.push(eq(mediaAssets.context, input.context));
+  if (input.filter === "images") filters.push(ilike(mediaAssets.mimeType, "image/%"));
+  if (input.filter === "private") filters.push(eq(mediaAssets.visibility, "private"));
+  if (input.filter === "product") {
+    filters.push(or(ilike(mediaAssets.context, "product:%"), ilike(mediaAssets.context, "release:%"))!);
+  }
+  if (input.filter === "content") filters.push(ilike(mediaAssets.context, "content:%"));
+  if (input.filter === "release") filters.push(ilike(mediaAssets.context, "release:%"));
+  if (input.q?.trim()) {
+    const term = `%${input.q.trim()}%`;
+    filters.push(
+      or(
+        ilike(mediaAssets.publicId, term),
+        ilike(mediaAssets.altText, term),
+        ilike(mediaAssets.context, term),
+        ilike(mediaAssets.objectKey, term),
+      )!,
+    );
+  }
+  const where = filters.length ? and(...filters) : undefined;
   return db
     .select()
     .from(mediaAssets)
@@ -554,6 +659,68 @@ export async function listAdminMedia(
     .orderBy(desc(mediaAssets.createdAt))
     .limit(ADMIN_PAGE_SIZE)
     .offset(offset);
+}
+
+export async function getAdminMediaByPublicId(publicId: string, db: Database = requireDb()) {
+  const [row] = await db
+    .select()
+    .from(mediaAssets)
+    .where(eq(mediaAssets.publicId, publicId))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function listAdminReleases(
+  input: { productId?: string; page?: number } = {},
+  db: Database = requireDb(),
+) {
+  const offset = adminOffset(input.page ?? 1);
+  const where = input.productId ? eq(softwareReleases.productId, input.productId) : undefined;
+  return db
+    .select({
+      id: softwareReleases.id,
+      publicId: softwareReleases.publicId,
+      productId: softwareReleases.productId,
+      version: softwareReleases.version,
+      platform: softwareReleases.platform,
+      architecture: softwareReleases.architecture,
+      channel: softwareReleases.channel,
+      fileName: softwareReleases.fileName,
+      fileSize: softwareReleases.fileSize,
+      status: softwareReleases.status,
+      publishedAt: softwareReleases.publishedAt,
+      updatedAt: softwareReleases.updatedAt,
+      productSlug: products.slug,
+      productPublicId: products.publicId,
+      nameVi: productTranslations.name,
+    })
+    .from(softwareReleases)
+    .innerJoin(products, eq(softwareReleases.productId, products.id))
+    .leftJoin(
+      productTranslations,
+      and(eq(productTranslations.productId, products.id), eq(productTranslations.locale, "vi")),
+    )
+    .where(where)
+    .orderBy(desc(softwareReleases.updatedAt))
+    .limit(ADMIN_PAGE_SIZE)
+    .offset(offset);
+}
+
+export async function listAdminProductsForPicker(db: Database = requireDb()) {
+  return db
+    .select({
+      id: products.id,
+      publicId: products.publicId,
+      slug: products.slug,
+      nameVi: productTranslations.name,
+    })
+    .from(products)
+    .leftJoin(
+      productTranslations,
+      and(eq(productTranslations.productId, products.id), eq(productTranslations.locale, "vi")),
+    )
+    .orderBy(desc(products.updatedAt))
+    .limit(200);
 }
 
 export async function listAdminAudit(

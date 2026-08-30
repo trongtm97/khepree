@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import {
   featureTranslations,
   features,
@@ -17,6 +17,7 @@ import { mapPlanFeatureRow } from "./features";
 import { resolveLocalizedRow } from "./i18n";
 import { parseProductMarketingMetadata } from "./metadata";
 import { resolvePricingDisplayMode } from "./pricing";
+import { isPriceAllowedForMarket, type MarketContext } from "./market";
 import { isPurchasableBillingType } from "./types";
 import type {
   PricingProductGroup,
@@ -29,6 +30,7 @@ import type {
 export interface ProductLocaleOptions {
   locale: string;
   fallbackLocale?: string;
+  market?: MarketContext;
 }
 
 function mapProductSummary(
@@ -103,13 +105,45 @@ export class ProductService {
     slug: string,
     options: ProductLocaleOptions,
   ): Promise<PublicProductDetail | null> {
+    return this.getProductDetailBySlug(slug, options, { activeOnly: true });
+  }
+
+  async getProductPreviewBySlug(
+    slug: string,
+    options: ProductLocaleOptions & { previewToken: string; previewSecret: string },
+  ): Promise<PublicProductDetail | null> {
+    if (!this.db) return null;
+    const [product] = await this.db.select().from(products).where(eq(products.slug, slug)).limit(1);
+    if (!product) return null;
+    const { verifyProductPreviewToken } = await import("./preview-token");
+    if (
+      !verifyProductPreviewToken({
+        productId: product.id,
+        token: options.previewToken,
+        secret: options.previewSecret,
+      })
+    ) {
+      return null;
+    }
+    return this.getProductDetailBySlug(slug, options, { activeOnly: false, productRow: product });
+  }
+
+  private async getProductDetailBySlug(
+    slug: string,
+    options: ProductLocaleOptions,
+    mode: { activeOnly: boolean; productRow?: typeof products.$inferSelect },
+  ): Promise<PublicProductDetail | null> {
     if (!this.db) return null;
 
-    const [product] = await this.db
-      .select()
-      .from(products)
-      .where(and(eq(products.slug, slug), eq(products.status, "active")))
-      .limit(1);
+    const product =
+      mode.productRow ??
+      (
+        await this.db
+          .select()
+          .from(products)
+          .where(and(eq(products.slug, slug), eq(products.status, "active")))
+          .limit(1)
+      )[0];
 
     if (!product) return null;
 
@@ -121,7 +155,7 @@ export class ProductService {
     const translation = resolveLocalizedRow(translations, options.locale, options.fallbackLocale);
     if (!translation) return null;
 
-    const productPlans = await this.loadActivePlans([product.id], options);
+    const productPlans = await this.loadPlansForProduct([product.id], options, mode.activeOnly);
     const planBundle = productPlans.get(product.id) ?? [];
 
     return {
@@ -193,6 +227,7 @@ export class ProductService {
       .where(and(eq(prices.publicId, pricePublicId), eq(prices.planId, plan.id)))
       .limit(1);
     if (!price || !price.isActive || price.amountMinor <= 0n) return null;
+    if (!isPriceAllowedForMarket(price, options.market)) return null;
 
     const [productTranslationsForRow, planTranslationsForRow] = await Promise.all([
       this.db.select().from(productTranslations).where(eq(productTranslations.productId, product.id)),
@@ -237,19 +272,38 @@ export class ProductService {
     };
   }
 
-  private async loadActivePlans(
+  private async loadPlansForProduct(
     productIds: string[],
     options: ProductLocaleOptions,
+    activeOnly: boolean,
   ): Promise<Map<string, PublicPlan[]>> {
     if (!this.db || productIds.length === 0) return new Map();
 
     const planRows = await this.db
       .select()
       .from(plans)
-      .where(and(inArray(plans.productId, productIds), eq(plans.status, "active")))
+      .where(
+        activeOnly
+          ? and(inArray(plans.productId, productIds), eq(plans.status, "active"))
+          : and(inArray(plans.productId, productIds), ne(plans.status, "archived")),
+      )
       .orderBy(asc(plans.slug));
 
-    if (planRows.length === 0) return new Map();
+    return this.hydratePlans(planRows, options);
+  }
+
+  private async loadActivePlans(
+    productIds: string[],
+    options: ProductLocaleOptions,
+  ): Promise<Map<string, PublicPlan[]>> {
+    return this.loadPlansForProduct(productIds, options, true);
+  }
+
+  private async hydratePlans(
+    planRows: Array<typeof plans.$inferSelect>,
+    options: ProductLocaleOptions,
+  ): Promise<Map<string, PublicPlan[]>> {
+    if (!this.db || planRows.length === 0) return new Map();
 
     const planIds = planRows.map((row) => row.id);
     const [planTranslationRows, featureRows, priceRows] = await Promise.all([

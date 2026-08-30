@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Button } from "@khepree/ui";
+import type { CheckoutFormField } from "@khepree/commerce";
 
 const ALLOWED_HOSTS = new Set(["pay-sandbox.sepay.vn", "pay.sepay.vn"]);
 const ALLOWED_FIELDS = new Set([
@@ -11,12 +12,12 @@ const ALLOWED_FIELDS = new Set([
   "operation",
   "order_description",
   "order_invoice_number",
+  "customer_id",
+  "payment_method",
   "success_url",
   "error_url",
   "cancel_url",
   "signature",
-  "payment_method",
-  "customer_id",
 ]);
 
 export function ProviderCheckoutForm({
@@ -25,7 +26,7 @@ export function ProviderCheckoutForm({
   submitLabel,
 }: {
   action: string;
-  fields: Record<string, string>;
+  fields: CheckoutFormField[];
   submitLabel: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -47,10 +48,10 @@ export function ProviderCheckoutForm({
 
   return (
     <form ref={formRef} action={action} method="POST" className="space-y-4">
-      {Object.entries(fields)
-        .filter(([name]) => ALLOWED_FIELDS.has(name))
-        .map(([name, value]) => (
-          <input key={name} type="hidden" name={name} value={value} />
+      {fields
+        .filter((field) => ALLOWED_FIELDS.has(field.name))
+        .map((field) => (
+          <input key={field.name} type="hidden" name={field.name} value={field.value} />
         ))}
       <Button type="submit" className="w-full">
         {submitLabel}

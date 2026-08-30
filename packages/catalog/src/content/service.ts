@@ -1,10 +1,14 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, isNull, max } from "drizzle-orm";
 import {
+  contentCategories,
+  contentCategoryTranslations,
   contentEntries,
   contentVersions,
   createPublicId,
+  mediaAssets,
   requireDb,
+  user,
   withTransaction,
   type Database,
 } from "@khepree/db";
@@ -28,6 +32,11 @@ import type {
 function mapVersion(
   row: typeof contentVersions.$inferSelect,
   entry: typeof contentEntries.$inferSelect,
+  meta: {
+    featuredMediaPublicId?: string | null;
+    authorName?: string | null;
+    categoryName?: string | null;
+  } = {},
 ): ContentVersionRecord {
   return {
     id: row.id,
@@ -44,6 +53,13 @@ function mapVersion(
     bodyStorageProvider: row.bodyStorageProvider,
     bodyStorageBucket: row.bodyStorageBucket,
     bodyObjectKey: row.bodyObjectKey,
+    featuredMediaId: row.featuredMediaId,
+    featuredMediaPublicId: meta.featuredMediaPublicId ?? null,
+    authorUserId: row.authorUserId,
+    authorName: meta.authorName ?? null,
+    categoryId: row.categoryId,
+    categoryName: meta.categoryName ?? null,
+    scheduledAt: row.scheduledAt,
     status: row.status,
     publishedAt: row.publishedAt,
     createdAt: row.createdAt,
@@ -66,6 +82,10 @@ function toPublishedContent(
     seoTitle: version.seoTitle,
     seoDescription: version.seoDescription,
     bodyObjectKey: version.bodyObjectKey,
+    featuredMediaPublicId: null,
+    authorUserId: version.authorUserId,
+    authorName: null,
+    categoryName: null,
     publishedAt: version.publishedAt,
   };
 }
@@ -75,9 +95,20 @@ export function bodyObjectKeyFor(entryId: string, locale: string, versionNumber:
   return `prv/content/${entryId}/${locale}/v${versionNumber}.md`;
 }
 
-/** Pure helper for concurrency-safe version allocation (max query + 1). */
+/** Pure helper for concurrency-safe version allocation (max query + 1). Unique conflict retries in createDraftVersion. */
 export function nextContentVersionNumber(maxVersion: number | null | undefined): number {
   return (maxVersion ?? 0) + 1;
+}
+
+/** CMS version allocation: retry on unique (entry_id, locale, version_number). */
+function isUniqueViolation(error: unknown): boolean {
+  let current: unknown = error;
+  for (let i = 0; i < 4 && current && typeof current === "object"; i++) {
+    const record = current as { code?: string; cause?: unknown };
+    if (record.code === "23505") return true;
+    current = record.cause;
+  }
+  return /duplicate key|unique constraint/i.test(error instanceof Error ? error.message : String(error));
 }
 
 type BodyMeta = {
@@ -127,6 +158,52 @@ async function bodyMetaFor(
   };
 }
 
+async function resolveFeaturedMediaId(
+  db: Database,
+  publicId: string | null | undefined,
+): Promise<string | null> {
+  if (!publicId?.trim()) return null;
+  const [row] = await db
+    .select({ id: mediaAssets.id })
+    .from(mediaAssets)
+    .where(eq(mediaAssets.publicId, publicId.trim()))
+    .limit(1);
+  return row?.id ?? null;
+}
+
+async function versionMeta(
+  db: Database,
+  row: typeof contentVersions.$inferSelect,
+): Promise<{ featuredMediaPublicId: string | null; authorName: string | null; categoryName: string | null }> {
+  const [featured, author, category] = await Promise.all([
+    row.featuredMediaId
+      ? db
+          .select({ publicId: mediaAssets.publicId })
+          .from(mediaAssets)
+          .where(eq(mediaAssets.id, row.featuredMediaId))
+          .limit(1)
+          .then((rows) => rows[0]?.publicId ?? null)
+      : Promise.resolve(null),
+    row.authorUserId
+      ? db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, row.authorUserId))
+          .limit(1)
+          .then((rows) => rows[0]?.name ?? null)
+      : Promise.resolve(null),
+    row.categoryId
+      ? db
+          .select({ name: contentCategoryTranslations.name })
+          .from(contentCategoryTranslations)
+          .where(eq(contentCategoryTranslations.categoryId, row.categoryId))
+          .limit(1)
+          .then((rows) => rows[0]?.name ?? null)
+      : Promise.resolve(null),
+  ]);
+  return { featuredMediaPublicId: featured, authorName: author, categoryName: category };
+}
+
 export class ContentService {
   constructor(
     private db: Database = requireDb(),
@@ -135,6 +212,14 @@ export class ContentService {
 
   private get storage(): ObjectStorage {
     return this.storageOverride ?? getPrivateObjectStorage();
+  }
+
+  private async enrichVersion(
+    row: typeof contentVersions.$inferSelect,
+    entry: typeof contentEntries.$inferSelect,
+  ): Promise<ContentVersionRecord> {
+    const meta = await versionMeta(this.db, row);
+    return mapVersion(row, entry, meta);
   }
 
   async createDraft(input: CreateDraftInput): Promise<ContentVersionRecord> {
@@ -161,65 +246,90 @@ export class ContentService {
       input.body,
     );
 
-    const [version] = await this.db
-      .insert(contentVersions)
-      .values({
-        entryId: entry.id,
-        locale: input.locale,
-        versionNumber,
-        title: input.title,
-        excerpt: input.excerpt ?? null,
-        seoTitle: input.seoTitle ?? null,
-        seoDescription: input.seoDescription ?? null,
-        ...bodyMeta,
-        status: "DRAFT",
-      })
-      .returning();
+    const featuredMediaId = await resolveFeaturedMediaId(this.db, input.featuredMediaPublicId);
 
-    if (!version) throw new Error("Failed to create content version");
-    return mapVersion(version, entry);
-  }
-
-  async createDraftVersion(input: CreateDraftVersionInput): Promise<ContentVersionRecord> {
-    const allocated = await withTransaction(this.db, async (tx) => {
-      const [entry] = await tx
-        .select()
-        .from(contentEntries)
-        .where(and(eq(contentEntries.id, input.entryId), isNull(contentEntries.deletedAt)))
-        .limit(1);
-
-      if (!entry) throw new Error("Content entry not found");
-
-      const [maxRow] = await tx
-        .select({ maxVersion: max(contentVersions.versionNumber) })
-        .from(contentVersions)
-        .where(
-          and(eq(contentVersions.entryId, input.entryId), eq(contentVersions.locale, input.locale)),
-        );
-
-      const versionNumber = nextContentVersionNumber(maxRow?.maxVersion);
-
-      const [version] = await tx
+    try {
+      const [version] = await this.db
         .insert(contentVersions)
         .values({
-          entryId: input.entryId,
+          entryId: entry.id,
           locale: input.locale,
           versionNumber,
           title: input.title,
           excerpt: input.excerpt ?? null,
           seoTitle: input.seoTitle ?? null,
           seoDescription: input.seoDescription ?? null,
-          ...emptyBodyMeta,
+          featuredMediaId,
+          authorUserId: input.authorUserId ?? null,
+          categoryId: input.categoryId ?? null,
+          scheduledAt: input.scheduledAt ?? null,
+          ...bodyMeta,
           status: "DRAFT",
         })
         .returning();
 
       if (!version) throw new Error("Failed to create content version");
-      return { entry, version, versionNumber };
-    });
+      return this.enrichVersion(version, entry);
+    } catch (error) {
+      if (bodyMeta.bodyObjectKey) {
+        await this.storage.deleteObject(bodyMeta.bodyObjectKey, "private").catch(() => undefined);
+      }
+      throw error;
+    }
+  }
+
+  async createDraftVersion(input: CreateDraftVersionInput): Promise<ContentVersionRecord> {
+    let allocated: { entry: typeof contentEntries.$inferSelect; version: typeof contentVersions.$inferSelect; versionNumber: number } | undefined;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      try {
+        allocated = await withTransaction(this.db, async (tx) => {
+          const [entry] = await tx
+            .select()
+            .from(contentEntries)
+            .where(and(eq(contentEntries.id, input.entryId), isNull(contentEntries.deletedAt)))
+            .limit(1);
+
+          if (!entry) throw new Error("Content entry not found");
+
+          const [maxRow] = await tx
+            .select({ maxVersion: max(contentVersions.versionNumber) })
+            .from(contentVersions)
+            .where(
+              and(eq(contentVersions.entryId, input.entryId), eq(contentVersions.locale, input.locale)),
+            );
+
+          const versionNumber = nextContentVersionNumber(maxRow?.maxVersion);
+
+          const [version] = await tx
+            .insert(contentVersions)
+            .values({
+              entryId: input.entryId,
+              locale: input.locale,
+              versionNumber,
+              title: input.title,
+              excerpt: input.excerpt ?? null,
+              seoTitle: input.seoTitle ?? null,
+              seoDescription: input.seoDescription ?? null,
+              featuredMediaId: input.featuredMediaId ?? null,
+              authorUserId: input.authorUserId ?? null,
+              categoryId: input.categoryId ?? null,
+              ...emptyBodyMeta,
+              status: "DRAFT",
+            })
+            .returning();
+
+          if (!version) throw new Error("Failed to create content version");
+          return { entry, version, versionNumber };
+        });
+        break;
+      } catch (error) {
+        if (!isUniqueViolation(error) || attempt === 7) throw error;
+      }
+    }
+    if (!allocated) throw new Error("Failed to allocate content version");
 
     if (!input.body) {
-      return mapVersion(allocated.version, allocated.entry);
+      return this.enrichVersion(allocated.version, allocated.entry);
     }
 
     const bodyMeta = await bodyMetaFor(
@@ -230,14 +340,21 @@ export class ContentService {
       input.body,
     );
 
-    const [updated] = await this.db
-      .update(contentVersions)
-      .set({ ...bodyMeta, updatedAt: new Date() })
-      .where(eq(contentVersions.id, allocated.version.id))
-      .returning();
+    try {
+      const [updated] = await this.db
+        .update(contentVersions)
+        .set({ ...bodyMeta, updatedAt: new Date() })
+        .where(eq(contentVersions.id, allocated.version.id))
+        .returning();
 
-    if (!updated) throw new Error("Failed to update content version body");
-    return mapVersion(updated, allocated.entry);
+      if (!updated) throw new Error("Failed to update content version body");
+      return this.enrichVersion(updated, allocated.entry);
+    } catch (error) {
+      if (bodyMeta.bodyObjectKey) {
+        await this.storage.deleteObject(bodyMeta.bodyObjectKey, "private").catch(() => undefined);
+      }
+      throw error;
+    }
   }
 
   async updateDraft(input: UpdateContentInput): Promise<ContentVersionRecord> {
@@ -280,6 +397,11 @@ export class ContentService {
       }
     }
 
+    let featuredMediaId = existing.featuredMediaId;
+    if (input.featuredMediaPublicId !== undefined) {
+      featuredMediaId = await resolveFeaturedMediaId(this.db, input.featuredMediaPublicId);
+    }
+
     const [updated] = await this.db
       .update(contentVersions)
       .set({
@@ -288,6 +410,10 @@ export class ContentService {
         seoTitle: input.seoTitle !== undefined ? input.seoTitle : existing.seoTitle,
         seoDescription:
           input.seoDescription !== undefined ? input.seoDescription : existing.seoDescription,
+        featuredMediaId,
+        authorUserId: input.authorUserId !== undefined ? input.authorUserId : existing.authorUserId,
+        categoryId: input.categoryId !== undefined ? input.categoryId : existing.categoryId,
+        scheduledAt: input.scheduledAt !== undefined ? input.scheduledAt : existing.scheduledAt,
         ...bodyMeta,
         updatedAt: new Date(),
       })
@@ -295,7 +421,7 @@ export class ContentService {
       .returning();
 
     if (!updated) throw new Error("Failed to update content version");
-    return mapVersion(updated, entry);
+    return this.enrichVersion(updated, entry);
   }
 
   async publish(versionId: string): Promise<{
@@ -346,7 +472,7 @@ export class ContentService {
       if (!published) throw new Error("Failed to publish content version");
 
       return {
-        version: mapVersion(published, entry),
+        version: await this.enrichVersion(published, entry),
         revalidation: buildContentRevalidationPlan({
           slug: entry.slug,
           contentType: entry.contentType,
@@ -382,7 +508,87 @@ export class ContentService {
       .returning();
 
     if (!archived) throw new Error("Failed to archive content version");
-    return mapVersion(archived, entry);
+    return this.enrichVersion(archived, entry);
+  }
+
+  async getVersion(versionId: string): Promise<ContentVersionRecord | null> {
+    const [row] = await this.db
+      .select({ version: contentVersions, entry: contentEntries })
+      .from(contentVersions)
+      .innerJoin(contentEntries, eq(contentVersions.entryId, contentEntries.id))
+      .where(and(eq(contentVersions.id, versionId), isNull(contentEntries.deletedAt)))
+      .limit(1);
+    if (!row) return null;
+    return this.enrichVersion(row.version, row.entry);
+  }
+
+  async listEntryVersions(entryId: string, locale?: string): Promise<ContentVersionRecord[]> {
+    const rows = await this.db
+      .select({ version: contentVersions, entry: contentEntries })
+      .from(contentVersions)
+      .innerJoin(contentEntries, eq(contentVersions.entryId, contentEntries.id))
+      .where(
+        locale
+          ? and(eq(contentVersions.entryId, entryId), eq(contentVersions.locale, locale))
+          : eq(contentVersions.entryId, entryId),
+      )
+      .orderBy(desc(contentVersions.versionNumber));
+
+    const result: ContentVersionRecord[] = [];
+    for (const row of rows) {
+      result.push(await this.enrichVersion(row.version, row.entry));
+    }
+    return result;
+  }
+
+  async createDraftFromPublished(input: {
+    entryId: string;
+    locale: string;
+  }): Promise<ContentVersionRecord> {
+    const [published] = await this.db
+      .select()
+      .from(contentVersions)
+      .where(
+        and(
+          eq(contentVersions.entryId, input.entryId),
+          eq(contentVersions.locale, input.locale),
+          eq(contentVersions.status, "PUBLISHED"),
+        ),
+      )
+      .orderBy(desc(contentVersions.versionNumber))
+      .limit(1);
+    if (!published) throw new Error("No published version to fork");
+
+    const body = published.bodyObjectKey
+      ? await this.getBody({ bodyObjectKey: published.bodyObjectKey })
+      : null;
+
+    return this.createDraftVersion({
+      entryId: input.entryId,
+      locale: input.locale,
+      title: published.title,
+      excerpt: published.excerpt,
+      seoTitle: published.seoTitle,
+      seoDescription: published.seoDescription,
+      body,
+      featuredMediaId: published.featuredMediaId,
+      authorUserId: published.authorUserId,
+      categoryId: published.categoryId,
+    });
+  }
+
+  async listCategories(locale: string) {
+    const rows = await this.db.select().from(contentCategories).orderBy(contentCategories.slug);
+    if (rows.length === 0) return [];
+    const translations = await this.db
+      .select()
+      .from(contentCategoryTranslations)
+      .where(eq(contentCategoryTranslations.locale, locale));
+    return rows.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: translations.find((t) => t.categoryId === row.id)?.name ?? row.slug,
+    }));
   }
 
   private async findPublishedVersion(entryId: string, locale: string) {
@@ -428,7 +634,37 @@ export class ContentService {
 
     if (!version) return null;
 
-    return toPublishedContent(entry, version);
+    const meta = await versionMeta(this.db, version);
+    return {
+      ...toPublishedContent(entry, version),
+      featuredMediaPublicId: meta.featuredMediaPublicId,
+      authorUserId: version.authorUserId,
+      authorName: meta.authorName,
+      categoryName: meta.categoryName,
+    };
+  }
+
+  async getPreviewVersion(versionId: string): Promise<(PublishedContent & { versionId: string }) | null> {
+    const version = await this.getVersion(versionId);
+    if (!version || version.status === "ARCHIVED") return null;
+    return {
+      entryPublicId: version.entryPublicId,
+      slug: version.slug,
+      contentType: version.contentType,
+      locale: version.locale,
+      versionNumber: version.versionNumber,
+      title: version.title,
+      excerpt: version.excerpt,
+      seoTitle: version.seoTitle,
+      seoDescription: version.seoDescription,
+      bodyObjectKey: version.bodyObjectKey,
+      featuredMediaPublicId: version.featuredMediaPublicId,
+      authorUserId: version.authorUserId,
+      authorName: version.authorName,
+      categoryName: version.categoryName,
+      publishedAt: version.publishedAt,
+      versionId: version.id,
+    };
   }
 
   async listPublished(input: {

@@ -1,5 +1,5 @@
-import { getEnv, isEmailConfigured } from "@khepree/config";
-import { createEmailAdapter } from "@khepree/email";
+import { getEnv, isEmailConfigured, DEFAULT_LOCALE, isSupportedLocale } from "@khepree/config";
+import { createEmailAdapter, renderTransactionalEmail } from "@khepree/email";
 
 const env = getEnv();
 
@@ -33,20 +33,22 @@ export async function sendAuthEmail(input: {
   }
 }
 
-export function verificationEmailContent(url: string, name?: string | null) {
-  const greeting = name ? `Hi ${name},` : "Hi,";
+export function verificationEmailContent(url: string, name?: string | null, locale = DEFAULT_LOCALE) {
+  const copy = renderTransactionalEmail("verify_email", isSupportedLocale(locale) ? locale : DEFAULT_LOCALE);
+  const greeting = name ? (locale === "en" ? `Hi ${name},` : `Xin chào ${name},`) : copy.text;
   return {
-    subject: "Verify your Khepree email",
-    text: `${greeting}\n\nVerify your email address:\n${url}\n\nIf you did not create an account, you can ignore this message.`,
-    html: `<p>${greeting}</p><p>Verify your email address:</p><p><a href="${url}">${url}</a></p><p>If you did not create an account, you can ignore this message.</p>`,
+    subject: copy.subject,
+    text: `${greeting}\n${url}`,
+    html: `<p>${greeting}</p><p><a href="${url}">${url}</a></p>`,
   };
 }
 
-export function resetPasswordEmailContent(url: string, name?: string | null) {
-  const greeting = name ? `Hi ${name},` : "Hi,";
+export function resetPasswordEmailContent(url: string, name?: string | null, locale = DEFAULT_LOCALE) {
+  const copy = renderTransactionalEmail("password_reset", isSupportedLocale(locale) ? locale : DEFAULT_LOCALE);
+  const greeting = name ? (locale === "en" ? `Hi ${name},` : `Xin chào ${name},`) : copy.text;
   return {
-    subject: "Reset your Khepree password",
-    text: `${greeting}\n\nReset your password:\n${url}\n\nIf you did not request this, you can ignore this message.`,
-    html: `<p>${greeting}</p><p>Reset your password:</p><p><a href="${url}">${url}</a></p><p>If you did not request this, you can ignore this message.</p>`,
+    subject: copy.subject,
+    text: `${greeting}\n${url}`,
+    html: `<p>${greeting}</p><p><a href="${url}">${url}</a></p>`,
   };
 }

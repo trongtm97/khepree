@@ -69,6 +69,8 @@ export interface GrantEntitlementInput {
   /** When set, retries with the same order item reuse one row. */
   orderPublicId?: string;
   orderItemId?: string;
+  /** Default true. Commerce paid path sets false so licensing handler provisions. */
+  provisionLicense?: boolean;
 }
 
 export interface UpdateEntitlementInput {

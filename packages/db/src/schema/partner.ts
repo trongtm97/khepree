@@ -79,6 +79,7 @@ export const partners = pgTable(
     status: partnerStatusEnum("status").notNull().default("pending"),
     modes: jsonb("modes").$type<PartnerMode[]>().notNull().default(["REFERRAL"]),
     allowNegativeBalance: boolean("allow_negative_balance").notNull().default(false),
+    defaultCurrency: text("default_currency").notNull().default("VND"),
     ...timestamps,
   },
   (table) => [
@@ -117,7 +118,7 @@ export const wallets = pgTable(
       .unique()
       .references(() => partners.id, { onDelete: "restrict" }),
     balanceMinor: bigint("balance_minor", { mode: "bigint" }).notNull().default(0n),
-    currency: text("currency").notNull().default("USD"),
+    currency: text("currency").notNull().default("VND"),
     ...timestamps,
   },
   (table) => [index("wallets_partner_id_idx").on(table.partnerId)],

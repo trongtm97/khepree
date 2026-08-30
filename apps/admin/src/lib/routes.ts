@@ -4,31 +4,95 @@ export const AUTH_ROUTES = {
   signIn: "/sign-in",
 } as const;
 
-export const ADMIN_NAV: Array<{ label: string; href: string; anyOf: Permission[] }> = [
-  { label: "Dashboard", href: "/dashboard", anyOf: ["admin.access"] },
-  { label: "Users", href: "/users", anyOf: ["admin.users.read"] },
-  { label: "Organizations", href: "/organizations", anyOf: ["admin.users.read"] },
-  { label: "Products", href: "/products", anyOf: ["catalog.read"] },
-  { label: "Plans", href: "/plans", anyOf: ["catalog.read"] },
-  { label: "Features", href: "/features", anyOf: ["catalog.read"] },
-  { label: "Prices", href: "/prices", anyOf: ["catalog.read"] },
-  { label: "Orders", href: "/orders", anyOf: ["finance.read", "support.read"] },
-  { label: "Payments", href: "/payments", anyOf: ["finance.read"] },
-  { label: "Subscriptions", href: "/subscriptions", anyOf: ["finance.read"] },
-  { label: "Entitlements", href: "/entitlements", anyOf: ["entitlement.read"] },
-  { label: "Licenses", href: "/licenses", anyOf: ["entitlement.read"] },
-  { label: "Devices", href: "/devices", anyOf: ["entitlement.read"] },
-  { label: "Partners", href: "/partners", anyOf: ["partner.admin", "support.read", "finance.read"] },
-  { label: "Commissions", href: "/commissions", anyOf: ["finance.read"] },
-  { label: "Content", href: "/content", anyOf: ["content.read"] },
-  { label: "Media", href: "/media", anyOf: ["content.read"] },
-  { label: "Releases", href: "/releases", anyOf: ["content.read"] },
-  { label: "Downloads", href: "/downloads", anyOf: ["content.read"] },
-  { label: "Audit Logs", href: "/audit", anyOf: ["support.read", "finance.read"] },
-  { label: "System", href: "/system", anyOf: ["admin.access"] },
+export type AdminNavItem = {
+  label: string;
+  href: string;
+  anyOf: Permission[];
+};
+
+export type AdminNavGroup = {
+  id: string;
+  label: string;
+  items: AdminNavItem[];
+};
+
+/** Single source for sidebar + mobile drawer. URLs stay English; labels are Vietnamese. */
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+  {
+    id: "overview",
+    label: "Tổng quan",
+    items: [{ label: "Tổng quan", href: "/dashboard", anyOf: ["admin.access"] }],
+  },
+  {
+    id: "products",
+    label: "Sản phẩm",
+    items: [
+      { label: "Sản phẩm", href: "/products", anyOf: ["catalog.read"] },
+      { label: "Gói", href: "/plans", anyOf: ["catalog.read"] },
+      { label: "Tính năng", href: "/features", anyOf: ["catalog.read"] },
+      { label: "Giá", href: "/prices", anyOf: ["catalog.read"] },
+      { label: "Phiên bản", href: "/releases", anyOf: ["content.read"] },
+      { label: "Tải xuống", href: "/downloads", anyOf: ["content.read"] },
+    ],
+  },
+  {
+    id: "content",
+    label: "Nội dung & SEO",
+    items: [
+      { label: "Bài viết", href: "/content/articles", anyOf: ["content.read"] },
+      { label: "Trang", href: "/content/pages", anyOf: ["content.read"] },
+      { label: "Tài liệu", href: "/content/docs", anyOf: ["content.read"] },
+      { label: "Media", href: "/media", anyOf: ["content.read"] },
+    ],
+  },
+  {
+    id: "customers",
+    label: "Khách hàng",
+    items: [
+      { label: "Người dùng", href: "/users", anyOf: ["admin.users.read"] },
+      { label: "Tổ chức", href: "/organizations", anyOf: ["admin.users.read"] },
+    ],
+  },
+  {
+    id: "commerce",
+    label: "Bán hàng",
+    items: [
+      { label: "Đơn hàng", href: "/orders", anyOf: ["finance.read", "support.read"] },
+      { label: "Thanh toán", href: "/payments", anyOf: ["finance.read"] },
+      { label: "Đăng ký", href: "/subscriptions", anyOf: ["finance.read"] },
+    ],
+  },
+  {
+    id: "licensing",
+    label: "Bản quyền",
+    items: [
+      { label: "Quyền sử dụng", href: "/entitlements", anyOf: ["entitlement.read"] },
+      { label: "Bản quyền", href: "/licenses", anyOf: ["entitlement.read"] },
+      { label: "Thiết bị", href: "/devices", anyOf: ["entitlement.read"] },
+    ],
+  },
+  {
+    id: "partners",
+    label: "Đối tác",
+    items: [
+      { label: "Đại lý", href: "/partners", anyOf: ["partner.admin", "support.read", "finance.read"] },
+      { label: "Hoa hồng", href: "/commissions", anyOf: ["finance.read"] },
+    ],
+  },
+  {
+    id: "system",
+    label: "Hệ thống",
+    items: [
+      { label: "Nhật ký hoạt động", href: "/audit", anyOf: ["support.read", "finance.read"] },
+      { label: "Hệ thống", href: "/system", anyOf: ["admin.access"] },
+    ],
+  },
 ];
 
+export const ADMIN_NAV = ADMIN_NAV_GROUPS.flatMap((group) => group.items);
+
 export const PROTECTED_PATHS = ADMIN_NAV.map((item) => item.href);
+
 export const PUBLIC_AUTH_PATHS = [
   AUTH_ROUTES.signIn,
   "/unauthorized",
@@ -42,4 +106,16 @@ export function isProtectedPath(pathname: string): boolean {
 
 export function isPublicAuthPath(pathname: string): boolean {
   return PUBLIC_AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+export function filterNavGroups(
+  groups: AdminNavGroup[],
+  canAccess: (permissions: Permission[]) => boolean,
+): AdminNavGroup[] {
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccess(item.anyOf)),
+    }))
+    .filter((group) => group.items.length > 0);
 }

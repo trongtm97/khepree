@@ -40,7 +40,7 @@ export function proxy(request: NextRequest) {
 
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = hasSession ? "/dashboard" : AUTH_ROUTES.signIn;
+    url.pathname = hasSession ? "/select" : AUTH_ROUTES.signIn;
     return finish(request, NextResponse.redirect(url));
   }
 
@@ -48,7 +48,7 @@ export function proxy(request: NextRequest) {
     const next = safeReturnPath(request.nextUrl.searchParams.get("next"));
     const url = request.nextUrl.clone();
     const [path, query] = next.split("?");
-    url.pathname = path || "/dashboard";
+    url.pathname = path || "/select";
     url.search = query ? `?${query}` : "";
     return finish(request, NextResponse.redirect(url));
   }
@@ -67,6 +67,8 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/select",
+    "/p/:path*",
     "/dashboard/:path*",
     "/customers/:path*",
     "/licenses/:path*",

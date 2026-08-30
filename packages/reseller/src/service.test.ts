@@ -5,7 +5,6 @@ import { MemoryCatalogReader } from "@khepree/entitlement";
 import { createEntitlementService } from "@khepree/entitlement";
 import { MemoryEntitlementRepository } from "@khepree/entitlement";
 import type { CatalogSnapshot } from "@khepree/entitlement";
-import type { PaidOrderContext, RefundedOrderContext } from "@khepree/commerce";
 import { signedLedgerDelta } from "./ledger";
 import { hashVisitorId } from "./privacy";
 import { PartnerError } from "./errors";
@@ -49,6 +48,7 @@ const catalog: PlanCatalog = {
       productId: PRODUCT_ID,
       productSlug: "sample",
       billingType: "recurring",
+      accessTermDays: 365,
     };
   },
 };
@@ -73,6 +73,7 @@ function partnerRow(id: string, extra: Partial<Parameters<MemoryPartnerRepositor
     status: "active" as const,
     modes: ["REFERRAL", "RESELLER"] as PartnerMode[],
     allowNegativeBalance: false,
+    defaultCurrency: "VND",
     commissionBps: 1000,
     ...extra,
   };
@@ -95,13 +96,13 @@ async function setup(options: { allowNegative?: boolean } = {}) {
   await store.insertMembership({ partnerId: PARTNER_A, userId: "owner-a", role: "PARTNER_OWNER" });
   await store.insertMembership({ partnerId: PARTNER_A, userId: "sales-a", role: "PARTNER_SALES" });
   await store.insertMembership({ partnerId: PARTNER_B, userId: "owner-b", role: "PARTNER_OWNER" });
-  await store.getOrCreateWallet(PARTNER_A, "USD");
-  await store.getOrCreateWallet(PARTNER_B, "USD");
+  await store.getOrCreateWallet(PARTNER_A, "VND");
+  await store.getOrCreateWallet(PARTNER_B, "VND");
   await store.insertPartnerPrice({
     partnerId: PARTNER_A,
     planId: PLAN_ID,
     amountMinor: 1000n,
-    currency: "USD",
+    currency: "VND",
   });
   const users = new MemoryUsers([
     { id: "owner-a", email: "a@example.com", name: "Owner A" },
@@ -318,7 +319,7 @@ describe("referral attribution", () => {
     const { service, store } = await setup();
     const code = await service.createReferral({ actorUserId: "owner-a", partnerId: PARTNER_A });
     await service.attributeSignup({ userId: "buyer", code: code.code });
-    const paid = paidOrder("ord-1", "buyer", 10000n);
+    const paid = { customer: { userId: "buyer", organizationId: null }, order: { id: "ord-1", publicId: "ord_ord-1", currency: "VND", totalMinor: 10000n } };
     await service.onPaidOrder(paid);
     const commissions = await store.listCommissions(PARTNER_A);
     expect(commissions).toHaveLength(1);
@@ -331,7 +332,7 @@ describe("referral attribution", () => {
     const wallet = await store.getWalletByPartner(PARTNER_A);
     expect(wallet?.balanceMinor).toBe(1000n);
 
-    await service.onRefunded(refundedOrder(paid, true));
+    await service.onRefunded({ orderId: paid.order.id, full: true });
     const reversed = await store.getCommissionById(commissions[0]!.id);
     expect(reversed?.status).toBe("reversed");
     const after = await store.getWalletByPartner(PARTNER_A);
@@ -340,7 +341,10 @@ describe("referral attribution", () => {
 
   it("does not commission an unattributed checkout", async () => {
     const { service, store } = await setup();
-    await service.onPaidOrder(paidOrder("ord-2", "stranger", 10000n));
+    await service.onPaidOrder({
+      customer: { userId: "stranger", organizationId: null },
+      order: { id: "ord-2", publicId: "ord_ord-2", currency: "VND", totalMinor: 10000n },
+    });
     expect(await store.listCommissions(PARTNER_A)).toHaveLength(0);
   });
 });
@@ -420,6 +424,7 @@ describe("reseller issue", () => {
       idempotencyKey: "issue-1",
     });
     const first = await entitlement.getEntitlement(issued.issue.entitlementId);
+    expect(first?.expiresAt?.getTime()).toBe(NOW.getTime() + 365 * 86_400_000);
     const firstExpiry = first?.expiresAt?.getTime() ?? 0;
     await service.renewIssue({
       actorUserId: "owner-a",
@@ -430,52 +435,21 @@ describe("reseller issue", () => {
     const renewed = await entitlement.getEntitlement(issued.issue.entitlementId);
     expect(renewed?.expiresAt?.getTime()).toBeGreaterThan(firstExpiry);
   });
+
+  it("requires an explicit partner public id and rejects a third org", async () => {
+    const { service, store } = await setup();
+    await store.insertMembership({ partnerId: PARTNER_B, userId: "owner-a", role: "PARTNER_SALES" });
+    const partnerA = await store.getPartnerById(PARTNER_A);
+    const partnerB = await store.getPartnerById(PARTNER_B);
+    const actors = await service.listActorsForUser("owner-a");
+    expect(actors.map((row) => row.partner.id).sort()).toEqual([PARTNER_A, PARTNER_B].sort());
+    expect(await service.resolveForUser("owner-a", partnerA!.publicId)).toMatchObject({
+      partner: { id: PARTNER_A },
+    });
+    expect(await service.resolveForUser("owner-a", partnerB!.publicId)).toMatchObject({
+      partner: { id: PARTNER_B },
+    });
+    expect(await service.resolveForUser("owner-a", "ptr_missing")).toBeNull();
+  });
 });
 
-function paidOrder(orderId: string, userId: string, totalMinor: bigint): PaidOrderContext {
-  return {
-    order: {
-      id: orderId,
-      publicId: `ord_${orderId}`,
-      customerId: "cus-1",
-      status: "paid",
-      currency: "USD",
-      totalMinor,
-      createdAt: NOW,
-      updatedAt: NOW,
-    },
-    items: [],
-    customer: {
-      id: "cus-1",
-      publicId: "cus_1",
-      userId,
-      organizationId: null,
-      createdAt: NOW,
-      updatedAt: NOW,
-    },
-    payment: {
-      id: "pay-1",
-      publicId: "pay_1",
-      orderId,
-      provider: "mock",
-      providerPaymentId: "mock_1",
-      status: "succeeded",
-      amountMinor: totalMinor,
-      currency: "USD",
-      method: null,
-      createdAt: NOW,
-      updatedAt: NOW,
-    },
-    subscriptions: [],
-  };
-}
-
-function refundedOrder(paid: PaidOrderContext, full: boolean): RefundedOrderContext {
-  return {
-    order: paid.order,
-    items: paid.items,
-    customer: paid.customer,
-    payment: paid.payment,
-    full,
-  };
-}
