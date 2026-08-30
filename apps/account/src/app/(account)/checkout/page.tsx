@@ -1,9 +1,10 @@
 import { requireSession } from "@khepree/auth/session";
 import { createProductService, formatBillingInterval, formatPriceAmount } from "@khepree/catalog";
-import { DEFAULT_LOCALE, DEFAULT_CURRENCY, DEFAULT_MARKET_REGION, getEnv } from "@khepree/config";
+import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION, getEnv } from "@khepree/config";
 import { Alert, Button, Card, CardDescription, CardTitle } from "@khepree/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LegalConsentNotice } from "@/components/legal-consent-notice";
 import { accountLocaleFromCookies } from "@/lib/locale";
 import { accountMessages } from "@/lib/messages";
 import { startCheckoutAction } from "./actions";
@@ -24,7 +25,6 @@ export default async function CheckoutPage({
   const pricePublicId = params.price ?? "";
   const env = getEnv();
   const appUrl = env.APP_URL || "http://localhost:3000";
-  const termsUrl = `${appUrl}/${locale || DEFAULT_LOCALE}/terms`;
 
   const offer =
     planPublicId && pricePublicId
@@ -35,9 +35,7 @@ export default async function CheckoutPage({
       : null;
 
   const notice =
-    params.error === "terms"
-      ? copy.termsRequired
-      : params.error === "missing"
+    params.error === "missing"
         ? copy.missing
         : params.error === "unavailable"
           ? copy.unavailable
@@ -88,21 +86,7 @@ export default async function CheckoutPage({
           <form action={startCheckoutAction} className="mt-6 space-y-4">
             <input type="hidden" name="planPublicId" value={offer.plan.publicId} />
             <input type="hidden" name="pricePublicId" value={offer.price.publicId} />
-            <label className="flex items-start gap-3 text-sm">
-              <input
-                type="checkbox"
-                name="acceptTerms"
-                required
-                className="mt-0.5 size-4 shrink-0 rounded border-khepree-mist text-khepree-teal"
-              />
-              <span>
-                {copy.terms}{" "}
-                <Link href={termsUrl} className="text-khepree-teal hover:underline">
-                  {copy.termsLink}
-                </Link>
-                .
-              </span>
-            </label>
+            <LegalConsentNotice locale={locale} copy={copy} variant="terms-only" />
             <Button type="submit" className="w-full">
               {copy.continue}
             </Button>

@@ -21,6 +21,8 @@ dist
 *.log
 npm-debug.log*
 pnpm-debug.log*
+.deploy-log.txt
+.deploy-*.tar.gz
 
 # OS
 .DS_Store

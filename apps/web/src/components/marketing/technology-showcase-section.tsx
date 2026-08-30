@@ -10,7 +10,7 @@ export function TechnologyShowcaseSection({ messages }: { messages: Messages }) 
       <TechGrid className="opacity-25 max-sm:opacity-15" />
       <Container className="relative grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
         <div>
-          <Title className="text-foreground">{messages.technology.heading}</Title>
+          <Title className="whitespace-pre-line text-foreground">{messages.technology.heading}</Title>
           <BodyText className="mt-5 text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
             {messages.technology.copy}
           </BodyText>

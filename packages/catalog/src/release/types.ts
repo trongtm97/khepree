@@ -56,6 +56,19 @@ export interface LatestReleaseQuery {
   currentVersion?: string | null;
 }
 
+/** Published release row for public marketing changelog — active products only. */
+export interface PublicChangelogEntry {
+  releasePublicId: string;
+  productSlug: string;
+  productName: string;
+  version: string;
+  platform: ReleasePlatform;
+  architecture: ReleaseArchitecture;
+  channel: ReleaseChannel;
+  publishedAt: Date;
+  releaseNotes: string | null;
+}
+
 export interface PrepareReleaseUploadInput {
   productId: string;
   fileName: string;

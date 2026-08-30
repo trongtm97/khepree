@@ -4,18 +4,7 @@ import { listPublishedContent } from "@/lib/content";
 import { getPublicProducts } from "@/lib/catalog";
 import { isSupportedLocale, localePath } from "@/lib/i18n/config";
 import { siteUrl } from "@/lib/seo/metadata";
-
-const ROUTES = [
-  "",
-  "/products",
-  "/about",
-  "/contact",
-  "/blog",
-  "/docs",
-  "/security",
-  "/privacy",
-  "/terms",
-] as const;
+import { PUBLIC_SITEMAP_STATIC_ROUTES } from "@/lib/seo/public-sitemap-routes";
 
 function localeAlternates(
   path: string,
@@ -34,7 +23,7 @@ function localeAlternates(
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = SUPPORTED_LOCALES.flatMap((locale) =>
-    ROUTES.map((route) => ({
+    PUBLIC_SITEMAP_STATIC_ROUTES.map((route) => ({
       url: siteUrl(localePath(locale, route || "/")),
       changeFrequency: route === "" ? ("weekly" as const) : ("monthly" as const),
       priority: route === "" ? 1 : 0.7,

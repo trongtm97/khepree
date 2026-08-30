@@ -1,7 +1,7 @@
 "use client";
 
 import type { ResolvedKhepreeSurface } from "@khepree/config";
-import { cn } from "@khepree/ui";
+import { cn, ctaButtonGroupClass } from "@khepree/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -14,6 +14,7 @@ import { LanguageSwitcher } from "./language-switcher";
 import { ABOUT_PATH } from "./nav";
 import { ProductsMobileLinks } from "./products-menu";
 import { ResourcesMobileLinks } from "./resources-menu";
+import { SupportMobileLinks } from "./support-menu";
 
 const HEADER_OFFSET = "3.5rem";
 
@@ -119,16 +120,17 @@ export function MobileNav({
             aria-label="Mobile"
             role="dialog"
             aria-modal="true"
-            className="fixed inset-x-0 z-50 flex flex-col overflow-hidden border-t border-border/80 bg-background/98 shadow-[0_16px_48px_rgb(0_0_0/0.12)] backdrop-blur-xl motion-safe:animate-in motion-safe:slide-in-from-top-2"
+            className="fixed inset-x-0 z-50 flex flex-col overflow-hidden border-t border-border/80 bg-background/98 px-4 shadow-[0_16px_48px_rgb(0_0_0/0.12)] backdrop-blur-xl motion-safe:animate-in motion-safe:slide-in-from-top-2"
             style={{
               top: HEADER_OFFSET,
               height: `calc(100dvh - ${HEADER_OFFSET})`,
               paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
             }}
           >
-            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4">
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain py-4">
               <ProductsMobileLinks locale={locale} messages={messages} products={products} onNavigate={close} />
               <ResourcesMobileLinks locale={locale} messages={messages} onNavigate={close} />
+              <SupportMobileLinks locale={locale} messages={messages} onNavigate={close} />
               <EcosystemMobileLinks messages={messages} surfaces={ecosystemSurfaces} onNavigate={close} />
 
               <div className="mt-4 border-t border-border pt-4">
@@ -150,17 +152,30 @@ export function MobileNav({
               </div>
             </div>
 
-            <div className="shrink-0 space-y-3 border-t border-border bg-background/95 px-4 py-4">
-              <Link
-                href={signInUrl}
-                className="flex min-h-11 items-center justify-center rounded-[var(--radius-control)] text-sm font-medium text-muted transition-colors hover:bg-border-subtle hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
-                onClick={close}
-              >
-                {messages.nav.signIn}
-              </Link>
-              <ButtonLink href={signUpUrl} variant="accent" showArrow fullWidthMobile className="w-full" onClick={close}>
-                {messages.nav.signUp}
-              </ButtonLink>
+            <div className="shrink-0 border-t border-border bg-background/95 py-4">
+              <div className={ctaButtonGroupClass}>
+                <ButtonLink
+                  href={signInUrl}
+                  variant="secondary"
+                  size="md"
+                  fullWidthMobile
+                  className="w-full"
+                  onClick={close}
+                >
+                  {messages.nav.signIn}
+                </ButtonLink>
+                <ButtonLink
+                  href={signUpUrl}
+                  variant="accent"
+                  size="md"
+                  showArrow
+                  fullWidthMobile
+                  className="w-full"
+                  onClick={close}
+                >
+                  {messages.nav.signUp}
+                </ButtonLink>
+              </div>
             </div>
           </nav>
         </>

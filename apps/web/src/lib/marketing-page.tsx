@@ -6,10 +6,12 @@ import { getMessages, type Messages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo/metadata";
 
-type PageKey = keyof Messages["pages"];
+type MarketingPageKey = {
+  [K in keyof Messages["pages"]]: Messages["pages"][K] extends { intro: string } ? K : never;
+}[keyof Messages["pages"]];
 
 export interface MarketingPageConfig {
-  pageKey: PageKey;
+  pageKey: MarketingPageKey;
   path: string;
   renderBody?: (messages: Messages, locale: SupportedLocale) => ReactNode;
 }

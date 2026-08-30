@@ -36,6 +36,45 @@
 }
 
 @layer utilities {
+  .section-py {
+    padding-block: 3rem;
+  }
+
+  @media (min-width: 640px) {
+    .section-py {
+      padding-block: 5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-py {
+      padding-block: 6rem;
+    }
+  }
+
+  .section-py-compact {
+    padding-block: 3rem;
+  }
+
+  @media (min-width: 640px) {
+    .section-py-compact {
+      padding-block: 3.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-py-compact {
+      padding-block: 4rem;
+    }
+  }
+
+  .cta-spotlight {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 100%, rgb(25 211 197 / 0.12), transparent 65%);
+  }
+
   @media (max-width: 767px), (pointer: coarse) {
     .mobile-reduce-motion {
       animation: none !important;
@@ -61,8 +100,52 @@
   .motion-parallax-lite,
   .motion-light-sweep,
   .motion-fade-up,
-  .motion-soft-scale {
+  .motion-soft-scale,
+  .leverage-input-pulse,
+  .leverage-output-card {
     animation: none !important;
     transition: none !important;
   }
+}
+
+@keyframes leverage-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(25 211 197 / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgb(25 211 197 / 0);
+  }
+}
+
+@keyframes leverage-branch-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.leverage-input-pulse {
+  animation: leverage-pulse 2.8s ease-in-out infinite;
+}
+
+.leverage-output-card {
+  animation: leverage-branch-in 0.6s ease-out both;
+}
+
+.leverage-branch-grid .leverage-output-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.leverage-branch-grid .leverage-output-card:nth-child(2) {
+  animation-delay: 0.25s;
+}
+.leverage-branch-grid .leverage-output-card:nth-child(3) {
+  animation-delay: 0.4s;
+}
+.leverage-branch-grid .leverage-output-card:nth-child(4) {
+  animation-delay: 0.55s;
 }

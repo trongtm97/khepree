@@ -1,7 +1,7 @@
 "use client";
 
 import { safeAccountNextPath } from "@khepree/auth/safe-account-next-path";
-import { Alert, Button, Checkbox, Input } from "@khepree/ui";
+import { Alert, Button, Input } from "@khepree/ui";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -9,8 +9,9 @@ import { signUpWithLegalConsentAction } from "@/app/(auth)/actions";
 import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { PasswordInput } from "@/components/auth/password-input";
 import { authClient } from "@/lib/auth-client";
-import { mapAuthError, marketingLegalUrl, type AuthCopy } from "@/lib/auth-ui";
+import { mapAuthError, type AuthCopy } from "@/lib/auth-ui";
 import type { SupportedLocale } from "@khepree/config";
+import { LegalConsentNotice } from "@/components/legal-consent-notice";
 import { AUTH_ROUTES } from "@/lib/routes";
 
 export function SignUpForm({
@@ -29,7 +30,6 @@ export function SignUpForm({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -50,10 +50,6 @@ export function SignUpForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!acceptTerms) {
-      setError(copy.termsRequired);
-      return;
-    }
     setError(null);
     setLoading(true);
 
@@ -69,9 +65,6 @@ export function SignUpForm({
     router.refresh();
   }
 
-  const termsUrl = marketingLegalUrl(locale, "terms");
-  const privacyUrl = marketingLegalUrl(locale, "privacy");
-
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -80,6 +73,8 @@ export function SignUpForm({
       </div>
 
       {error ? <Alert variant="error">{error}</Alert> : null}
+
+      <LegalConsentNotice locale={locale} copy={copy} />
 
       {googleEnabled ? (
         <>
@@ -108,27 +103,6 @@ export function SignUpForm({
         value={password}
         onChange={setPassword}
         copy={copy}
-      />
-      <Checkbox
-        checked={acceptTerms}
-        onChange={(e) => setAcceptTerms(e.target.checked)}
-        label={
-          <>
-            {copy.termsPrefix}{" "}
-            <a href={termsUrl} target="_blank" rel="noopener noreferrer" className="text-khepree-teal hover:underline">
-              {copy.termsLink}
-            </a>{" "}
-            {copy.termsAnd}{" "}
-            <a
-              href={privacyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-khepree-teal hover:underline"
-            >
-              {copy.privacyLink}
-            </a>
-          </>
-        }
       />
       <Button type="submit" className="w-full" disabled={loading || googleLoading}>
         {loading ? copy.signingUp : copy.signUp}

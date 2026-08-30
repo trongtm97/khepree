@@ -16,15 +16,16 @@ export const buttonVariants: Record<ButtonVariant, string> = {
   primary:
     "border border-teal/20 bg-teal text-white shadow-[var(--shadow-soft)] hover:bg-teal/90 hover:shadow-[0_0_0_1px_rgb(13_148_136/0.12),0_8px_20px_rgb(13_148_136/0.16)]",
   accent: [
-    "relative overflow-hidden border border-teal/20 bg-gradient-to-r from-teal via-teal to-cyan/95 text-white",
-    "shadow-[0_1px_2px_rgb(0_0_0/0.1),0_0_0_1px_rgb(13_148_136/0.1)]",
-    "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent",
-    "hover:brightness-[1.05] hover:border-teal/30 hover:shadow-[0_0_0_1px_rgb(13_148_136/0.16),0_10px_28px_rgb(13_148_136/0.18)]",
+    "relative overflow-hidden border border-teal/25 bg-gradient-to-r from-teal via-cyan to-[#5fe7ff] text-white",
+    "shadow-[0_1px_2px_rgb(0_0_0/0.12),0_0_0_1px_rgb(25_211_197/0.12),0_8px_24px_rgb(25_211_197/0.2)]",
+    "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent",
+    "hover:brightness-[1.06] hover:border-teal/35 hover:shadow-[0_0_0_1px_rgb(25_211_197/0.2),0_12px_32px_rgb(25_211_197/0.28)]",
+    "motion-safe:hover:-translate-y-px",
   ].join(" "),
   secondary:
     "border border-teal/25 bg-teal/10 text-foreground shadow-[var(--shadow-soft)] hover:border-teal/40 hover:bg-teal/[0.14] hover:shadow-[0_0_0_1px_rgb(13_148_136/0.08),0_8px_20px_rgb(13_148_136/0.1)]",
   secondaryDark:
-    "border border-white/20 bg-white/[0.06] text-white backdrop-blur-sm hover:border-teal/40 hover:bg-white/[0.1] hover:shadow-[0_0_0_1px_rgb(45_212_191/0.12),0_0_16px_rgb(6_182_212/0.08)]",
+    "border border-white/18 bg-white/[0.07] text-white backdrop-blur-sm hover:border-teal/45 hover:bg-white/[0.11] hover:shadow-[0_0_0_1px_rgb(25_211_197/0.15),0_0_20px_rgb(25_211_197/0.1)] motion-safe:hover:-translate-y-px",
   ghost: "text-foreground hover:bg-border-subtle/80",
   danger: "border border-red-600/30 bg-red-600 text-white hover:bg-red-700",
 };

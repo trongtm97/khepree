@@ -2,6 +2,8 @@ export * from "./domains";
 export * from "./env";
 export * from "./env-validation";
 export * from "./ecosystem-surfaces";
+export * from "./public-contact";
+export * from "./legal-pages";
 export * from "./logger";
 export * from "./request-id";
 export * from "./alert";

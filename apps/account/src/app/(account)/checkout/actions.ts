@@ -11,9 +11,6 @@ import { resolveAccountLocale } from "@/lib/locale";
 
 export async function startCheckoutAction(formData: FormData) {
   const session = await requireSession();
-  if (formData.get("acceptTerms") !== "on") {
-    redirect("/checkout?error=terms");
-  }
 
   const planPublicId = String(formData.get("planPublicId") ?? "");
   const pricePublicId = String(formData.get("pricePublicId") ?? "");

@@ -123,14 +123,14 @@ export function ProductShowcaseSection({
   if (products.length === 0) return null;
 
   return (
-    <section id="products" className="border-t border-border py-16 lg:py-24">
+    <section id="products" className="section-surface border-t border-border section-py">
       <Container>
         <div className="max-w-2xl">
-          <Title>{messages.products.heading}</Title>
-          <BodyText className="mt-4 text-lg">{messages.products.copy}</BodyText>
+          <Title className="text-pretty">{messages.products.heading}</Title>
+          <BodyText className="mt-4 text-base sm:text-lg">{messages.products.intro}</BodyText>
         </div>
 
-        <div className="mt-14 space-y-12 sm:space-y-16 lg:space-y-20">
+        <div className="mt-12 space-y-12 sm:space-y-16 lg:space-y-20">
           {products.map((product, index) => (
             <ProductShowcaseRow
               key={product.publicId}

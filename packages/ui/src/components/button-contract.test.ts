@@ -10,12 +10,12 @@ import {
 describe("button-contract", () => {
   it("accent includes softened gradient and highlight", () => {
     expect(buttonVariants.accent).toContain("from-teal");
-    expect(buttonVariants.accent).toContain("to-cyan/95");
-    expect(buttonVariants.accent).toContain("via-white/25");
+    expect(buttonVariants.accent).toContain("via-cyan");
+    expect(buttonVariants.accent).toContain("via-white/30");
   });
 
   it("secondaryDark uses glass on dark surfaces", () => {
-    expect(buttonVariants.secondaryDark).toContain("bg-white/[0.06]");
+    expect(buttonVariants.secondaryDark).toContain("bg-white/[0.07]");
     expect(buttonVariants.secondaryDark).toContain("text-white");
     expect(buttonVariants.secondaryDark).not.toContain("bg-white text");
   });

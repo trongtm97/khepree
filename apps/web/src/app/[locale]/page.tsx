@@ -1,18 +1,23 @@
-import { CtaSection } from "@/components/marketing/cta-section";
-import { EcosystemSection } from "@/components/marketing/ecosystem-section";
 import { HeroSection } from "@/components/marketing/hero-section";
-import { HowKhepreeHelpsSection } from "@/components/marketing/how-khepree-helps-section";
+import {
+  AiPhilosophyQuote,
+  BrandSection,
+  FomoSection,
+  Leverage10xSection,
+  PipelineSection,
+  UrgencySection,
+} from "@/components/marketing/homepage-sections";
 import { IntentSection } from "@/components/marketing/intent-section";
 import { ProductShowcaseSection } from "@/components/marketing/product-showcase-section";
-import { ResourcesSection } from "@/components/marketing/resources-section";
-import { TechnologyShowcaseSection } from "@/components/marketing/technology-showcase-section";
 import { TrustSection } from "@/components/marketing/trust-section";
-import { getEcosystemNetworkSurfaces } from "@/lib/ecosystem-nav";
-import { listPublishedContent } from "@/lib/content";
+import { ValueStrip } from "@/components/marketing/value-strip";
+import { CtaSection } from "@/components/marketing/cta-section";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getPublicProducts } from "@/lib/catalog";
 import { getMessages } from "@/lib/i18n/get-messages";
-import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
+import { isSupportedLocale, type SupportedLocale } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo/metadata";
+import { websiteJsonLd } from "@/lib/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -38,40 +43,25 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const heroProduct = products.find((product) => product.gallery?.[0] || product.icon);
   const heroMedia = heroProduct?.gallery[0] ?? heroProduct?.icon ?? null;
 
-  const [articles, docs] = await Promise.all([
-    listPublishedContent("article", locale),
-    listPublishedContent("doc", locale),
-  ]);
-  const resources = [...articles, ...docs]
-    .sort((a, b) => {
-      const aTime = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-      const bTime = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-      return bTime - aTime;
-    })
-    .slice(0, 4)
-    .map((item) => ({
-      ...item,
-      href: localePath(locale, `${item.contentType === "article" ? "/blog" : "/docs"}/${item.slug}`),
-    }));
-
-  const ecosystemSurfaces = getEcosystemNetworkSurfaces(locale);
-
   return (
     <>
+      <JsonLd data={websiteJsonLd()} />
       <HeroSection
         locale={locale}
         messages={messages}
         screenshotUrl={heroMedia?.url}
         screenshotAlt={heroMedia?.altText || heroProduct?.name}
-        productName={heroProduct?.name}
       />
+      <ValueStrip messages={messages} />
+      <FomoSection messages={messages} />
+      <Leverage10xSection messages={messages} />
       <IntentSection messages={messages} />
       <ProductShowcaseSection locale={locale} messages={messages} products={products} />
-      <HowKhepreeHelpsSection messages={messages} />
-      <TechnologyShowcaseSection messages={messages} />
-      <EcosystemSection messages={messages} surfaces={ecosystemSurfaces} />
-      <TrustSection messages={messages} />
-      <ResourcesSection locale={locale} messages={messages} items={resources} />
+      <AiPhilosophyQuote messages={messages} />
+      <PipelineSection messages={messages} />
+      <UrgencySection locale={locale} messages={messages} />
+      <BrandSection locale={locale} messages={messages} />
+      <TrustSection locale={locale} messages={messages} />
       <CtaSection locale={locale} messages={messages} />
     </>
   );

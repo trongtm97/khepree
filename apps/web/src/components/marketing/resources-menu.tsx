@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
-import { RESOURCE_NAV_KEYS, RESOURCE_NAV_PATHS } from "./nav";
+import { RESOURCE_NAV_KEYS, RESOURCE_NAV_LABEL_KEYS, RESOURCE_NAV_PATHS } from "./nav";
 
 function ResourceLinkItem({
   href,
@@ -28,13 +28,6 @@ function ResourceLinkItem({
     </Link>
   );
 }
-
-const RESOURCE_LABEL_KEYS = {
-  blog: "resourceBlog",
-  docs: "resourceDocs",
-  productGuides: "resourceProductGuides",
-  security: "resourceSecurity",
-} as const satisfies Record<(typeof RESOURCE_NAV_KEYS)[number], keyof Messages["nav"]>;
 
 export function ResourcesMenu({ locale, messages }: { locale: SupportedLocale; messages: Messages }) {
   const [open, setOpen] = useState(false);
@@ -103,7 +96,7 @@ export function ResourcesMenu({ locale, messages }: { locale: SupportedLocale; m
               <li key={key}>
                 <ResourceLinkItem
                   href={localePath(locale, RESOURCE_NAV_PATHS[key])}
-                  label={messages.nav[RESOURCE_LABEL_KEYS[key]]}
+                  label={messages.nav[RESOURCE_NAV_LABEL_KEYS[key]]}
                   onNavigate={() => setOpen(false)}
                 />
               </li>
@@ -134,7 +127,7 @@ export function ResourcesMobileLinks({
           <li key={key}>
             <ResourceLinkItem
               href={localePath(locale, RESOURCE_NAV_PATHS[key])}
-              label={messages.nav[RESOURCE_LABEL_KEYS[key]]}
+              label={messages.nav[RESOURCE_NAV_LABEL_KEYS[key]]}
               onNavigate={onNavigate}
             />
           </li>

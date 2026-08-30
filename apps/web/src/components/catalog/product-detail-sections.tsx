@@ -53,6 +53,13 @@ function Section({
   );
 }
 
+const PRODUCT_RELATED_LINKS = [
+  { key: "docs", path: "/docs" },
+  { key: "changelog", path: "/changelog" },
+  { key: "security", path: "/security" },
+  { key: "privacy", path: "/privacy" },
+] as const;
+
 const FEATURE_VISUALS = [
   "bg-gradient-to-br from-teal/15 via-cyan/10 to-transparent",
   "bg-[radial-gradient(circle_at_top_right,rgb(99_102_241/0.12),transparent_60%)]",
@@ -187,6 +194,54 @@ export function ProductDetailSections({
           </Section>
         ) : null}
 
+        {product.gallery.length > 0 ? (
+          <Section id="gallery" title={messages.catalog.sections.gallery}>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {product.gallery.map((item, index) => (
+                <ScrollReveal key={`${item.url}-${index}`} delay={index * 80}>
+                  <figure className="overflow-hidden rounded-[var(--radius-card)] border border-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- product gallery from catalog */}
+                    <img src={item.url} alt={item.altText || product.name} className="aspect-video w-full object-cover" />
+                  </figure>
+                </ScrollReveal>
+              ))}
+            </div>
+          </Section>
+        ) : null}
+
+        {marketing.howItWorks?.length ? (
+          <Section id="howItWorks" title={messages.catalog.sections.howItWorks}>
+            <ol className="grid gap-4 md:grid-cols-3">
+              {marketing.howItWorks.map((step, index) => (
+                <ScrollReveal key={`${step.step}-${step.title}`} delay={index * 80}>
+                  <GlassPanel className="h-full p-6">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-teal">Step {step.step}</p>
+                    <h3 className="mt-2 text-lg font-semibold text-foreground">{step.title}</h3>
+                    <p className="mt-3 text-sm text-muted">{step.description}</p>
+                  </GlassPanel>
+                </ScrollReveal>
+              ))}
+            </ol>
+          </Section>
+        ) : null}
+
+        {product.operatingSystems.length > 0 || product.platforms.length > 0 ? (
+          <Section id="requirements" title={messages.catalog.sections.requirements}>
+            <div className="flex flex-wrap gap-2">
+              {product.platforms.map((platform) => (
+                <Badge key={platform} variant="teal">
+                  {messages.catalog.platforms[platform]}
+                </Badge>
+              ))}
+              {product.operatingSystems.map((os) => (
+                <Badge key={os} variant="default">
+                  {os}
+                </Badge>
+              ))}
+            </div>
+          </Section>
+        ) : null}
+
         {product.plans.length > 0 ? (
           <Section id="pricing" title={messages.catalog.sections.pricing} intro={messages.catalog.pricingIntro}>
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -236,6 +291,21 @@ export function ProductDetailSections({
             </dl>
           </Section>
         ) : null}
+
+        <Section id="related" title={messages.catalog.relatedLinks.heading}>
+          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-base">
+            {PRODUCT_RELATED_LINKS.map((item) => (
+              <li key={item.path}>
+                <Link
+                  href={localePath(locale, item.path)}
+                  className="font-medium text-teal hover:underline"
+                >
+                  {messages.catalog.relatedLinks[item.key]}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
 
         {finalCta ? (
           <Section id="cta" title={messages.catalog.sections.cta} dark>

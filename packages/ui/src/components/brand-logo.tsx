@@ -1,7 +1,7 @@
 import { cn } from "../lib/cn";
 
-/** Intrinsic artwork ratio after PNG trim (333×300 source). */
-export const BRAND_LOGO_ASPECT_RATIO = 333 / 300;
+/** Intrinsic artwork ratio (842×200 source). */
+export const BRAND_LOGO_ASPECT_RATIO = 842 / 200;
 
 export type BrandLogoContext = "header" | "auth" | "app" | "footer";
 

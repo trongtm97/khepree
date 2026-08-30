@@ -1,11 +1,24 @@
 import type { PublicProductDetail } from "@khepree/catalog";
 import type { ProductMarketingMetadata } from "@khepree/catalog";
 
-export type ProductPageSectionId = "overview" | "solutions" | "features" | "pricing" | "guides" | "faq";
+export type ProductPageSectionId =
+  | "overview"
+  | "solutions"
+  | "features"
+  | "gallery"
+  | "howItWorks"
+  | "requirements"
+  | "pricing"
+  | "guides"
+  | "faq";
 
 export interface ProductPageSection {
   id: ProductPageSectionId;
   labelKey: ProductPageSectionId;
+}
+
+function hasRequirements(product: PublicProductDetail): boolean {
+  return product.operatingSystems.length > 0 || product.platforms.length > 0;
 }
 
 /** Sections with content only — drives sticky product nav. */
@@ -18,6 +31,15 @@ export function listProductPageSections(product: PublicProductDetail): ProductPa
   }
   if (marketing.highlights?.length) {
     sections.push({ id: "features", labelKey: "features" });
+  }
+  if (product.gallery.length > 0) {
+    sections.push({ id: "gallery", labelKey: "gallery" });
+  }
+  if (marketing.howItWorks?.length) {
+    sections.push({ id: "howItWorks", labelKey: "howItWorks" });
+  }
+  if (hasRequirements(product)) {
+    sections.push({ id: "requirements", labelKey: "requirements" });
   }
   if (product.plans.length > 0) {
     sections.push({ id: "pricing", labelKey: "pricing" });

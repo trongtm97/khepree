@@ -63,10 +63,12 @@ export {
   meetsMinimumVersion,
   parseReleaseVersion,
 } from "./release/version";
+export { resolveReleaseNotes, sortPublicChangelog } from "./release/public-changelog";
 export type {
   CreateReleaseDraftInput,
   LatestReleaseQuery,
   PrepareReleaseUploadInput,
+  PublicChangelogEntry,
   ReleaseRecord,
 } from "./release/types";
 

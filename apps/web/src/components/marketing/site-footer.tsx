@@ -1,3 +1,4 @@
+import { statusPublicUrl } from "@khepree/config";
 import type { ResolvedKhepreeSurface } from "@khepree/config";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -56,16 +57,18 @@ export interface SiteFooterProps {
 export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterProps) {
   const social = socialLinks();
   const year = new Date().getFullYear();
+  const statusUrl = statusPublicUrl();
 
-  const linkClass = "block min-h-11 py-1 leading-6 text-khepree-slate/70 hover:text-khepree-ink sm:min-h-0 sm:py-0";
+  const linkClass =
+    "block min-h-10 py-1.5 leading-6 text-muted transition-colors hover:text-foreground sm:min-h-0 sm:py-0";
 
   return (
-    <footer className="border-t border-khepree-mist bg-khepree-white">
-      <Container className="py-10 sm:py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-10">
+    <footer className="border-t border-border bg-surface">
+      <Container className="section-py-compact">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-7 lg:gap-10">
           <div className="sm:col-span-2 lg:col-span-2">
             <BrandLogo context="footer" />
-            <p className="mt-3 max-w-xs text-sm text-khepree-slate/70">{messages.hero.headline}</p>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">{messages.meta.defaultDescription}</p>
           </div>
 
           <FooterLinkList title={messages.footer.products}>
@@ -73,6 +76,68 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
               <li>
                 <Link href={localePath(locale, "/products")} className={linkClass}>
                   {messages.footer.allProducts}
+                </Link>
+              </li>
+            </ul>
+          </FooterLinkList>
+
+          <FooterLinkList title={messages.footer.resources}>
+            <ul className="space-y-1 text-sm sm:space-y-2">
+              <li>
+                <Link href={localePath(locale, "/blog")} className={linkClass}>
+                  {messages.footer.blog}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/docs")} className={linkClass}>
+                  {messages.footer.docs}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/changelog")} className={linkClass}>
+                  {messages.footer.changelog}
+                </Link>
+              </li>
+            </ul>
+          </FooterLinkList>
+
+          <FooterLinkList title={messages.footer.support}>
+            <ul className="space-y-1 text-sm sm:space-y-2">
+              <li>
+                <Link href={localePath(locale, "/support")} className={linkClass}>
+                  {messages.footer.supportCenter}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/contact")} className={linkClass}>
+                  {messages.footer.contact}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/security")} className={linkClass}>
+                  {messages.footer.security}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/trust")} className={linkClass}>
+                  {messages.footer.trust}
+                </Link>
+              </li>
+              {statusUrl ? (
+                <li>
+                  <a href={statusUrl} rel="noopener noreferrer" target="_blank" className={linkClass}>
+                    {messages.footer.status}
+                  </a>
+                </li>
+              ) : null}
+            </ul>
+          </FooterLinkList>
+
+          <FooterLinkList title={messages.footer.company}>
+            <ul className="space-y-1 text-sm sm:space-y-2">
+              <li>
+                <Link href={localePath(locale, "/about")} className={linkClass}>
+                  {messages.footer.about}
                 </Link>
               </li>
             </ul>
@@ -96,57 +161,35 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
               </ul>
             </FooterLinkList>
           ) : null}
-
-          <FooterLinkList title={messages.footer.resources}>
-            <ul className="space-y-1 text-sm sm:space-y-2">
-              <li>
-                <Link href={localePath(locale, "/docs")} className={linkClass}>
-                  {messages.footer.docs}
-                </Link>
-              </li>
-              <li>
-                <Link href={localePath(locale, "/blog")} className={linkClass}>
-                  {messages.footer.blog}
-                </Link>
-              </li>
-            </ul>
-          </FooterLinkList>
-
-          <FooterLinkList title={messages.footer.company}>
-            <ul className="space-y-1 text-sm sm:space-y-2">
-              <li>
-                <Link href={localePath(locale, "/about")} className={linkClass}>
-                  {messages.footer.about}
-                </Link>
-              </li>
-              <li>
-                <Link href={localePath(locale, "/contact")} className={linkClass}>
-                  {messages.footer.contact}
-                </Link>
-              </li>
-            </ul>
-          </FooterLinkList>
         </div>
 
-        <div className="mt-8 flex flex-col gap-6 border-t border-khepree-mist pt-8 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col gap-6 border-t border-border pt-6 sm:mt-10 sm:flex-row sm:items-start sm:justify-between sm:pt-8">
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-khepree-slate/50">
-              {messages.footer.legal}
-            </h2>
-            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-khepree-slate/70">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">{messages.footer.legal}</h2>
+            <ul className="mt-2.5 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted">
               <li>
-                <Link href={localePath(locale, "/security")} className="hover:text-khepree-ink">
-                  {messages.footer.security}
-                </Link>
-              </li>
-              <li>
-                <Link href={localePath(locale, "/privacy")} className="hover:text-khepree-ink">
+                <Link href={localePath(locale, "/privacy")} className="transition-colors hover:text-foreground">
                   {messages.footer.privacy}
                 </Link>
               </li>
               <li>
-                <Link href={localePath(locale, "/terms")} className="hover:text-khepree-ink">
+                <Link href={localePath(locale, "/terms")} className="transition-colors hover:text-foreground">
                   {messages.footer.terms}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/refund")} className="transition-colors hover:text-foreground">
+                  {messages.footer.refund}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/eula")} className="transition-colors hover:text-foreground">
+                  {messages.footer.eula}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath(locale, "/cookies")} className="transition-colors hover:text-foreground">
+                  {messages.footer.cookies}
                 </Link>
               </li>
             </ul>
@@ -154,14 +197,19 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
 
           <div className="flex flex-col gap-3 sm:items-end">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-khepree-slate/50">{messages.footer.language}</span>
+              <span className="text-xs text-muted">{messages.footer.language}</span>
               <LanguageSwitcher locale={locale} />
             </div>
             {social.length > 0 ? (
-              <ul className="flex gap-4 text-sm text-khepree-slate/70">
+              <ul className="flex gap-4 text-sm text-muted">
                 {social.map((item) => (
                   <li key={item.label}>
-                    <a href={item.url} rel="noopener noreferrer" target="_blank" className="hover:text-khepree-ink">
+                    <a
+                      href={item.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                      className="transition-colors hover:text-foreground"
+                    >
                       {item.label}
                     </a>
                   </li>
@@ -171,7 +219,7 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
           </div>
         </div>
 
-        <p className="mt-8 text-xs text-khepree-slate/50">
+        <p className="mt-6 text-xs text-muted sm:mt-8">
           © {year} Khepree. {messages.footer.copyright}
         </p>
       </Container>

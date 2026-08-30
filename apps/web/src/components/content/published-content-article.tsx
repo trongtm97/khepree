@@ -18,7 +18,7 @@ import {
 } from "@/lib/content";
 import { extractMarkdownHeadings, injectHeadingIds } from "@/lib/content-headings";
 import { getMessages } from "@/lib/i18n/get-messages";
-import { articleJsonLd } from "@/lib/seo/json-ld";
+import { articleJsonLd, breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { createPageMetadata, siteUrl } from "@/lib/seo/metadata";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 
@@ -151,6 +151,11 @@ export async function PublishedContentArticle({
     return (
       <>
         <JsonLd
+          data={breadcrumbJsonLd(
+            breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
+          )}
+        />
+        <JsonLd
           data={articleJsonLd({
             headline: entry.title,
             description: entry.seoDescription ?? entry.excerpt ?? entry.title,
@@ -181,6 +186,11 @@ export async function PublishedContentArticle({
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd(
+          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
+        )}
+      />
       <JsonLd
         data={articleJsonLd({
           headline: entry.title,

@@ -4,9 +4,9 @@ import type { HTMLAttributes } from "react";
 type MeshTone = "teal" | "indigo" | "mixed";
 
 const meshes: Record<MeshTone, string> = {
-  teal: "from-teal/20 via-cyan/10 to-background",
-  indigo: "from-indigo/20 via-teal/10 to-background",
-  mixed: "from-indigo/15 via-teal/15 via-cyan/10 to-background",
+  teal: "from-teal/18 via-cyan/10 to-background",
+  indigo: "from-teal/12 via-cyan/8 to-background",
+  mixed: "from-teal/14 via-cyan/12 to-background",
 };
 
 export interface GradientMeshProps extends HTMLAttributes<HTMLDivElement> {

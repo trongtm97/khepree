@@ -46,13 +46,13 @@ export function SiteHeader({
         "sticky top-0 z-50 border-b backdrop-blur-md motion-safe:transition-[background-color,box-shadow,border-color] motion-safe:duration-200",
         scrolled
           ? [
-              "border-border/65 bg-background/94 shadow-[0_1px_0_rgb(255_255_255/0.05)_inset,0_8px_32px_rgb(0_0_0/0.06)]",
-              "supports-[backdrop-filter]:bg-background/88 supports-[backdrop-filter]:backdrop-blur-xl",
+              "border-border/70 bg-background/95 shadow-[0_1px_0_rgb(255_255_255/0.6)_inset,0_4px_24px_rgb(16_24_40/0.06)]",
+              "supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-xl",
             ].join(" ")
-          : "border-border/25 bg-background/55 supports-[backdrop-filter]:bg-background/45",
+          : "border-border/30 bg-background/70 supports-[backdrop-filter]:bg-background/55",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-[76rem] items-center px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[3.75rem] max-w-[76rem] items-center px-4 sm:px-6 lg:px-8">
         <Link href={localePath(locale)} className="flex shrink-0 items-center py-1">
           <BrandLogo context="header" />
         </Link>
@@ -66,7 +66,7 @@ export function SiteHeader({
           />
         </div>
 
-        <div className="ml-auto hidden shrink-0 items-center gap-2 lg:flex">
+        <div className="ml-auto hidden shrink-0 items-center gap-1.5 lg:flex xl:gap-2">
           <LanguageSwitcher locale={locale} />
           <Link
             href={signInUrl}

@@ -21,7 +21,10 @@ export function HowKhepreeHelpsSection({ messages }: { messages: Messages }) {
                     {index + 1}
                   </span>
                   <p className="mt-4 text-lg font-medium leading-snug text-foreground sm:text-xl">
-                    {messages.howItWorks[key]}
+                    {messages.howItWorks[key].title}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">
+                    {messages.howItWorks[key].copy}
                   </p>
                 </div>
                 {index < STEPS.length - 1 ? (

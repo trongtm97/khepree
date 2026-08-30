@@ -1,32 +1,57 @@
 import { BRAND } from "@khepree/config";
 import type { PublicProductDetail } from "@khepree/catalog";
 import { isPurchasableBillingType, minorToMajor, selectDisplayPrice } from "@khepree/catalog";
-import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION } from "@khepree/config";
+import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION, getPublicContactAddresses } from "@khepree/config";
 import { siteUrl } from "./metadata";
 
 function schemaPrice(amountMinor: string, currency: string): string {
   return String(minorToMajor(BigInt(amountMinor), currency));
 }
 
-export function organizationJsonLd() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: BRAND.name,
-    url: siteUrl(),
-    description: BRAND.tagline,
-    sameAs: getSocialUrls(),
-  };
-}
-
 function getSocialUrls(): string[] {
-  const urls = [
+  return [
     process.env.NEXT_PUBLIC_SOCIAL_TWITTER,
     process.env.NEXT_PUBLIC_SOCIAL_GITHUB,
     process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN,
   ].filter((url): url is string => Boolean(url && url.startsWith("http")));
+}
 
-  return urls;
+/** Factual organization fields only — no invented founding date, awards, or employee counts. */
+export function organizationJsonLd() {
+  const contacts = getPublicContactAddresses();
+  const contactPoint = [
+    {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: contacts.support,
+    },
+    ...(contacts.billing
+      ? [{ "@type": "ContactPoint", contactType: "billing", email: contacts.billing }]
+      : []),
+  ];
+
+  const payload: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: BRAND.name,
+    url: siteUrl(),
+    logo: siteUrl("/brand/logo.png"),
+    contactPoint,
+  };
+
+  const sameAs = getSocialUrls();
+  if (sameAs.length > 0) payload.sameAs = sameAs;
+
+  return payload;
+}
+
+export function websiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: BRAND.name,
+    url: siteUrl(),
+  };
 }
 
 export function breadcrumbJsonLd(items: { name: string; href: string }[]) {

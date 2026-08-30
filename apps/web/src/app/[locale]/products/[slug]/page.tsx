@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ProductDetailSections } from "@/components/catalog/product-detail-sections";
+import { ProductChangelogSection } from "@/components/catalog/product-changelog-section";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { getPublicProductBySlug, getProductPreviewBySlug } from "@/lib/catalog";
+import { getPublicChangelog } from "@/lib/releases";
 import { breadcrumbJsonLd, faqPageJsonLd, productPlanOffersJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
 import { createPageMetadata, siteUrl } from "@/lib/seo/metadata";
 import { accountPublicUrl } from "@/lib/urls";
@@ -69,6 +71,8 @@ export default async function ProductDetailPage({
 
   const messages = getMessages(locale);
   const isPreview = Boolean(preview);
+  const releases = isPreview ? [] : await getPublicChangelog(locale, slug);
+  const changelog = messages.pages.changelog;
 
   const path = localePath(locale, `/products/${slug}`);
   const pageUrl = siteUrl(path);
@@ -115,6 +119,21 @@ export default async function ProductDetailPage({
         messages={messages}
         accountUrl={accountPublicUrl()}
       />
+      {releases.length > 0 ? (
+        <div className="border-b border-khepree-slate/10">
+          <div className="mx-auto max-w-6xl px-4 lg:px-8">
+            <ProductChangelogSection
+              entries={releases}
+              locale={locale}
+              title={messages.catalog.nav.changelog}
+              versionLabel={changelog.version}
+              releasedLabel={changelog.released}
+              downloadsLabel={changelog.downloads}
+              fullChangelogLabel={messages.catalog.fullChangelog}
+            />
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

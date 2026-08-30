@@ -2,6 +2,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import {
   createPublicId,
   mediaAssets,
+  productTranslations,
   products,
   releaseTranslations,
   softwareReleases,
@@ -11,11 +12,14 @@ import {
 } from "@khepree/db";
 import { validateUpload } from "@khepree/storage";
 import { CatalogError } from "../product/admin";
+import { requireLocaleRow } from "../product/i18n";
 import { MediaService } from "../media/service";
+import { resolveReleaseNotes, sortPublicChangelog } from "./public-changelog";
 import type {
   CreateReleaseDraftInput,
   LatestReleaseQuery,
   PrepareReleaseUploadInput,
+  PublicChangelogEntry,
   ReleaseRecord,
 } from "./types";
 import { isReleaseVersionNewer, meetsMinimumVersion, compareReleaseVersions } from "./version";
@@ -57,11 +61,19 @@ function mapRelease(
 }
 
 export class ReleaseService {
+  private mediaService?: MediaService;
+
   constructor(
     private readonly db: Database,
     private readonly audit: AuditService,
-    private readonly media: MediaService = new MediaService(db),
-  ) {}
+    media?: MediaService,
+  ) {
+    this.mediaService = media;
+  }
+
+  private get media(): MediaService {
+    return (this.mediaService ??= new MediaService(this.db));
+  }
 
   async listForProduct(productId: string): Promise<ReleaseRecord[]> {
     const rows = await this.db
@@ -93,6 +105,75 @@ export class ReleaseService {
     return rows.map((row) =>
       mapRelease(row, mediaById.get(row.mediaAssetId) ?? "", notesByRelease.get(row.id) ?? []),
     );
+  }
+
+  async listPublicChangelog(options: {
+    locale: string;
+    productSlug?: string;
+  }): Promise<PublicChangelogEntry[]> {
+    const conditions = [
+      eq(softwareReleases.status, "published"),
+      eq(products.status, "active"),
+    ];
+    if (options.productSlug?.trim()) {
+      conditions.push(eq(products.slug, options.productSlug.trim()));
+    }
+
+    const rows = await this.db
+      .select({
+        release: softwareReleases,
+        productSlug: products.slug,
+        productId: products.id,
+      })
+      .from(softwareReleases)
+      .innerJoin(products, eq(softwareReleases.productId, products.id))
+      .where(and(...conditions))
+      .orderBy(desc(softwareReleases.publishedAt));
+
+    if (rows.length === 0) return [];
+
+    const productIds = [...new Set(rows.map((row) => row.productId))];
+    const releaseIds = rows.map((row) => row.release.id);
+
+    const [productTranslationRows, noteRows] = await Promise.all([
+      this.db
+        .select()
+        .from(productTranslations)
+        .where(inArray(productTranslations.productId, productIds)),
+      this.db
+        .select()
+        .from(releaseTranslations)
+        .where(inArray(releaseTranslations.releaseId, releaseIds)),
+    ]);
+
+    const notesByRelease = new Map<string, Array<{ locale: string; releaseNotes: string | null }>>();
+    for (const note of noteRows) {
+      const list = notesByRelease.get(note.releaseId) ?? [];
+      list.push({ locale: note.locale, releaseNotes: note.releaseNotes });
+      notesByRelease.set(note.releaseId, list);
+    }
+
+    const entries: PublicChangelogEntry[] = [];
+    for (const row of rows) {
+      if (!row.release.publishedAt) continue;
+      const translations = productTranslationRows.filter((t) => t.productId === row.productId);
+      const translation = requireLocaleRow(translations, options.locale);
+      if (!translation) continue;
+
+      entries.push({
+        releasePublicId: row.release.publicId,
+        productSlug: row.productSlug,
+        productName: translation.name,
+        version: row.release.version,
+        platform: row.release.platform,
+        architecture: row.release.architecture,
+        channel: row.release.channel,
+        publishedAt: row.release.publishedAt,
+        releaseNotes: resolveReleaseNotes(options.locale, notesByRelease.get(row.release.id) ?? []),
+      });
+    }
+
+    return sortPublicChangelog(entries);
   }
 
   async countPublishedForProduct(productId: string): Promise<number> {

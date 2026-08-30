@@ -11,6 +11,7 @@ import { EcosystemMenu } from "./ecosystem-menu";
 import { ABOUT_PATH } from "./nav";
 import { ProductsMenu } from "./products-menu";
 import { ResourcesMenu } from "./resources-menu";
+import { SupportMenu } from "./support-menu";
 
 export function PrimaryNav({
   locale,
@@ -28,9 +29,10 @@ export function PrimaryNav({
   const aboutActive = pathname === aboutHref || pathname.startsWith(`${aboutHref}/`);
 
   return (
-    <nav aria-label="Primary" className="flex items-center gap-0">
+    <nav aria-label="Primary" className="flex items-center gap-0.5">
       <ProductsMenu locale={locale} messages={messages} products={products} />
       <ResourcesMenu locale={locale} messages={messages} />
+      <SupportMenu locale={locale} messages={messages} />
       <EcosystemMenu messages={messages} surfaces={ecosystemSurfaces} align="left" />
       <Link
         href={aboutHref}

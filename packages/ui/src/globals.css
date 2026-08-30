@@ -4,21 +4,21 @@
 
 @theme {
   /* Semantic surfaces — light mode primary */
-  --color-background: #f6f8fb;
+  --color-background: #f7f9fc;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
-  --color-foreground: #0b1220;
-  --color-muted: #5b6478;
-  --color-border: #e3e8ef;
-  --color-border-subtle: #eef2f7;
+  --color-foreground: #101828;
+  --color-muted: #52607a;
+  --color-border: #dfe7ef;
+  --color-border-subtle: #eef2f6;
 
   /* Semantic aliases matching token vocabulary */
   --color-text: var(--color-foreground);
   --color-text-muted: var(--color-muted);
 
-  /* Brand spectrum */
-  --color-teal: #0d9488;
-  --color-cyan: #06b6d4;
+  /* Brand spectrum — premium teal/cyan accent */
+  --color-teal: #19d3c5;
+  --color-cyan: #35e6d4;
   --color-indigo: #4f46e5;
   --color-solar-accent: #f5b942;
 
@@ -63,7 +63,7 @@
   /* Depth */
   --shadow-soft: 0 1px 2px rgb(11 18 32 / 0.04), 0 8px 24px rgb(11 18 32 / 0.06);
   --shadow-elevated: 0 2px 8px rgb(11 18 32 / 0.06), 0 16px 40px rgb(11 18 32 / 0.08);
-  --shadow-glow-teal: 0 0 0 1px rgb(13 148 136 / 0.08), 0 12px 40px rgb(13 148 136 / 0.14);
+  --shadow-glow-teal: 0 0 0 1px rgb(25 211 197 / 0.1), 0 12px 40px rgb(25 211 197 / 0.16);
   --shadow-glow-indigo: 0 0 0 1px rgb(79 70 229 / 0.08), 0 12px 40px rgb(79 70 229 / 0.12);
 
   /* Motion */
@@ -157,15 +157,71 @@
 
   /* Dark technology sections */
   .tech-section {
-    --color-background: #070b14;
-    --color-surface: rgb(255 255 255 / 0.04);
+    --color-background: #07111f;
+    --color-surface: #0b1730;
     --color-surface-elevated: rgb(255 255 255 / 0.06);
-    --color-foreground: #f8fafc;
-    --color-muted: rgb(248 250 252 / 0.68);
+    --color-foreground: #f5f7fb;
+    --color-muted: rgb(245 247 251 / 0.72);
     --color-border: rgb(255 255 255 / 0.1);
     --color-border-subtle: rgb(255 255 255 / 0.06);
     color: var(--color-foreground);
+    background: linear-gradient(180deg, #07111f 0%, #0a1528 100%);
+  }
+
+  .section-light {
     background-color: var(--color-background);
+  }
+
+  .section-surface {
+    background-color: var(--color-surface);
+  }
+
+  .marketing-card {
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .marketing-card-lift {
+      transition:
+        transform var(--motion-base) var(--motion-ease-out),
+        box-shadow var(--motion-base) var(--motion-ease-out),
+        border-color var(--motion-base) var(--motion-ease-out);
+    }
+
+    .marketing-card-lift:hover {
+      transform: translate3d(0, -2px, 0);
+      box-shadow: var(--shadow-elevated);
+      border-color: color-mix(in srgb, var(--color-border) 75%, var(--color-teal) 25%);
+    }
+  }
+
+  .statement-pivot {
+    position: relative;
+    background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-background) 100%);
+  }
+
+  .statement-pivot::before {
+    content: "";
+    position: absolute;
+    inset-inline: 10%;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--color-teal) 40%, transparent),
+      transparent
+    );
+  }
+
+  .statement-pivot-glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 40%, rgb(25 211 197 / 0.06), transparent 70%);
   }
 }
 
