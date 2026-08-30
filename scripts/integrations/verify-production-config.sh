@@ -70,19 +70,47 @@ check_set POSTGRES_USER
 check_set POSTGRES_PASSWORD
 check_set POSTGRES_DB
 check_set REDIS_PASSWORD
-check_set R2_ACCOUNT_ID
-check_set R2_ACCESS_KEY_ID
-check_set R2_SECRET_ACCESS_KEY
-check_set R2_BUCKET_PUBLIC
-check_set R2_BUCKET_PRIVATE
 check_set LICENSE_SIGNING_PRIVATE_KEY
 check_set LICENSE_SIGNING_PUBLIC_KEY
-check_set EMAIL_PROVIDER_API_KEY
 
-if [[ "${EMAIL_PROVIDER:-}" != "resend" ]]; then
-  warn "EMAIL_PROVIDER must be resend in production"
+if [[ -n "${S3_ENDPOINT:-}" && "${S3_ENDPOINT}" != *"CHANGE_ME"* ]]; then
+  check_set S3_ENDPOINT
+  check_set S3_ACCESS_KEY_ID
+  check_set S3_SECRET_ACCESS_KEY
+  check_set S3_BUCKET_PUBLIC
+  check_set S3_BUCKET_PRIVATE
+  ok "S3 storage configured"
+elif [[ -n "${R2_ACCOUNT_ID:-}" && "${R2_ACCOUNT_ID}" != *"CHANGE_ME"* ]]; then
+  check_set R2_ACCOUNT_ID
+  check_set R2_ACCESS_KEY_ID
+  check_set R2_SECRET_ACCESS_KEY
+  check_set R2_BUCKET_PUBLIC
+  check_set R2_BUCKET_PRIVATE
+  ok "R2 storage configured (legacy)"
 else
+  warn "Neither S3 nor R2 storage is configured"
+fi
+
+mail_from="${MAIL_FROM:-${EMAIL_FROM:-}}"
+if [[ -z "${mail_from}" || "${mail_from}" == *"CHANGE_ME"* ]]; then
+  warn "MAIL_FROM or EMAIL_FROM missing or placeholder"
+else
+  ok "MAIL_FROM/EMAIL_FROM is set"
+fi
+
+if [[ "${EMAIL_PROVIDER:-}" == "smtp" ]]; then
+  check_set SMTP_HOST
+  if [[ -z "${SMTP_PORT:-}" || "${SMTP_PORT}" == *"CHANGE_ME"* ]]; then
+    warn "SMTP_PORT missing or placeholder"
+  else
+    ok "SMTP_PORT is set"
+  fi
+  ok "EMAIL_PROVIDER=smtp"
+elif [[ "${EMAIL_PROVIDER:-}" == "resend" ]]; then
+  check_set EMAIL_PROVIDER_API_KEY
   ok "EMAIL_PROVIDER=resend"
+else
+  warn "EMAIL_PROVIDER must be smtp or resend in production"
 fi
 
 if [[ "${PAYMENT_PROVIDER:-}" != "sepay" ]]; then
@@ -102,7 +130,7 @@ else
 fi
 
 if [[ -z "${REDIS_PASSWORD:-}" || "${REDIS_PASSWORD}" == *"CHANGE_ME"* ]]; then
-  warn "REDIS_PASSWORD missing (REDIS_URL is composed in compose.production.yml)"
+  warn "REDIS_PASSWORD missing (REDIS_URL is composed in compose file)"
 else
   ok "REDIS_PASSWORD is set"
 fi
@@ -110,7 +138,7 @@ fi
 if [[ "${TRUSTED_PROXY:-}" == "cloudflare" ]]; then
   ok "TRUSTED_PROXY=cloudflare"
 elif [[ -z "${TRUSTED_PROXY:-}" || "${TRUSTED_PROXY}" == "none" ]]; then
-  ok "TRUSTED_PROXY not cloudflare (ensure DNS is not proxied or IP spoofing is understood)"
+  ok "TRUSTED_PROXY=none (direct DNS — expected on shared VPS without CF proxy)"
 else
   warn "TRUSTED_PROXY has unexpected value"
 fi

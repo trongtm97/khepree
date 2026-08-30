@@ -20,26 +20,32 @@ describe("storage factory production fail-fast", () => {
     vi.stubEnv("API_URL", "https://api.example.com");
     vi.stubEnv("LICENSE_SIGNING_PRIVATE_KEY", "dGVzdA==");
     vi.stubEnv("LICENSE_SIGNING_PUBLIC_KEY", "dGVzdA==");
-    vi.stubEnv("EMAIL_FROM", "Khepree <no-reply@example.com>");
-    vi.stubEnv("EMAIL_PROVIDER_API_KEY", "email-key");
-    vi.stubEnv("MOCK_PAYMENT_WEBHOOK_SECRET", "webhook-secret-not-change-me");
-    vi.stubEnv("R2_ACCOUNT_ID", "acct");
-    vi.stubEnv("R2_ACCESS_KEY_ID", "key");
-    vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret");
-    vi.stubEnv("R2_BUCKET_PUBLIC", "public-bucket");
-    vi.stubEnv("R2_BUCKET_PRIVATE", "");
+    vi.stubEnv("MAIL_FROM", "Khepree <no-reply@example.com>");
+    vi.stubEnv("EMAIL_PROVIDER", "smtp");
+    vi.stubEnv("SMTP_HOST", "smtp.example.com");
+    vi.stubEnv("SMTP_PORT", "587");
+    vi.stubEnv("REDIS_URL", "redis://localhost:6379");
+    vi.stubEnv("PAYMENT_PROVIDER", "sepay");
+    vi.stubEnv("SEPAY_ENV", "sandbox");
+    vi.stubEnv("SEPAY_MERCHANT_ID", "merchant");
+    vi.stubEnv("SEPAY_SECRET_KEY", "secret");
+    vi.stubEnv("S3_ENDPOINT", "https://s3.example.com");
+    vi.stubEnv("S3_ACCESS_KEY_ID", "key");
+    vi.stubEnv("S3_SECRET_ACCESS_KEY", "secret");
+    vi.stubEnv("S3_BUCKET_PUBLIC", "public-bucket");
+    vi.stubEnv("S3_BUCKET_PRIVATE", "");
 
     const { getPrivateObjectStorage } = await import("./factory");
     expect(() => getPrivateObjectStorage()).toThrow(
-      /R2 public and private bucket configuration is required in production|Private R2 bucket is not configured/,
+      /bucket configuration is required in production|Private object storage is not configured/,
     );
   });
 
-  it("uses mock storage in development when R2 is not configured", async () => {
+  it("uses mock storage in development when storage is not configured", async () => {
     vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("R2_ACCOUNT_ID", "");
-    vi.stubEnv("R2_BUCKET_PUBLIC", "");
-    vi.stubEnv("R2_BUCKET_PRIVATE", "");
+    vi.stubEnv("S3_ENDPOINT", "");
+    vi.stubEnv("S3_BUCKET_PUBLIC", "");
+    vi.stubEnv("S3_BUCKET_PRIVATE", "");
 
     const { getPrivateObjectStorage } = await import("./factory");
     const storage = getPrivateObjectStorage();

@@ -1,0 +1,50 @@
+# Append these blocks to /opt/chapmee/app/Caddyfile.production
+# AFTER backing up the file. Do NOT remove existing CHAPMEE blocks.
+#
+# Khepree containers must be running on chapmee_chapmee_net before reload.
+# Validate: docker exec chapmee-caddy caddy validate --config /etc/caddy/Caddyfile
+# Reload:    docker exec chapmee-caddy caddy reload --config /etc/caddy/Caddyfile
+
+www.khepree.com {
+	redir https://khepree.com{uri} permanent
+}
+
+khepree.com {
+	reverse_proxy khepree-web:3000 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+account.khepree.com {
+	reverse_proxy khepree-account:3001 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+admin.khepree.com {
+	reverse_proxy khepree-admin:3002 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+partner.khepree.com {
+	reverse_proxy khepree-partner:3003 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}
+
+api.khepree.com {
+	reverse_proxy khepree-api:3004 {
+		header_up Host {host}
+		header_up X-Request-ID {http.request.header.X-Request-ID}
+		header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+	}
+}

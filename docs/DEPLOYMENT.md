@@ -11,7 +11,7 @@ Khepree is a pnpm + Turborepo monorepo of Next.js apps and Node packages. Hostin
 | admin.khepree.com | `apps/admin` | 3002 | Internal staff (no public sign-up) |
 | partner.khepree.com | `apps/partner` | 3003 | Reseller / referral portal |
 | api.khepree.com | `apps/api` | 3004 | Public/internal HTTP APIs |
-| cdn.khepree.com | public object bucket | — | Public assets (`R2_PUBLIC_BASE_URL`) |
+| cdn.khepree.com | public object bucket | — | Public assets (`S3_PUBLIC_BASE_URL` or legacy `R2_PUBLIC_BASE_URL`) |
 | download.khepree.com | private object bucket + signed URLs | — | Entitled downloads only |
 
 `app.khepree.com` is reserved for future web products. Do not point it at marketing.
@@ -62,6 +62,15 @@ Set per environment (see `docs/ENVIRONMENTS.md`):
 - Rate limits are in-memory per process. More than one production instance is a launch restriction until Redis (P1).
 
 Maintenance: `MAINTENANCE_MODE=1` returns 503 from the web/account/admin/partner proxy.
+
+## VPS compose layouts
+
+| File | Use when |
+|------|----------|
+| `compose.production.yml` | Dedicated Khepree VPS — includes Caddy on 80/443 |
+| `compose.shared-vps.yml` | Same VPS as CHAPMEE — reuses `chapmee-caddy` via `chapmee_chapmee_net` |
+
+Shared VPS step-by-step: **`docs/SHARED-VPS-DEPLOYMENT.md`**.
 
 ## Health and rollback
 

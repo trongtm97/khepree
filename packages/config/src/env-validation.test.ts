@@ -19,16 +19,17 @@ function productionBase() {
     ADMIN_URL: "https://admin.example.com",
     PARTNER_URL: "https://partner.example.com",
     API_URL: "https://api.example.com",
-    R2_ACCOUNT_ID: "acct",
-    R2_ACCESS_KEY_ID: "key",
-    R2_SECRET_ACCESS_KEY: "secret",
-    R2_BUCKET_PUBLIC: "pub",
-    R2_BUCKET_PRIVATE: "prv",
+    S3_ENDPOINT: "https://s3.example.com",
+    S3_ACCESS_KEY_ID: "key",
+    S3_SECRET_ACCESS_KEY: "secret",
+    S3_BUCKET_PUBLIC: "khepree-public",
+    S3_BUCKET_PRIVATE: "khepree-private",
     LICENSE_SIGNING_PRIVATE_KEY: "priv",
     LICENSE_SIGNING_PUBLIC_KEY: "pubk",
-    EMAIL_FROM: "Khepree <no-reply@khepree.com>",
-    EMAIL_PROVIDER_API_KEY: "email-key",
-    EMAIL_PROVIDER: "resend" as const,
+    MAIL_FROM: "Khepree <no-reply@khepree.com>",
+    EMAIL_PROVIDER: "smtp" as const,
+    SMTP_HOST: "smtp.example.com",
+    SMTP_PORT: "587",
     REDIS_URL: "redis://localhost:6379",
   };
 }
@@ -86,7 +87,22 @@ describe("validateRuntimeEnv", () => {
           SEPAY_SECRET_KEY: "s",
         }),
       ),
-    ).toThrow(/EMAIL_PROVIDER=resend/);
+    ).toThrow(/EMAIL_PROVIDER=resend\|smtp/);
+  });
+
+  it("accepts production SMTP email", () => {
+    process.env.NEXT_PHASE = "";
+    expect(() =>
+      validateRuntimeEnv(
+        getEnv({
+          ...productionBase(),
+          PAYMENT_PROVIDER: "sepay",
+          SEPAY_ENV: "sandbox",
+          SEPAY_MERCHANT_ID: "m",
+          SEPAY_SECRET_KEY: "s",
+        }),
+      ),
+    ).not.toThrow();
   });
 
   it("rejects production without REDIS_URL", () => {
@@ -103,6 +119,22 @@ describe("validateRuntimeEnv", () => {
         }),
       ),
     ).toThrow(/REDIS_URL/);
+  });
+
+  it("rejects production without storage buckets", () => {
+    process.env.NEXT_PHASE = "";
+    expect(() =>
+      validateRuntimeEnv(
+        getEnv({
+          ...productionBase(),
+          S3_BUCKET_PRIVATE: "",
+          PAYMENT_PROVIDER: "sepay",
+          SEPAY_ENV: "sandbox",
+          SEPAY_MERCHANT_ID: "m",
+          SEPAY_SECRET_KEY: "s",
+        }),
+      ),
+    ).toThrow(/bucket configuration/);
   });
 });
 

@@ -8,6 +8,7 @@ import {
   isPublicStorageConfigured,
   isRedisConfigured,
   isSePayConfigured,
+  mailFromAddress,
 } from "./env";
 
 export class EnvValidationError extends Error {
@@ -46,6 +47,31 @@ export function validatePaymentProviderConfiguration(env: Env = getEnv()): void 
   throw new EnvValidationError(`Unknown payment provider: ${env.PAYMENT_PROVIDER}`);
 }
 
+function validateProductionEmail(env: Env): void {
+  if (env.EMAIL_PROVIDER === "dev" || !isEmailConfigured(env)) {
+    throw new EnvValidationError(
+      "Production email requires EMAIL_PROVIDER=resend|smtp with complete configuration",
+    );
+  }
+
+  requireValue("MAIL_FROM or EMAIL_FROM", mailFromAddress(env));
+
+  if (env.EMAIL_PROVIDER === "resend") {
+    requireValue("EMAIL_PROVIDER_API_KEY", env.EMAIL_PROVIDER_API_KEY);
+    return;
+  }
+
+  if (env.EMAIL_PROVIDER === "smtp") {
+    requireValue("SMTP_HOST", env.SMTP_HOST);
+    if (!env.SMTP_PORT || env.SMTP_PORT <= 0) {
+      throw new EnvValidationError("SMTP_PORT is required in production when EMAIL_PROVIDER=smtp");
+    }
+    return;
+  }
+
+  throw new EnvValidationError(`Unsupported EMAIL_PROVIDER in production: ${env.EMAIL_PROVIDER}`);
+}
+
 /** Fail fast when production-critical configuration is missing. Skips `next build`. */
 export function validateRuntimeEnv(env: Env = getEnv()): void {
   if (isNextBuildPhase()) return;
@@ -66,7 +92,7 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
 
   if (!isPublicStorageConfigured(env) || !isPrivateStorageConfigured(env)) {
     throw new EnvValidationError(
-      "R2 public and private bucket configuration is required in production",
+      "S3 or R2 public and private bucket configuration is required in production",
     );
   }
 
@@ -74,11 +100,7 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
     throw new EnvValidationError("LICENSE_SIGNING_PRIVATE_KEY and LICENSE_SIGNING_PUBLIC_KEY are required in production");
   }
 
-  if (!isEmailConfigured(env) || env.EMAIL_PROVIDER === "dev") {
-    throw new EnvValidationError(
-      "Production email requires EMAIL_PROVIDER=resend, EMAIL_FROM, and EMAIL_PROVIDER_API_KEY",
-    );
-  }
+  validateProductionEmail(env);
 
   validatePaymentProviderConfiguration(env);
   if (!isRedisConfigured(env)) {

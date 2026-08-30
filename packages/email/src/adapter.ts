@@ -1,5 +1,6 @@
-import { getEnv, isEmailConfigured, emitAlert, createLogger } from "@khepree/config";
+import { getEnv, isEmailConfigured, mailFromAddress, emitAlert, createLogger } from "@khepree/config";
 import type { EmailAdapter, SendEmailInput } from "./index";
+import { SmtpEmailAdapter } from "./smtp-adapter";
 
 const log = createLogger("email");
 
@@ -27,8 +28,9 @@ export class ResendEmailAdapter implements EmailAdapter {
   readonly status = "configured" as const;
 
   constructor(
-    private readonly apiKey: string,
     private readonly from: string,
+    private readonly replyTo: string | undefined,
+    private readonly apiKey: string,
   ) {}
 
   async send(input: SendEmailInput): Promise<{ id: string }> {
@@ -40,6 +42,7 @@ export class ResendEmailAdapter implements EmailAdapter {
       },
       body: JSON.stringify({
         from: this.from,
+        ...(this.replyTo ? { reply_to: this.replyTo } : {}),
         to: [input.to],
         subject: input.subject,
         html: input.html,
@@ -56,17 +59,60 @@ export class ResendEmailAdapter implements EmailAdapter {
   }
 }
 
+function createProductionEmailAdapter(env: ReturnType<typeof getEnv>): EmailAdapter {
+  const from = mailFromAddress(env);
+  if (!from) {
+    throw new Error("Production email requires MAIL_FROM or EMAIL_FROM");
+  }
+  const replyTo = env.MAIL_REPLY_TO?.trim() || undefined;
+
+  if (env.EMAIL_PROVIDER === "smtp") {
+    if (!env.SMTP_HOST || !env.SMTP_PORT) {
+      throw new Error("Production SMTP requires SMTP_HOST and SMTP_PORT");
+    }
+    return new SmtpEmailAdapter(
+      from,
+      replyTo,
+      env.SMTP_HOST,
+      env.SMTP_PORT,
+      env.SMTP_SECURE === "true",
+      env.SMTP_USER?.trim() || undefined,
+      env.SMTP_PASS?.trim() || undefined,
+    );
+  }
+
+  if (env.EMAIL_PROVIDER === "resend") {
+    if (!env.EMAIL_PROVIDER_API_KEY) {
+      throw new Error("Production Resend requires EMAIL_PROVIDER_API_KEY");
+    }
+    return new ResendEmailAdapter(from, replyTo, env.EMAIL_PROVIDER_API_KEY);
+  }
+
+  throw new Error(`Production email provider ${env.EMAIL_PROVIDER} is not configured`);
+}
+
 export function createEmailAdapter(): EmailAdapter {
   const env = getEnv();
-  const provider = process.env.EMAIL_PROVIDER ?? env.EMAIL_PROVIDER ?? "dev";
+  const provider = env.EMAIL_PROVIDER ?? "dev";
+
   if (env.NODE_ENV === "production") {
-    if (provider !== "resend" || !isEmailConfigured(env) || !env.EMAIL_PROVIDER_API_KEY || !env.EMAIL_FROM) {
-      throw new Error("Production email is not configured (EMAIL_PROVIDER=resend plus EMAIL_FROM and EMAIL_PROVIDER_API_KEY)");
+    if (provider === "dev" || !isEmailConfigured(env)) {
+      throw new Error(
+        "Production email is not configured (EMAIL_PROVIDER=resend|smtp with complete settings)",
+      );
     }
-    return new ResendEmailAdapter(env.EMAIL_PROVIDER_API_KEY, env.EMAIL_FROM);
+    return createProductionEmailAdapter(env);
   }
-  if (provider === "resend" && isEmailConfigured(env) && env.EMAIL_PROVIDER_API_KEY && env.EMAIL_FROM) {
-    return new ResendEmailAdapter(env.EMAIL_PROVIDER_API_KEY, env.EMAIL_FROM);
+
+  if (provider === "smtp" && isEmailConfigured(env)) {
+    return createProductionEmailAdapter(env);
   }
+
+  if (provider === "resend" && isEmailConfigured(env) && env.EMAIL_PROVIDER_API_KEY) {
+    return createProductionEmailAdapter(env);
+  }
+
   return new DevPreviewEmailAdapter();
 }
+
+export { SmtpEmailAdapter } from "./smtp-adapter";

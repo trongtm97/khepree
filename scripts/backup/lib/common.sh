@@ -9,7 +9,7 @@ REPO_ROOT="$(cd "${BACKUP_SCRIPT_DIR}/.." && pwd)"
 
 KHEPREE_ENV_FILE="${KHEPREE_ENV_FILE:-/etc/khepree/.env.production}"
 KHEPREE_BACKUP_ENV="${KHEPREE_BACKUP_ENV:-/etc/khepree/backup.env}"
-COMPOSE_FILE="${COMPOSE_FILE:-${REPO_ROOT}/compose.production.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-${REPO_ROOT}/compose.shared-vps.yml}"
 BACKUP_LOCAL_DIR="${BACKUP_LOCAL_DIR:-/var/backups/khepree/postgres}"
 BACKUP_PASSPHRASE_FILE="${BACKUP_PASSPHRASE_FILE:-/etc/khepree/backup.passphrase}"
 BACKUP_LAST_SUCCESS_FILE="${BACKUP_LAST_SUCCESS_FILE:-/var/backups/khepree/last-backup.timestamp}"
@@ -21,7 +21,7 @@ BACKUP_RCLONE_REMOTE="${BACKUP_RCLONE_REMOTE:-}"
 BACKUP_FILENAME_PREFIX="${BACKUP_FILENAME_PREFIX:-khepree}"
 
 # Hostnames that must never be restore targets without explicit override.
-PRODUCTION_DB_HOST_MARKERS="${PRODUCTION_DB_HOST_MARKERS:-postgres}"
+PRODUCTION_DB_HOST_MARKERS="${PRODUCTION_DB_HOST_MARKERS:-khepree-postgres postgres}"
 
 log() {
   echo "[khepree-backup] $*"

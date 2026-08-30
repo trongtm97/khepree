@@ -1,19 +1,31 @@
-import { describe, expect, it } from "vitest";
-import { DevPreviewEmailAdapter } from "./adapter";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-describe("DevPreviewEmailAdapter", () => {
-  it("returns preview id without claiming delivery", async () => {
-    const adapter = new DevPreviewEmailAdapter();
-    const result = await adapter.send({
-      to: "user@example.com",
-      subject: "Reset password",
-      text: "http://localhost:3001/reset-password?token=abc",
-      html: "<p>reset</p>",
-    });
+describe("createEmailAdapter", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
 
-    expect(adapter.status).toBe("mock");
-    expect(result.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-    );
+  it("throws in production when SMTP is incomplete", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("EMAIL_PROVIDER", "smtp");
+    vi.stubEnv("MAIL_FROM", "Khepree <no-reply@khepree.com>");
+    vi.stubEnv("SMTP_HOST", "");
+
+    const { createEmailAdapter } = await import("./adapter");
+    expect(() => createEmailAdapter()).toThrow(/not configured/);
+  });
+
+  it("creates SMTP adapter when configured", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("EMAIL_PROVIDER", "smtp");
+    vi.stubEnv("MAIL_FROM", "Khepree <no-reply@khepree.com>");
+    vi.stubEnv("MAIL_REPLY_TO", "support@khepree.com");
+    vi.stubEnv("SMTP_HOST", "smtp.example.com");
+    vi.stubEnv("SMTP_PORT", "587");
+
+    const { createEmailAdapter } = await import("./adapter");
+    const adapter = createEmailAdapter();
+    expect(adapter.status).toBe("configured");
   });
 });

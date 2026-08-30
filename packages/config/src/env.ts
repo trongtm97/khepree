@@ -25,6 +25,19 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
+  /** Generic S3-compatible storage (Vietnix, MinIO, etc.). Preferred in production. */
+  STORAGE_PROVIDER: z.enum(["s3"]).optional(),
+  S3_ENDPOINT: z.string().optional(),
+  S3_REGION: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  S3_BUCKET_PUBLIC: z.string().optional(),
+  S3_BUCKET_PRIVATE: z.string().optional(),
+  S3_PUBLIC_BASE_URL: optionalUrl,
+  /** Set true for path-style endpoints (typical Vietnix/MinIO). */
+  S3_FORCE_PATH_STYLE: z.enum(["true", "false"]).optional(),
+
+  /** Legacy Cloudflare R2 — used when S3_* is unset. */
   R2_ACCOUNT_ID: z.string().optional(),
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
@@ -36,8 +49,16 @@ const envSchema = z.object({
   LICENSE_SIGNING_PUBLIC_KEY: z.string().optional(),
 
   EMAIL_FROM: z.string().optional(),
+  MAIL_FROM: z.string().optional(),
+  MAIL_REPLY_TO: z.string().optional(),
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
-  EMAIL_PROVIDER: z.enum(["dev", "resend"]).default("dev"),
+  EMAIL_PROVIDER: z.enum(["dev", "resend", "smtp"]).default("dev"),
+
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z.enum(["true", "false"]).optional(),
 
   REDIS_URL: z.string().optional(),
 
@@ -89,31 +110,36 @@ export function isDatabaseConfigured(env: Env = getEnv()): boolean {
   return Boolean(env.DATABASE_URL && !env.DATABASE_URL.includes("CHANGE_ME"));
 }
 
-export function isPublicStorageConfigured(env: Env = getEnv()): boolean {
-  return Boolean(
-    env.R2_ACCOUNT_ID &&
-      env.R2_ACCESS_KEY_ID &&
-      env.R2_SECRET_ACCESS_KEY &&
-      env.R2_BUCKET_PUBLIC,
-  );
-}
+export {
+  isPrivateStorageConfigured,
+  isPublicStorageConfigured,
+  isR2StorageConfigured,
+  isS3StorageConfigured,
+  isStorageConfigured,
+  resolveStorageCredentials,
+  type ResolvedStorageCredentials,
+  type StorageCredentialSource,
+} from "./storage-env";
 
-export function isPrivateStorageConfigured(env: Env = getEnv()): boolean {
-  return Boolean(
-    env.R2_ACCOUNT_ID &&
-      env.R2_ACCESS_KEY_ID &&
-      env.R2_SECRET_ACCESS_KEY &&
-      env.R2_BUCKET_PRIVATE,
-  );
-}
-
-/** Both buckets configured — required for staging/production storage. */
-export function isStorageConfigured(env: Env = getEnv()): boolean {
-  return isPublicStorageConfigured(env) && isPrivateStorageConfigured(env);
+export function mailFromAddress(env: Env = getEnv()): string | undefined {
+  return env.MAIL_FROM?.trim() || env.EMAIL_FROM?.trim() || undefined;
 }
 
 export function isEmailConfigured(env: Env = getEnv()): boolean {
-  return Boolean(env.EMAIL_FROM && env.EMAIL_PROVIDER_API_KEY);
+  const from = mailFromAddress(env);
+  if (!from || from.includes("CHANGE_ME")) return false;
+  if (env.EMAIL_PROVIDER === "resend") {
+    return Boolean(env.EMAIL_PROVIDER_API_KEY && !env.EMAIL_PROVIDER_API_KEY.includes("CHANGE_ME"));
+  }
+  if (env.EMAIL_PROVIDER === "smtp") {
+    return Boolean(
+      env.SMTP_HOST &&
+        !env.SMTP_HOST.includes("CHANGE_ME") &&
+        env.SMTP_PORT &&
+        env.SMTP_PORT > 0,
+    );
+  }
+  return false;
 }
 
 export function isLicenseSigningConfigured(env: Env = getEnv()): boolean {

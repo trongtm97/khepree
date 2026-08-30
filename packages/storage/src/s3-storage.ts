@@ -1,3 +1,4 @@
+import { resolveStorageCredentials } from "@khepree/config";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -6,7 +7,6 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { getEnv } from "@khepree/config";
 import type { IntegrationStatus } from "@khepree/types";
 import { isObjectNotFoundError, StorageConfigurationError, StorageInfrastructureError } from "./errors";
 import type {
@@ -25,39 +25,43 @@ const DEFAULT_DOWNLOAD_TTL = 300;
 
 /** S3-compatible adapter scoped to one logical bucket — no public/private fallback. */
 export class S3ObjectStorage implements ObjectStorage {
-  readonly provider = "r2";
+  readonly provider: string;
   readonly status: IntegrationStatus = "configured";
 
   private client: S3Client;
   private readonly bucketName: string;
   readonly bucketKind: StorageBucket;
+  private readonly publicBaseUrl?: string;
 
   constructor(bucketKind: StorageBucket) {
-    const env = getEnv();
-    this.bucketKind = bucketKind;
-
-    if (bucketKind === "private") {
-      if (!env.R2_BUCKET_PRIVATE) {
-        throw new StorageConfigurationError("R2_BUCKET_PRIVATE is required for private storage");
-      }
-      this.bucketName = env.R2_BUCKET_PRIVATE;
-    } else {
-      if (!env.R2_BUCKET_PUBLIC) {
-        throw new StorageConfigurationError("R2_BUCKET_PUBLIC is required for public storage");
-      }
-      this.bucketName = env.R2_BUCKET_PUBLIC;
+    const creds = resolveStorageCredentials();
+    if (!creds) {
+      throw new StorageConfigurationError("S3 storage credentials are incomplete");
     }
 
-    if (!env.R2_ACCOUNT_ID || !env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY) {
-      throw new StorageConfigurationError("R2 credentials are incomplete");
+    this.provider = creds.source;
+    this.bucketKind = bucketKind;
+    this.publicBaseUrl = creds.publicBaseUrl;
+
+    if (bucketKind === "private") {
+      if (!creds.privateBucket) {
+        throw new StorageConfigurationError("Private bucket is required for private storage");
+      }
+      this.bucketName = creds.privateBucket;
+    } else {
+      if (!creds.publicBucket) {
+        throw new StorageConfigurationError("Public bucket is required for public storage");
+      }
+      this.bucketName = creds.publicBucket;
     }
 
     this.client = new S3Client({
-      region: "auto",
-      endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      region: creds.region,
+      endpoint: creds.endpoint,
+      forcePathStyle: creds.forcePathStyle,
       credentials: {
-        accessKeyId: env.R2_ACCESS_KEY_ID,
-        secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+        accessKeyId: creds.accessKeyId,
+        secretAccessKey: creds.secretAccessKey,
       },
     });
   }
@@ -180,8 +184,7 @@ export class S3ObjectStorage implements ObjectStorage {
 
   publicUrl(key: string): string | null {
     if (this.bucketKind !== "public") return null;
-    const env = getEnv();
-    if (!env.R2_PUBLIC_BASE_URL) return null;
-    return `${env.R2_PUBLIC_BASE_URL.replace(/\/$/, "")}/${key}`;
+    if (!this.publicBaseUrl) return null;
+    return `${this.publicBaseUrl.replace(/\/$/, "")}/${key}`;
   }
 }
