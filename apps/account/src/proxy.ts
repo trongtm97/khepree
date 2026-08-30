@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { safeReturnPath } from "@khepree/auth/safe-return-path";
+import { safeAccountNextPath } from "@khepree/auth/safe-account-next-path";
 import {
   attachSecurityHeaders,
   enforceRateLimit,
@@ -47,8 +47,8 @@ export async function proxy(request: NextRequest) {
     return finish(request, NextResponse.redirect(url));
   }
 
-  if (hasSession && isPublicAuthPath(pathname) && pathname !== AUTH_ROUTES.resetPassword) {
-    const next = safeReturnPath(request.nextUrl.searchParams.get("next"));
+  if (hasSession && isPublicAuthPath(pathname) && pathname !== AUTH_ROUTES.resetPassword && pathname !== AUTH_ROUTES.acceptLegal) {
+    const next = safeAccountNextPath(request.nextUrl.searchParams.get("next"));
     const url = request.nextUrl.clone();
     const [path, query] = next.split("?");
     url.pathname = path || "/dashboard";
@@ -83,6 +83,7 @@ export const config = {
     "/checkout/:path*",
     "/sign-in",
     "/sign-up",
+    "/accept-legal",
     "/verify-email",
     "/forgot-password",
   ],

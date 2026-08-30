@@ -1,13 +1,14 @@
 import { cn } from "../lib/cn";
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
-  label: string;
+  label: ReactNode;
   description?: string;
 }
 
 export function Checkbox({ className, label, description, id, ...props }: CheckboxProps) {
-  const checkboxId = id ?? label.toLowerCase().replace(/\s+/g, "-");
+  const checkboxId =
+    id ?? (typeof label === "string" ? label.toLowerCase().replace(/\s+/g, "-") : "checkbox");
 
   return (
     <div className="flex items-start gap-3">

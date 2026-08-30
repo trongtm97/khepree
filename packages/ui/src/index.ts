@@ -1,4 +1,4 @@
-export { BrandLogo } from "./components/brand-logo";
+export { BrandLogo, BRAND_LOGO_ASPECT_RATIO, type BrandLogoContext, type BrandLogoProps } from "./components/brand-logo";
 export { Button } from "./components/button";
 export { Input } from "./components/input";
 export { Textarea } from "./components/textarea";

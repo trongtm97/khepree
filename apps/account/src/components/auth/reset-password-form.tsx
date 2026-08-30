@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { mapAuthError, type AuthCopy } from "@/lib/auth-ui";
 import { AUTH_ROUTES } from "@/lib/routes";
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ copy }: { copy: AuthCopy }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -18,7 +19,7 @@ export function ResetPasswordForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!token) {
-      setError("Reset token is missing or invalid.");
+      setError(copy.reset.missingToken);
       return;
     }
     setError(null);
@@ -27,7 +28,7 @@ export function ResetPasswordForm() {
     setLoading(false);
 
     if (result.error) {
-      setError(result.error.message ?? "Reset failed");
+      setError(mapAuthError(result.error.message, copy));
       return;
     }
 
@@ -38,9 +39,9 @@ export function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="space-y-4">
-        <Alert variant="error">This reset link is invalid or expired.</Alert>
+        <Alert variant="error">{copy.reset.invalidLink}</Alert>
         <Link href={AUTH_ROUTES.forgotPassword} className="text-sm font-medium text-khepree-teal hover:underline">
-          Request a new link
+          {copy.reset.requestNew}
         </Link>
       </div>
     );
@@ -49,12 +50,12 @@ export function ResetPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Set new password</h1>
-        <p className="mt-1 text-sm text-khepree-slate/70">Choose a strong password for your account.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{copy.reset.title}</h1>
+        <p className="mt-1 text-sm text-khepree-slate/70">{copy.reset.subtitle}</p>
       </div>
       {error ? <Alert variant="error">{error}</Alert> : null}
       <Input
-        label="New password"
+        label={copy.reset.newPassword}
         type="password"
         autoComplete="new-password"
         required
@@ -63,7 +64,7 @@ export function ResetPasswordForm() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Updating…" : "Update password"}
+        {loading ? copy.reset.updating : copy.reset.update}
       </Button>
     </form>
   );

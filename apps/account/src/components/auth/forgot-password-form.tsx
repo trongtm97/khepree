@@ -4,9 +4,10 @@ import { Alert, Button, Input } from "@khepree/ui";
 import Link from "next/link";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { mapAuthError, type AuthCopy } from "@/lib/auth-ui";
 import { AUTH_ROUTES } from "@/lib/routes";
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ copy }: { copy: AuthCopy }) {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export function ForgotPasswordForm() {
     setLoading(false);
 
     if (result.error) {
-      setError(result.error.message ?? "Request failed");
+      setError(mapAuthError(result.error.message, copy));
       return;
     }
 
@@ -33,13 +34,10 @@ export function ForgotPasswordForm() {
   if (sent) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
-        <Alert variant="info">
-          If an account exists for {email}, a reset link was generated. In development, check
-          the server console for the preview — no email was sent to production.
-        </Alert>
+        <h1 className="text-2xl font-semibold tracking-tight">{copy.forgot.checkTitle}</h1>
+        <Alert variant="info">{copy.forgot.checkBody}</Alert>
         <Link href={AUTH_ROUTES.signIn} className="text-sm font-medium text-khepree-teal hover:underline">
-          Back to sign in
+          {copy.forgot.backToSignIn}
         </Link>
       </div>
     );
@@ -48,12 +46,12 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Forgot password</h1>
-        <p className="mt-1 text-sm text-khepree-slate/70">We will send a reset link if the account exists.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{copy.forgot.title}</h1>
+        <p className="mt-1 text-sm text-khepree-slate/70">{copy.forgot.subtitle}</p>
       </div>
       {error ? <Alert variant="error">{error}</Alert> : null}
       <Input
-        label="Email"
+        label={copy.email}
         type="email"
         autoComplete="email"
         required
@@ -61,10 +59,10 @@ export function ForgotPasswordForm() {
         onChange={(e) => setEmail(e.target.value)}
       />
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Sending…" : "Send reset link"}
+        {loading ? copy.forgot.sending : copy.forgot.sendLink}
       </Button>
       <Link href={AUTH_ROUTES.signIn} className="block text-center text-sm text-khepree-teal hover:underline">
-        Back to sign in
+        {copy.forgot.backToSignIn}
       </Link>
     </form>
   );

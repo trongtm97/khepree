@@ -1,6 +1,6 @@
 # Database (production)
 
-Schema lives in `@khepree/db` (Drizzle). Applied files: `packages/db/drizzle/0000_*.sql` through `0007_phase10_admin.sql`. Phase 12 does not add a migration.
+Schema lives in `@khepree/db` (Drizzle). Applied files: `packages/db/drizzle/0000_*.sql` through `0013_phase16_url_redirects.sql`. Migrations `0000`–`0008` are frozen; Phase 13.1–16 additions are `0009`–`0013` (see `packages/db/README.md` and `docs/TODOS.md` migration inventory).
 
 ## Migration workflow
 

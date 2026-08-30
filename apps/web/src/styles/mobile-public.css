@@ -47,4 +47,22 @@
       filter: none !important;
     }
   }
+
+  @media (max-width: 430px) {
+    .homepage-safe-x {
+      overflow-x: clip;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-float,
+  .motion-orbit,
+  .motion-parallax-lite,
+  .motion-light-sweep,
+  .motion-fade-up,
+  .motion-soft-scale {
+    animation: none !important;
+    transition: none !important;
+  }
 }

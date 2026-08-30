@@ -178,6 +178,14 @@ export function accountPublicUrl(source: Record<string, string | undefined> = pr
   return resolveConfiguredUrl("ACCOUNT_URL", "NEXT_PUBLIC_ACCOUNT_URL", "account", "account", source)!;
 }
 
+export function accountSignInUrl(source: Record<string, string | undefined> = process.env): string {
+  return `${accountPublicUrl(source)}/sign-in`;
+}
+
+export function accountSignUpUrl(source: Record<string, string | undefined> = process.env): string {
+  return `${accountPublicUrl(source)}/sign-up`;
+}
+
 export function partnerPublicUrl(source: Record<string, string | undefined> = process.env): string {
   return resolveConfiguredUrl("PARTNER_URL", "NEXT_PUBLIC_PARTNER_URL", "partner", "partner", source)!;
 }

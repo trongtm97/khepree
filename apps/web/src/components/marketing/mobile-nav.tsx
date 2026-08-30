@@ -17,12 +17,14 @@ const HEADER_OFFSET = "3.5rem";
 export function MobileNav({
   locale,
   messages,
-  accountUrl,
+  signInUrl,
+  signUpUrl,
   ecosystemSurfaces,
 }: {
   locale: SupportedLocale;
   messages: Messages;
-  accountUrl: string;
+  signInUrl: string;
+  signUpUrl: string;
   ecosystemSurfaces: ResolvedKhepreeSurface[];
 }) {
   const [menu, setMenu] = useState({ open: false, path: "" });
@@ -137,20 +139,23 @@ export function MobileNav({
                 surfaces={ecosystemSurfaces}
                 onNavigate={close}
               />
+
+              <div className="mt-4 border-t border-border pt-4">
+                <LanguageSwitcher locale={locale} />
+              </div>
             </div>
 
-            <div className="shrink-0 space-y-4 border-t border-border bg-background/95 px-4 py-4">
-              <LanguageSwitcher locale={locale} />
+            <div className="shrink-0 space-y-3 border-t border-border bg-background/95 px-4 py-4">
+              <ButtonLink href={signUpUrl} className="w-full" size="lg" onClick={close}>
+                {messages.nav.signUp}
+              </ButtonLink>
               <Link
-                href={accountUrl}
-                className="flex min-h-11 items-center text-sm font-medium text-foreground"
+                href={signInUrl}
+                className="flex min-h-11 items-center justify-center text-sm font-medium text-muted transition-colors hover:text-foreground"
                 onClick={close}
               >
                 {messages.nav.signIn}
               </Link>
-              <ButtonLink href={localePath(locale, "/products")} className="w-full" size="lg" onClick={close}>
-                {messages.nav.exploreProducts}
-              </ButtonLink>
             </div>
           </nav>
         </>

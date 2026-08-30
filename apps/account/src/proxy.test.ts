@@ -48,4 +48,9 @@ describe("account proxy", () => {
     const res = await proxy(request("/reset-password", "session-token"));
     expect(res.status).not.toBe(307);
   });
+
+  it("allows accept-legal while authenticated", async () => {
+    const res = await proxy(request("/accept-legal", "session-token"));
+    expect(res.status).not.toBe(307);
+  });
 });

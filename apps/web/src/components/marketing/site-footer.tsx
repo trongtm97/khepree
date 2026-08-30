@@ -64,7 +64,7 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
       <Container className="py-10 sm:py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-10">
           <div className="sm:col-span-2 lg:col-span-2">
-            <BrandLogo size="lg" />
+            <BrandLogo context="footer" />
             <p className="mt-3 max-w-xs text-sm text-khepree-slate/70">{messages.hero.headline}</p>
           </div>
 

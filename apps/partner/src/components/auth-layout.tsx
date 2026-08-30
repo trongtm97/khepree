@@ -9,7 +9,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <header className="border-b border-khepree-mist bg-khepree-white py-4">
         <Container className="flex items-center justify-between">
           <Link href="/sign-in">
-            <BrandLogo />
+            <BrandLogo context="auth" />
           </Link>
           <a
             href={marketingPublicUrl()}

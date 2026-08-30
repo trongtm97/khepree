@@ -1,5 +1,7 @@
 import {
   accountPublicUrl,
+  accountSignInUrl,
+  accountSignUpUrl,
   apiPublicUrl,
   appPublicUrl,
   downloadPublicUrl,
@@ -14,6 +16,8 @@ import { localePath, type SupportedLocale } from "@/lib/i18n/config";
 
 export {
   accountPublicUrl,
+  accountSignInUrl,
+  accountSignUpUrl,
   apiPublicUrl,
   appPublicUrl,
   downloadPublicUrl,

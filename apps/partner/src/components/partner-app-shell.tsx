@@ -38,7 +38,7 @@ export function PartnerAppShell({
         <Container className="flex h-14 items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link href={homeHref}>
-              <BrandLogo size="sm" />
+              <BrandLogo context="app" />
             </Link>
             <a
               href={marketingPublicUrl()}

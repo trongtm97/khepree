@@ -8,7 +8,10 @@
     "./server": "./src/server.ts",
     "./client": "./src/client.ts",
     "./session": "./src/session.ts",
-    "./safe-return-path": "./src/safe-return-path.ts"
+    "./safe-return-path": "./src/safe-return-path.ts",
+    "./safe-account-next-path": "./src/safe-account-next-path.ts",
+    "./legal-consent": "./src/legal-consent.ts",
+    "./google": "./src/google.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

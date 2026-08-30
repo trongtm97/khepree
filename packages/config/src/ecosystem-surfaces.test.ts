@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  accountSignInUrl,
+  accountSignUpUrl,
   appPublicUrl,
   listEcosystemFooterSurfaces,
   listEcosystemNavSurfaces,
@@ -67,5 +69,11 @@ describe("ecosystem-surfaces", () => {
   it("resolves marketing URL from WEB_URL", () => {
     process.env.WEB_URL = "https://www.example.com";
     expect(marketingPublicUrl()).toBe("https://www.example.com");
+  });
+
+  it("resolves account auth URLs from ACCOUNT_URL", () => {
+    process.env.ACCOUNT_URL = "https://account.example.com";
+    expect(accountSignInUrl()).toBe("https://account.example.com/sign-in");
+    expect(accountSignUpUrl()).toBe("https://account.example.com/sign-up");
   });
 });

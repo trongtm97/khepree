@@ -1,4 +1,4 @@
-import { accountPublicUrl } from "@/lib/urls";
+import { accountSignUpUrl } from "@/lib/urls";
 import { createKhepreePlatform } from "@khepree/platform";
 import { newVisitorId } from "@khepree/reseller";
 import { cookies } from "next/headers";
@@ -18,8 +18,7 @@ export async function GET(
   } catch {
     // Invalid code or missing DB still lands on sign-up with the ref query.
   }
-  const account = accountPublicUrl();
-  const url = new URL("/sign-up", account);
+  const url = new URL(accountSignUpUrl());
   url.searchParams.set("ref", code.toUpperCase());
   const response = NextResponse.redirect(url);
   response.cookies.set(VISITOR_COOKIE, visitorId, {

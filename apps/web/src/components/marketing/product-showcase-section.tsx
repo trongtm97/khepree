@@ -1,6 +1,6 @@
 import type { PublicProductSummary } from "@khepree/catalog";
 import { formatBillingInterval, formatPriceAmount } from "@khepree/catalog";
-import { BodyText, Container, EmptyState, ProductWindow, Title } from "@khepree/ui";
+import { BodyText, Container, ProductWindow, Title } from "@khepree/ui";
 import Link from "next/link";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
@@ -115,6 +115,8 @@ export function ProductShowcaseSection({
   messages: Messages;
   products: PublicProductSummary[];
 }) {
+  if (products.length === 0) return null;
+
   return (
     <section id="products" className="border-t border-border py-16 lg:py-24">
       <Container>
@@ -123,34 +125,23 @@ export function ProductShowcaseSection({
           <BodyText className="mt-4 text-lg">{messages.products.copy}</BodyText>
         </div>
 
-        {products.length > 0 ? (
-          <div className="mt-14 space-y-12 sm:space-y-16 lg:space-y-20">
-            {products.map((product, index) => (
-              <ProductShowcaseRow
-                key={product.publicId}
-                product={product}
-                locale={locale}
-                messages={messages}
-                reverse={index % 2 === 1}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-10">
-            <EmptyState
-              title={messages.products.emptyTitle}
-              description={messages.products.emptyDescription}
+        <div className="mt-14 space-y-12 sm:space-y-16 lg:space-y-20">
+          {products.map((product, index) => (
+            <ProductShowcaseRow
+              key={product.publicId}
+              product={product}
+              locale={locale}
+              messages={messages}
+              reverse={index % 2 === 1}
             />
-          </div>
-        )}
+          ))}
+        </div>
 
-        {products.length > 0 ? (
-          <p className="mt-12 text-center">
-            <Link href={localePath(locale, "/products")} className="text-sm font-medium text-teal hover:underline">
-              {messages.footer.allProducts}
-            </Link>
-          </p>
-        ) : null}
+        <p className="mt-12 text-center">
+          <Link href={localePath(locale, "/products")} className="text-sm font-medium text-teal hover:underline">
+            {messages.footer.allProducts}
+          </Link>
+        </p>
       </Container>
     </section>
   );

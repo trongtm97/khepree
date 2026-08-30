@@ -4,6 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
 import { getEnv } from "@khepree/config";
 import { authSchema, requireDb } from "@khepree/db";
+import { isGoogleAuthConfigured } from "./google";
 import { recordAuthAudit } from "./audit";
 import {
   getAuthBaseUrl,
@@ -75,6 +76,16 @@ export function createAuth(baseURL = getAuthBaseUrl()) {
         await sendAuthEmail({ to: user.email, ...content });
       },
     },
+    ...(isGoogleAuthConfigured()
+      ? {
+          socialProviders: {
+            google: {
+              clientId: process.env.GOOGLE_CLIENT_ID!,
+              clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            },
+          },
+        }
+      : {}),
     user: {
       changeEmail: {
         enabled: true,

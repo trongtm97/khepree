@@ -36,24 +36,28 @@ test.describe("marketing site", () => {
 });
 
 test.describe("account", () => {
-  test("signup and login pages render", async ({ page }, testInfo) => {
+  test.beforeEach(async ({ context }, testInfo) => {
     test.skip(testInfo.project.name !== "account");
-    await page.goto("/sign-in");
-    await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
-    await page.goto("/sign-up");
-    await expect(page.getByRole("heading", { name: /create account/i })).toBeVisible();
+    await context.addCookies([
+      { name: "khepree_locale", value: "vi", domain: "localhost", path: "/" },
+    ]);
   });
 
-  test("account access redirects when logged out", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "account");
+  test("signup and login pages render", async ({ page }) => {
+    await page.goto("/sign-in");
+    await expect(page.getByRole("heading", { name: /chào mừng bạn quay lại/i })).toBeVisible();
+    await page.goto("/sign-up");
+    await expect(page.getByRole("heading", { name: /tạo tài khoản khepree/i })).toBeVisible();
+  });
+
+  test("account access redirects when logged out", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/sign-in/);
     await page.goto("/licenses");
     await expect(page).toHaveURL(/sign-in/);
   });
 
-  test("dev checkout mock requires auth", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "account");
+  test("dev checkout mock requires auth", async ({ page }) => {
     await page.goto("/checkout/mock/ord_missing");
     await expect(page).toHaveURL(/sign-in/);
   });

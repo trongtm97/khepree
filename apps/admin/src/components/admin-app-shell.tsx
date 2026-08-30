@@ -64,7 +64,7 @@ export function AdminAppShell({
               </span>
             </button>
             <Link href="/dashboard">
-              <BrandLogo size="sm" />
+              <BrandLogo context="app" />
             </Link>
             <a
               href={marketingPublicUrl()}

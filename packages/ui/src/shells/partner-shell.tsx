@@ -13,7 +13,7 @@ export function PartnerShell({ children }: PartnerShellProps) {
     <div className="flex min-h-screen flex-col bg-khepree-cloud">
       <header className="border-b border-khepree-mist bg-khepree-white">
         <Container className="flex h-14 items-center justify-between">
-          <BrandLogo size="sm" />
+          <BrandLogo context="app" />
           <span className="text-sm font-medium text-khepree-indigo">Partner</span>
         </Container>
       </header>

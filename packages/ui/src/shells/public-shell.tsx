@@ -11,7 +11,7 @@ export function PublicShell({ children }: PublicShellProps) {
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-khepree-mist bg-khepree-white/90 backdrop-blur-md">
         <Container className="flex h-16 items-center justify-between">
-          <BrandLogo />
+          <BrandLogo context="header" />
           <nav aria-label="Primary" className="hidden items-center gap-6 text-sm md:flex">
             <span className="text-khepree-slate/50">Products</span>
             <span className="text-khepree-slate/50">Pricing</span>

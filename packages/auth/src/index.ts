@@ -15,7 +15,13 @@ export {
 } from "./session";
 export { recordAuthAudit, type AuthAuditAction } from "./audit";
 export { getAuthBaseUrl } from "./email";
-export { safeReturnPath } from "./safe-return-path";
+export { safeAccountNextPath, safeAccountNextPath as safeReturnPath } from "./safe-account-next-path";
+export { isGoogleAuthConfigured } from "./google";
+export {
+  LEGAL_DOCUMENT_VERSION,
+  hasRequiredLegalConsent,
+  recordLegalConsents,
+} from "./legal-consent";
 export { ensureUserProfile, ensureUserProfileById, getUserOrgMemberships, setUserPreferredLocale } from "./profile";
 export {
   IdentityDirectory,

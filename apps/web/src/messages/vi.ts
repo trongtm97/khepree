@@ -14,6 +14,7 @@ export const vi = {
     company: "Công ty",
     ecosystem: "Hệ sinh thái",
     signIn: "Đăng nhập",
+    signUp: "Tạo tài khoản",
     exploreProducts: "Tìm công cụ phù hợp",
     openMenu: "Mở menu",
     closeMenu: "Đóng menu",
@@ -21,9 +22,9 @@ export const vi = {
   hero: {
     headline: "Làm việc gọn hơn. Có thêm thời gian cho điều quan trọng.",
     supporting:
-      "Khepree tạo ra những công cụ giúp bạn giảm việc lặp lại, xử lý những việc tốn thời gian nhanh hơn và tận dụng AI mà không cần rành công nghệ.",
+      "Khepree tạo ra những công cụ giúp bạn bớt việc lặp lại, xử lý những việc tốn thời gian nhanh hơn và tận dụng AI mà không cần rành công nghệ.",
     ctaPrimary: "Tìm công cụ phù hợp",
-    ctaSecondary: "Xem Khepree giúp được gì",
+    ctaSecondary: "Tạo tài khoản",
   },
   valueStrip: {
     saveTime: "Tiết kiệm thời gian",
@@ -147,11 +148,13 @@ export const vi = {
     stepResult: "Kết quả",
   },
   ecosystem: {
-    heading: "Khi cần thêm, mọi thứ vẫn ở cùng Khepree.",
-    copy: "Tài khoản, ứng dụng, tải phần mềm và hỗ trợ được kết nối để bạn không phải tìm mỗi thứ ở một nơi.",
+    heading: "Một hệ sinh thái — mỗi công cụ có việc riêng.",
+    copy: "Chọn đúng nơi để quản lý tài khoản, tải phần mềm, hợp tác kinh doanh hoặc tích hợp kỹ thuật.",
     center: "Khepree",
+    open: "Mở",
   },
   howItWorks: {
+    heading: "Cách Khepree giúp bạn",
     step1: "Bạn có một việc cần xử lý",
     step2: "Chọn công cụ phù hợp",
     step3: "Hoàn thành với ít bước hơn",
@@ -166,15 +169,15 @@ export const vi = {
   trust: {
     heading: "Những gì bạn có thể tin cậy",
     clearPayments: {
-      title: "Thanh toán rõ ràng",
+      title: "Giá rõ ràng",
       copy: "Giá thật trên từng sản phẩm. Thanh toán qua luồng quen thuộc — không có gói ẩn sau khi mua.",
     },
     purchasedProducts: {
-      title: "Quản lý sản phẩm đã mua",
+      title: "Quản lý mọi sản phẩm trong một tài khoản",
       copy: "Đăng nhập để xem giấy phép, gói thuê bao và bản tải gắn với tài khoản của bạn.",
     },
     safeDownloads: {
-      title: "Tải phần mềm an toàn",
+      title: "Tải xuống được bảo vệ",
       copy: "Bộ cài chỉ được cấp khi tài khoản được phép — không liệt kê công khai trên website.",
     },
     vietnameseSupport: {
@@ -192,8 +195,9 @@ export const vi = {
   },
   cta: {
     heading: "Bạn đang mất thời gian ở việc nào?",
-    copy: "Xem các sản phẩm Khepree và chọn công cụ phù hợp.",
+    copy: "Xem các công cụ Khepree và chọn phần mềm phù hợp với việc bạn muốn giải quyết.",
     button: "Xem sản phẩm",
+    signUp: "Tạo tài khoản",
   },
   footer: {
     products: "Sản phẩm",

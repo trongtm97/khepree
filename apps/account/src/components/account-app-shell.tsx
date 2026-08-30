@@ -51,7 +51,7 @@ export function AccountAppShell({
       <header className="border-b border-khepree-mist bg-khepree-white">
         <Container className="flex h-14 items-center justify-between gap-4">
           <Link href={marketingPublicUrl()} target="_blank" rel="noopener noreferrer">
-            <BrandLogo size="sm" />
+            <BrandLogo context="app" />
           </Link>
           <div className="flex items-center gap-3 text-sm">
             <LocaleSwitch locale={locale} />

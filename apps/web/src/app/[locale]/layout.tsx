@@ -10,7 +10,6 @@ import { getEcosystemFooterSurfaces, getEcosystemNavSurfaces } from "@/lib/ecosy
 import { getMessages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, htmlLang, SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/i18n/config";
 import { organizationJsonLd } from "@/lib/seo/json-ld";
-import { accountPublicUrl } from "@/lib/urls";
 
 export function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
@@ -39,10 +38,9 @@ export default async function LocaleLayout({
           <SiteHeader
             locale={locale}
             messages={messages}
-            accountUrl={accountPublicUrl()}
             ecosystemSurfaces={ecosystemNav}
           />
-          <main className="flex-1">{children}</main>
+          <main className="homepage-safe-x flex-1 overflow-x-clip">{children}</main>
           <SiteFooter locale={locale} messages={messages} ecosystemSurfaces={ecosystemFooter} />
         </div>
       </body>

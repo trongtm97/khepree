@@ -13,7 +13,7 @@ export function AdminShell({ children }: AdminShellProps) {
     <div className="flex min-h-screen flex-col bg-khepree-ink text-khepree-cloud">
       <header className="border-b border-white/10">
         <Container className="flex h-14 items-center justify-between">
-          <BrandLogo variant="light" size="sm" />
+          <BrandLogo variant="light" context="app" />
           <span className="rounded-full bg-khepree-teal/20 px-2 py-0.5 text-xs text-khepree-teal">
             Admin
           </span>

@@ -8,7 +8,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <header className="border-b border-khepree-mist bg-khepree-white py-4">
         <Container className="flex justify-center">
           <Link href="/sign-in">
-            <BrandLogo />
+            <BrandLogo context="auth" />
           </Link>
         </Container>
       </header>

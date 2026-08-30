@@ -4,6 +4,7 @@ export const AUTH_ROUTES = {
   verifyEmail: "/verify-email",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
+  acceptLegal: "/accept-legal",
 } as const;
 
 export const PROTECTED_ROUTES = {

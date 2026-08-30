@@ -1,21 +1,39 @@
 "use client";
 
-import { safeReturnPath } from "@khepree/auth/safe-return-path";
+import { safeAccountNextPath } from "@khepree/auth/safe-account-next-path";
 import { Alert, Button, Input } from "@khepree/ui";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { PasswordInput } from "@/components/auth/password-input";
 import { authClient } from "@/lib/auth-client";
+import { mapAuthError, type AuthCopy } from "@/lib/auth-ui";
 import { AUTH_ROUTES } from "@/lib/routes";
 
-export function SignInForm() {
+export function SignInForm({ copy, googleEnabled }: { copy: AuthCopy; googleEnabled: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = safeReturnPath(searchParams.get("next"));
+  const next = safeAccountNextPath(searchParams.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  async function onGoogleSignIn() {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${window.location.origin}${next}`,
+      });
+    } catch {
+      setError(copy.errors.googleFailed);
+      setGoogleLoading(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +43,7 @@ export function SignInForm() {
     setLoading(false);
 
     if (result.error) {
-      setError(result.error.message ?? "Sign in failed");
+      setError(mapAuthError(result.error.message, copy));
       return;
     }
 
@@ -33,41 +51,55 @@ export function SignInForm() {
     router.refresh();
   }
 
+  const signUpHref =
+    searchParams.get("next") != null
+      ? `${AUTH_ROUTES.signUp}?next=${encodeURIComponent(searchParams.get("next")!)}`
+      : AUTH_ROUTES.signUp;
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
-        <p className="mt-1 text-sm text-khepree-slate/70">Welcome back to Khepree.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-khepree-ink">{copy.signInTitle}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-khepree-slate/70">{copy.signInSubtitle}</p>
       </div>
+
       {error ? <Alert variant="error">{error}</Alert> : null}
+
+      {googleEnabled ? (
+        <>
+          <GoogleSignInButton copy={copy} disabled={googleLoading || loading} onClick={() => void onGoogleSignIn()} />
+          <AuthDivider label={copy.or} />
+        </>
+      ) : null}
+
       <Input
-        label="Email"
+        label={copy.email}
         type="email"
         autoComplete="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <Input
-        label="Password"
-        type="password"
+      <PasswordInput
+        label={copy.password}
         autoComplete="current-password"
         required
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={setPassword}
+        copy={copy}
       />
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-end text-sm">
         <Link href={AUTH_ROUTES.forgotPassword} className="text-khepree-teal hover:underline">
-          Forgot password?
+          {copy.forgotPassword}
         </Link>
       </div>
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Signing in…" : "Sign in"}
+      <Button type="submit" className="w-full" disabled={loading || googleLoading}>
+        {loading ? copy.signingIn : copy.signIn}
       </Button>
       <p className="text-center text-sm text-khepree-slate/70">
-        No account?{" "}
-        <Link href={AUTH_ROUTES.signUp} className="font-medium text-khepree-teal hover:underline">
-          Sign up
+        {copy.noAccount}{" "}
+        <Link href={signUpHref} className="font-medium text-khepree-teal hover:underline">
+          {copy.createAccount}
         </Link>
       </p>
     </form>

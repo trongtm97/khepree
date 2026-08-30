@@ -12,6 +12,7 @@ export const en = {
     company: "Company",
     ecosystem: "Ecosystem",
     signIn: "Sign in",
+    signUp: "Create account",
     exploreProducts: "Find the right tool",
     openMenu: "Open menu",
     closeMenu: "Close menu",
@@ -21,7 +22,7 @@ export const en = {
     supporting:
       "Khepree builds tools that cut repetitive work, speed up time-consuming tasks, and help you use AI without needing to be technical.",
     ctaPrimary: "Find the right tool",
-    ctaSecondary: "See what Khepree can help with",
+    ctaSecondary: "Create account",
   },
   valueStrip: {
     saveTime: "Save time",
@@ -145,11 +146,13 @@ export const en = {
     stepResult: "Result",
   },
   ecosystem: {
-    heading: "When you need more, it all stays under Khepree.",
-    copy: "Account, apps, downloads, and support — connected so you are not hunting across unrelated sites.",
+    heading: "One ecosystem — each tool has a clear job.",
+    copy: "Go to the right place to manage your account, download software, partner with us, or integrate technically.",
     center: "Khepree",
+    open: "Open",
   },
   howItWorks: {
+    heading: "How Khepree helps",
     step1: "You have something to get done",
     step2: "Pick the tool that fits",
     step3: "Finish with fewer steps",
@@ -164,11 +167,11 @@ export const en = {
   trust: {
     heading: "What you can count on",
     clearPayments: {
-      title: "Clear checkout",
+      title: "Clear pricing",
       copy: "Live prices on each product. Pay through a familiar flow — no surprise tiers after you buy.",
     },
     purchasedProducts: {
-      title: "Manage what you bought",
+      title: "All products in one account",
       copy: "Sign in to see licenses, subscriptions, and downloads tied to your account.",
     },
     safeDownloads: {
@@ -190,8 +193,9 @@ export const en = {
   },
   cta: {
     heading: "What is eating your time?",
-    copy: "Browse Khepree products and pick the tool that fits.",
+    copy: "Browse Khepree tools and pick the software that fits what you want to solve.",
     button: "View products",
+    signUp: "Create account",
   },
   footer: {
     products: "Products",
