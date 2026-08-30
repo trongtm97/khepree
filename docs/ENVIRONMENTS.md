@@ -11,9 +11,9 @@ Three environments. Treat them as separate systems. **Never reuse a production s
 | Auth URLs | localhost ports | preview hostnames | `account.khepree.com` etc. |
 | `BETTER_AUTH_SECRET` | local only | staging secret | production secret |
 | License Ed25519 | ephemeral or **dev** keypair | staging keypair | production keypair in secret store |
-| Webhook secrets | `MOCK_PAYMENT_WEBHOOK_SECRET` local | staging | production |
+| Webhook secrets | mock local / SePay sandbox | staging SePay IPN secret | production SePay IPN secret |
 | Email | Dev preview logger | provider test/sandbox | provider production |
-| Payments | Mock adapter only | sandbox PSP | live PSP (not implemented yet) |
+| Payments | Mock adapter only | SePay sandbox (`PAYMENT_PROVIDER=sepay`, `SEPAY_ENV=sandbox`) | SePay production (`SEPAY_ENV=production`) after B1 sandbox proof |
 | Seed | Allowed (`pnpm db:seed`) | Optional, never production catalog samples | **Forbidden** |
 
 ## Isolation rules
@@ -21,7 +21,7 @@ Three environments. Treat them as separate systems. **Never reuse a production s
 1. **Databases** — one cluster/database per environment. Do not point preview at production.
 2. **Buckets** — separate public and private buckets (or hard prefixes) per environment. Private never falls back to public.
 3. **Auth URLs** — `BETTER_AUTH_URL` and `ACCOUNT_URL` / `ADMIN_URL` / `PARTNER_URL` must match the host the browser uses, or cookies and redirects break.
-4. **Webhook secrets** — unique per environment. Production `validateRuntimeEnv()` requires `MOCK_PAYMENT_WEBHOOK_SECRET` until a live PSP replaces mock; do not copy the production value into `.env` for local work.
+4. **Webhook secrets** — unique per environment. Production `validateRuntimeEnv()` requires `PAYMENT_PROVIDER=sepay` plus `SEPAY_ENV`, `SEPAY_MERCHANT_ID`, and `SEPAY_SECRET_KEY`. IPN uses `X-Secret-Key` (`SEPAY_IPN_SECRET` or `SEPAY_SECRET_KEY`). Do not copy production values into local `.env`.
 5. **Signing keys** — production private key stays in secret infrastructure. Development may use ephemeral keys (`packages/licensing`) which invalidate leases on restart.
 
 ## What `validateRuntimeEnv()` requires in production
@@ -34,7 +34,8 @@ Checked at Node boot (skipped during `next build`):
 - Public **and** private object storage
 - `LICENSE_SIGNING_PRIVATE_KEY` and `LICENSE_SIGNING_PUBLIC_KEY`
 - `EMAIL_FROM` and `EMAIL_PROVIDER_API_KEY`
-- `MOCK_PAYMENT_WEBHOOK_SECRET`
+- `PAYMENT_PROVIDER=sepay` with `SEPAY_ENV`, `SEPAY_MERCHANT_ID`, `SEPAY_SECRET_KEY`
+- Optional: `SEPAY_IPN_SECRET` (defaults to `SEPAY_SECRET_KEY`), `TRUSTED_PROXY=none|cloudflare`
 
 Template: `.env.example`. Real values live only in the environment’s secret store.
 

@@ -11,8 +11,17 @@ import type {
   WebhookRequest,
 } from "./types";
 
+export interface PaymentProviderCapabilities {
+  supportsOneTimePayment: boolean;
+  supportsRecurring: boolean;
+  supportsRefund: boolean;
+  supportsPartialRefund: boolean;
+  supportsVoid: boolean;
+}
+
 export interface PaymentProvider {
   readonly id: string;
+  readonly capabilities: PaymentProviderCapabilities;
   createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult>;
   verifyWebhook(request: WebhookRequest): Promise<VerifiedWebhook>;
   normalizeWebhookEvent(verified: VerifiedWebhook): NormalizedCommerceEvent | null;
@@ -50,6 +59,13 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 export class MockDevelopmentPaymentProvider implements PaymentProvider {
   readonly id = MOCK_PROVIDER_ID;
+  readonly capabilities: PaymentProviderCapabilities = {
+    supportsOneTimePayment: true,
+    supportsRecurring: false,
+    supportsRefund: true,
+    supportsPartialRefund: true,
+    supportsVoid: false,
+  };
 
   constructor(
     private readonly options: {
@@ -63,7 +79,10 @@ export class MockDevelopmentPaymentProvider implements PaymentProvider {
     const url = new URL(`/checkout/mock/${input.orderPublicId}`, this.options.hostedBaseUrl);
     url.searchParams.set("success", input.successUrl);
     url.searchParams.set("cancel", input.cancelUrl);
-    return { providerCheckoutId, checkoutUrl: url.toString() };
+    return {
+      providerCheckoutId,
+      checkoutAction: { mode: "redirect", url: url.toString() },
+    };
   }
 
   async verifyWebhook(request: WebhookRequest): Promise<VerifiedWebhook> {

@@ -36,7 +36,7 @@
 1. **Auth ≠ Entitlement ≠ License** — three separate systems
 2. **Feature-based authorization** — never `if (plan === "PRO")`
 3. **Money as BIGINT minor units** — no floating point; use `@khepree/types/money`
-4. **Payment provider adapter** — billing events normalize before entitlement; Stripe (or any SDK) objects are never domain models
+4. **Payment provider adapter** — billing events normalize before entitlement; SePay (or any SDK) objects are never domain models
 5. **i18n via translation tables** — `product_translations`, not `name_en` columns
 6. **Server Components first** — client only when interaction requires it
 7. **Private storage never falls back to public bucket**
@@ -60,7 +60,7 @@ Payment records keep their own status lifecycle (`pending` → `succeeded` | `fa
 
 Checkout intent creates a draft order, a provider-hosted checkout session, then a pending payment. Access is granted later by the entitlement engine from **normalized commerce events** — never from a success redirect URL. Full refunds **suspend** entitlements; they are never deleted.
 
-Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` — verify provider authenticity, persist `(provider, eventId)` uniquely, apply idempotently inside a transaction, audit, then run idempotent entitlement hooks after commit. The first adapter is `MockDevelopmentPaymentProvider`.
+Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`). Verify provider authenticity (`X-Secret-Key` for SePay), persist sanitized `(provider, eventId)` uniquely, apply idempotently inside a transaction, audit, then run entitlement hooks **only** for newly processed events. Checkout result is a provider-neutral `CheckoutAction` (`redirect` or `form_post`). Adapters: `MockDevelopmentPaymentProvider` (dev) and `SePayPaymentProvider`. Stripe is not in this repo.
 
 ## Entitlement, licenses, devices (Phase 08)
 
@@ -95,7 +95,7 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` — verify provider
 - Rate limits live in `@khepree/security` (in-memory sliding window, fail closed). Auth, license activate/refresh, webhooks, media, and admin/partner POSTs are covered. Multi-instance needs Redis.
 - Security headers (CSP `frame-ancestors 'none'`, Referrer-Policy, nosniff, Permissions-Policy, HSTS in production) are applied from each app `proxy.ts`.
 - Structured JSON logs via `createLogger` in `@khepree/config` redact password, authorization, cookies, secrets, tokens, and private keys.
-- `validateRuntimeEnv()` runs from `instrumentation.ts` on Node boot (skipped during `next build`). Production requires license signing keys, email provider, R2, and webhook secret.
+- `validateRuntimeEnv()` runs from `instrumentation.ts` on Node boot (skipped during `next build`). Production requires license signing keys, email provider env, R2, and SePay credentials.
 - Private product downloads (`media.context = product:<id>`) require entitlement before a presigned URL is issued. Media upload/complete require a session; owner is not client-supplied.
 - Mock checkout is development-only. Playwright critical flows: `E2E=1 pnpm test:e2e` with apps running.
 - Findings: `docs/SPEC-phase-11-security.md`.
@@ -117,7 +117,7 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` — verify provider
 | **10** | ✅ Complete | Admin control center — RBAC, domain commands, audit, no impersonation |
 | **11** | ✅ Complete | Production security, rate limits, headers, logging, E2E, error UX |
 | **12** | ✅ Complete | Public IA/SEO audit, CI quality gate, deployment/env/DB/R2/signing docs. **Not production-ready** — see `docs/PRODUCTION-STATUS.md` |
-| 13+ | Planned | Later phases |
+| **13** | ✅ Complete | Vietnam-first locale, VND, SePay adapter, commerce hardening. **Not production-ready** — B1 sandbox proof still open |
 
 Each phase inherits project constraints in `CONSTRAINTS.md`. Do not skip phases.
 

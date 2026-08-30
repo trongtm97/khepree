@@ -13,8 +13,8 @@ export function principalFromCustomer(customer: {
   throw new EntitlementError("NOT_FOUND", "Customer has no principal");
 }
 
-function sourceFromItem(billingIntervalSnapshot: string | null): EntitlementSource {
-  return billingIntervalSnapshot ? "subscription" : "perpetual";
+function sourceFromItem(accessTermDays: number | null): EntitlementSource {
+  return accessTermDays == null ? "perpetual" : "subscription";
 }
 
 export function createEntitlementCommerceHooks(entitlement: EntitlementService) {
@@ -22,15 +22,11 @@ export function createEntitlementCommerceHooks(entitlement: EntitlementService) 
     async afterPaid(ctx: PaidOrderContext) {
       const principal = principalFromCustomer(ctx.customer);
       for (const item of ctx.items) {
-        const subscription = ctx.subscriptions.find(
-          (row) => row.planId === item.planId && (row.status === "active" || row.status === "trialing"),
-        );
         await entitlement.grantEntitlement({
           principal,
           productId: item.productId,
           planId: item.planId,
-          source: sourceFromItem(item.billingIntervalSnapshot),
-          expiresAt: subscription?.currentPeriodEnd ?? null,
+          source: sourceFromItem(item.accessTermDaysSnapshot),
           orderPublicId: ctx.order.publicId,
           orderItemId: item.id,
           actorUserId: ctx.customer.userId,

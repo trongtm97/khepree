@@ -98,6 +98,8 @@ export interface CatalogSnapshot {
   planId: string;
   planSlug: string;
   features: FeatureSnapshotEntry[];
+  licensingMode: "NONE" | "ACCOUNT" | "DEVICE_LEASE" | "LICENSE_KEY_DEVICE";
+  accessTermDays: number | null;
 }
 
 export interface CatalogReader {

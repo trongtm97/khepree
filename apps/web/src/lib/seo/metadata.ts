@@ -1,6 +1,5 @@
-import { DOMAINS } from "@khepree/config";
+import { DOMAINS, DEFAULT_LOCALE, hreflangCode, type SupportedLocale } from "@khepree/config";
 import type { Metadata } from "next";
-import type { SupportedLocale } from "@/lib/i18n/config";
 import { localePath } from "@/lib/i18n/config";
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? `https://${DOMAINS.web}`;
@@ -33,13 +32,13 @@ export function createPageMetadata({
   const url = siteUrl(canonicalPath);
   const fullTitle = title.includes("Khepree") ? title : `${title} | Khepree`;
 
-  const locales: readonly SupportedLocale[] = hreflangLocales ?? ["en", "vi"];
+  const locales: readonly SupportedLocale[] = hreflangLocales ?? ["vi", "en"];
   const languages: Record<string, string> = {};
   for (const loc of locales) {
-    languages[loc] = siteUrl(localePath(loc, path));
+    languages[hreflangCode(loc)] = siteUrl(localePath(loc, path));
   }
-  const defaultLocale: SupportedLocale = locales.some((item) => item === "en")
-    ? "en"
+  const defaultLocale: SupportedLocale = locales.includes(DEFAULT_LOCALE)
+    ? DEFAULT_LOCALE
     : (locales[0] ?? locale);
   languages["x-default"] = siteUrl(localePath(defaultLocale, path));
 

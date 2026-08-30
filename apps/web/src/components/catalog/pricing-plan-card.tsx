@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION } from "@khepree/config";
 import type { PublicPlan } from "@khepree/catalog";
 import {
   formatBillingInterval,
@@ -34,15 +35,21 @@ export function PricingPlanCard({
   locale,
   messages,
   preferredCurrency,
+  preferredRegion,
   accountUrl,
 }: {
   plan: PublicPlan;
   locale: SupportedLocale;
   messages: Messages;
   preferredCurrency?: string;
+  preferredRegion?: string | null;
   accountUrl?: string;
 }) {
-  const price = selectDisplayPrice(plan.prices, { currency: preferredCurrency });
+  const price = selectDisplayPrice(plan.prices, {
+    currency: preferredCurrency ?? DEFAULT_CURRENCY,
+    region: preferredRegion ?? DEFAULT_MARKET_REGION,
+    defaultCurrency: DEFAULT_CURRENCY,
+  });
   const interval = price ? formatBillingInterval(price.interval, locale) : null;
   const checkoutHref =
     accountUrl && price && isPurchasableBillingType(plan.billingType)

@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { DEFAULT_LOCALE, isSupportedLocale } from "@khepree/config";
 import { hasPermission, type Permission, type PermissionContext } from "@khepree/security";
 import type { GlobalRole } from "@khepree/types";
 import { memberships, requireDb, session as sessionTable, userProfiles } from "@khepree/db";
@@ -21,6 +22,7 @@ export interface AuthenticatedSession {
     id: string;
   };
   globalRole: GlobalRole;
+  locale: string;
   orgIds: string[];
 }
 
@@ -33,7 +35,7 @@ export async function getSession(authBaseURL?: string): Promise<AuthenticatedSes
 
   const db = requireDb();
   const [profile] = await db
-    .select({ globalRole: userProfiles.globalRole })
+    .select({ globalRole: userProfiles.globalRole, locale: userProfiles.locale })
     .from(userProfiles)
     .where(eq(userProfiles.userId, result.user.id))
     .limit(1);
@@ -56,6 +58,7 @@ export async function getSession(authBaseURL?: string): Promise<AuthenticatedSes
       id: result.session.id,
     },
     globalRole: profile?.globalRole ?? "USER",
+    locale: isSupportedLocale(profile?.locale) ? profile.locale : DEFAULT_LOCALE,
     orgIds: orgRows.map((row) => row.organizationId),
   };
 }

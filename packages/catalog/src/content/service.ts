@@ -8,6 +8,7 @@ import {
   withTransaction,
   type Database,
 } from "@khepree/db";
+import { DEFAULT_LOCALE } from "@khepree/config";
 import {
   getPrivateObjectStorage,
   type ObjectStorage,
@@ -384,6 +385,22 @@ export class ContentService {
     return mapVersion(archived, entry);
   }
 
+  private async findPublishedVersion(entryId: string, locale: string) {
+    const [version] = await this.db
+      .select()
+      .from(contentVersions)
+      .where(
+        and(
+          eq(contentVersions.entryId, entryId),
+          eq(contentVersions.locale, locale),
+          eq(contentVersions.status, "PUBLISHED"),
+        ),
+      )
+      .orderBy(desc(contentVersions.versionNumber))
+      .limit(1);
+    return version ?? null;
+  }
+
   async getPublished(input: {
     slug: string;
     contentType: ContentType;
@@ -403,18 +420,11 @@ export class ContentService {
 
     if (!entry) return null;
 
-    const [version] = await this.db
-      .select()
-      .from(contentVersions)
-      .where(
-        and(
-          eq(contentVersions.entryId, entry.id),
-          eq(contentVersions.locale, input.locale),
-          eq(contentVersions.status, "PUBLISHED"),
-        ),
-      )
-      .orderBy(desc(contentVersions.versionNumber))
-      .limit(1);
+    const version =
+      (await this.findPublishedVersion(entry.id, input.locale)) ??
+      (input.locale === DEFAULT_LOCALE
+        ? null
+        : await this.findPublishedVersion(entry.id, DEFAULT_LOCALE));
 
     if (!version) return null;
 

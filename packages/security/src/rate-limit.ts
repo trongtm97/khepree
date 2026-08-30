@@ -11,7 +11,7 @@ export type RateLimitDecision =
 type Bucket = { timestamps: number[] };
 
 // ponytail: in-memory sliding window is per-process. Multi-instance production
-// should swap this Map for Redis (same consumeRateLimit signature).
+// is launch-restricted (docs/TODOS.md P1) until this Map is swapped for Redis.
 const buckets = new Map<string, Bucket>();
 
 export const RATE_LIMITS = {
@@ -27,12 +27,13 @@ export const RATE_LIMITS = {
 } as const satisfies Record<string, RateLimitPolicy>;
 
 export function clientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first;
+  const trusted = process.env.TRUSTED_PROXY === "cloudflare" ? "cloudflare" : "none";
+  if (trusted === "cloudflare") {
+    const cf = request.headers.get("cf-connecting-ip")?.trim();
+    if (cf) return cf;
   }
-  return request.headers.get("x-real-ip")?.trim() || "unknown";
+  // Do not trust client-supplied X-Forwarded-For / X-Real-IP.
+  return "unknown";
 }
 
 export function authRateLimitPolicy(pathname: string): RateLimitPolicy {

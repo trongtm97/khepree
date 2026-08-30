@@ -20,14 +20,14 @@ export const PROTECTED_ROUTES = {
 } as const;
 
 export const ACCOUNT_NAV = [
-  { label: "Dashboard", href: PROTECTED_ROUTES.dashboard },
-  { label: "Products", href: PROTECTED_ROUTES.products },
-  { label: "Licenses", href: PROTECTED_ROUTES.licenses },
-  { label: "Devices", href: PROTECTED_ROUTES.devices },
-  { label: "Billing", href: PROTECTED_ROUTES.billing },
-  { label: "Downloads", href: PROTECTED_ROUTES.downloads },
-  { label: "Profile", href: PROTECTED_ROUTES.profile },
-  { label: "Security", href: PROTECTED_ROUTES.security },
+  { label: "Tổng quan", href: PROTECTED_ROUTES.dashboard },
+  { label: "Sản phẩm", href: PROTECTED_ROUTES.products },
+  { label: "Giấy phép", href: PROTECTED_ROUTES.licenses },
+  { label: "Thiết bị", href: PROTECTED_ROUTES.devices },
+  { label: "Thanh toán", href: PROTECTED_ROUTES.billing },
+  { label: "Tải xuống", href: PROTECTED_ROUTES.downloads },
+  { label: "Hồ sơ", href: PROTECTED_ROUTES.profile },
+  { label: "Bảo mật", href: PROTECTED_ROUTES.security },
 ] as const;
 
 export const PUBLIC_AUTH_PATHS = Object.values(AUTH_ROUTES);

@@ -2,19 +2,29 @@
 
 import { BrandLogo, Button, cn, Container } from "@khepree/ui";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import type { SupportedLocale } from "@khepree/config";
+import { LocaleSwitch } from "@/components/locale-switch";
 import { ACCOUNT_NAV } from "@/lib/routes";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import type { AccountMessages } from "@/lib/messages";
 
 export interface AccountAppShellProps {
   children: ReactNode;
   userName: string;
   userEmail: string;
+  locale: SupportedLocale;
+  copy: AccountMessages;
 }
 
-export function AccountAppShell({ children, userName, userEmail }: AccountAppShellProps) {
+export function AccountAppShell({
+  children,
+  userName,
+  userEmail,
+  locale,
+  copy,
+}: AccountAppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -24,6 +34,17 @@ export function AccountAppShell({ children, userName, userEmail }: AccountAppShe
     router.refresh();
   }
 
+  const navLabels: Record<(typeof ACCOUNT_NAV)[number]["href"], string> = {
+    "/dashboard": copy.nav.dashboard,
+    "/products": copy.nav.products,
+    "/licenses": copy.nav.licenses,
+    "/devices": copy.nav.devices,
+    "/billing": copy.nav.billing,
+    "/downloads": copy.nav.downloads,
+    "/profile": copy.nav.profile,
+    "/security": copy.nav.security,
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-khepree-cloud">
       <header className="border-b border-khepree-mist bg-khepree-white">
@@ -31,10 +52,11 @@ export function AccountAppShell({ children, userName, userEmail }: AccountAppShe
           <Link href="/dashboard">
             <BrandLogo size="sm" />
           </Link>
-          <div className="hidden items-center gap-3 text-sm sm:flex">
-            <span className="text-khepree-slate/70">{userName || userEmail}</span>
+          <div className="flex items-center gap-3 text-sm">
+            <LocaleSwitch locale={locale} />
+            <span className="hidden text-khepree-slate/70 sm:inline">{userName || userEmail}</span>
             <Button type="button" variant="ghost" size="sm" onClick={() => void signOut()}>
-              Sign out
+              {copy.nav.signOut}
             </Button>
           </div>
         </Container>
@@ -59,7 +81,7 @@ export function AccountAppShell({ children, userName, userEmail }: AccountAppShe
                   )}
                   aria-current={active ? "page" : undefined}
                 >
-                  {item.label}
+                  {navLabels[item.href] ?? item.label}
                 </Link>
               );
             })}

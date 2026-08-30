@@ -34,6 +34,7 @@ export interface NormalizedCommerceEvent {
   currency: string;
   occurredAt: Date;
   rawType: string;
+  paymentMethod?: string;
 }
 
 export interface CustomerRecord {
@@ -68,6 +69,7 @@ export interface OrderItemRecord {
   productNameSnapshot: string;
   planNameSnapshot: string;
   billingIntervalSnapshot: string | null;
+  accessTermDaysSnapshot: number | null;
 }
 
 export interface PaymentRecord {
@@ -79,6 +81,7 @@ export interface PaymentRecord {
   status: PaymentStatus;
   amountMinor: MoneyMinor;
   currency: string;
+  method: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -99,10 +102,14 @@ export interface SubscriptionRecord {
   updatedAt: Date;
 }
 
+export type CheckoutAction =
+  | { mode: "redirect"; url: string }
+  | { mode: "form_post"; action: string; fields: Record<string, string> };
+
 export interface CheckoutIntentResult {
   orderPublicId: string;
   paymentPublicId: string;
-  checkoutUrl: string;
+  checkoutAction: CheckoutAction;
   provider: string;
 }
 
@@ -111,6 +118,23 @@ export interface BillingAccount {
   orders: Array<OrderRecord & { items: OrderItemRecord[]; payments: PaymentRecord[] }>;
   payments: PaymentRecord[];
   subscriptions: SubscriptionRecord[];
+}
+
+export type RefundStatus = "pending" | "succeeded" | "failed" | "manual_required";
+
+export interface RefundRecord {
+  id: string;
+  publicId: string;
+  paymentId: string;
+  provider: string;
+  providerRefundId: string | null;
+  amountMinor: MoneyMinor;
+  currency: string;
+  status: RefundStatus;
+  reason: string | null;
+  initiatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CatalogReader {
@@ -127,11 +151,14 @@ export interface CreateCheckoutInput {
   currency: string;
   successUrl: string;
   cancelUrl: string;
+  errorUrl?: string;
+  customerId?: string;
+  description?: string;
 }
 
 export interface CreateCheckoutResult {
   providerCheckoutId: string;
-  checkoutUrl: string;
+  checkoutAction: CheckoutAction;
 }
 
 export interface RefundProviderInput {

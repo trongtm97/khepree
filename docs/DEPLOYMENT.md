@@ -24,7 +24,7 @@ Each app should use its own `BETTER_AUTH` / `*_URL` base so cookies do not colli
 2. Set production secrets in the host’s secret store (not in git, not in `NEXT_PUBLIC_*`).
 3. Build: `pnpm install --frozen-lockfile` then `pnpm build`.
 4. Run each app’s `next start` (or the container equivalent) with that app’s URL and port.
-5. `validateRuntimeEnv()` runs on Node boot (not during `next build`). Production start fails if database, auth, both storage buckets, license signing keys, or email env vars are missing.
+5. `validateRuntimeEnv()` runs on Node boot (not during `next build`). Production start fails if database, auth, both storage buckets, license signing keys, email env vars, or SePay credentials (`PAYMENT_PROVIDER=sepay`) are missing.
 
 CI (`.github/workflows/ci.yml`) runs install, lint, typecheck, test, and build. It does **not** deploy. Do not promote a build that failed those checks.
 
@@ -57,7 +57,9 @@ Set per environment (see `docs/ENVIRONMENTS.md`):
 - `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (account host in production)
 - R2 / S3 credentials and bucket names (`docs/R2.md`)
 - `LICENSE_SIGNING_PRIVATE_KEY`, `LICENSE_SIGNING_PUBLIC_KEY` (`docs/LICENSE-SIGNING.md`)
-- Email and payment provider secrets when those integrations are live
+- Email and payment provider secrets when those integrations are live (`PAYMENT_PROVIDER`, `SEPAY_*`, never `NEXT_PUBLIC_`)
+- `TRUSTED_PROXY=none` (default) or `cloudflare` when the app sits behind Cloudflare. Client IP for rate limits comes from `CF-Connecting-IP` only in that mode. Do not trust `X-Forwarded-For`.
+- Rate limits are in-memory per process. More than one production instance is a launch restriction until Redis (P1).
 
 Maintenance: `MAINTENANCE_MODE=1` returns 503 from the web/account/admin/partner proxy.
 

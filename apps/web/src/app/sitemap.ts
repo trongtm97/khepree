@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@khepree/config";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, hreflangCode } from "@khepree/config";
 import type { MetadataRoute } from "next";
 import { AUDIENCE_SLUGS } from "@/lib/audiences";
 import { listPublishedContent } from "@/lib/content";
@@ -23,7 +23,7 @@ const ROUTES = [
 
 function localeAlternates(path: string): MetadataRoute.Sitemap[number]["alternates"] {
   const languages: Record<string, string> = Object.fromEntries(
-    SUPPORTED_LOCALES.map((locale) => [locale, siteUrl(localePath(locale, path || "/"))]),
+    SUPPORTED_LOCALES.map((locale) => [hreflangCode(locale), siteUrl(localePath(locale, path || "/"))]),
   );
   languages["x-default"] = siteUrl(localePath(DEFAULT_LOCALE, path || "/"));
   return { languages };
@@ -69,7 +69,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               const path = `${prefix}/${entry.slug}`;
               const url = siteUrl(localePath(locale, path));
               const languages: Record<string, string> = {
-                [locale]: url,
+                [hreflangCode(locale)]: url,
               };
               if (locale === DEFAULT_LOCALE) languages["x-default"] = url;
               return {

@@ -20,7 +20,10 @@ describe("MockDevelopmentPaymentProvider", () => {
       cancelUrl: "http://localhost:3001/checkout",
     });
     expect(result.providerCheckoutId).toBe("mockpay_ord_abc");
-    expect(result.checkoutUrl).toContain("/checkout/mock/ord_abc");
+    expect(result.checkoutAction.mode).toBe("redirect");
+    if (result.checkoutAction.mode === "redirect") {
+      expect(result.checkoutAction.url).toContain("/checkout/mock/ord_abc");
+    }
   });
 
   it("normalizes a verified payment.succeeded payload", async () => {

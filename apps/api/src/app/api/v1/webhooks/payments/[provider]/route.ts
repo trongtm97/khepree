@@ -34,6 +34,9 @@ export async function POST(
       if (error.code === "WEBHOOK_INVALID") {
         return jsonError("WEBHOOK_INVALID", "Webhook could not be verified", 400, requestId);
       }
+      if (error.code === "NOT_FOUND") {
+        return jsonError("NOT_FOUND", "Payment not found for provider event", 400, requestId);
+      }
       if (error.code === "UNKNOWN_PROVIDER") {
         return jsonError("UNKNOWN_PROVIDER", "Unknown payment provider", 404, requestId);
       }

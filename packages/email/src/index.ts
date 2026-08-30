@@ -22,4 +22,9 @@ export class MockEmailAdapter implements EmailAdapter {
 }
 
 export { createEmailAdapter, DevPreviewEmailAdapter } from "./adapter";
+export {
+  renderTransactionalEmail,
+  transactionalTemplate,
+  type TransactionalTemplateId,
+} from "./templates";
 

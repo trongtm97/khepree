@@ -6,6 +6,7 @@ import {
   isLicenseSigningConfigured,
   isPrivateStorageConfigured,
   isPublicStorageConfigured,
+  isSePayConfigured,
 } from "./env";
 
 export class EnvValidationError extends Error {
@@ -58,5 +59,12 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
     throw new EnvValidationError("EMAIL_FROM and EMAIL_PROVIDER_API_KEY are required in production");
   }
 
-  requireValue("MOCK_PAYMENT_WEBHOOK_SECRET", env.MOCK_PAYMENT_WEBHOOK_SECRET);
+  if (env.PAYMENT_PROVIDER !== "sepay") {
+    throw new EnvValidationError("PAYMENT_PROVIDER=sepay is required in production");
+  }
+  if (!isSePayConfigured(env)) {
+    throw new EnvValidationError(
+      "SEPAY_ENV, SEPAY_MERCHANT_ID, and SEPAY_SECRET_KEY are required when PAYMENT_PROVIDER=sepay",
+    );
+  }
 }

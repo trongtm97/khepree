@@ -1,10 +1,11 @@
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
+  htmlLang,
   type SupportedLocale,
 } from "@khepree/config";
 
-export { DEFAULT_LOCALE, SUPPORTED_LOCALES, type SupportedLocale };
+export { DEFAULT_LOCALE, SUPPORTED_LOCALES, htmlLang, type SupportedLocale };
 
 export function isSupportedLocale(value: string): value is SupportedLocale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(value);

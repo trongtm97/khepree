@@ -8,6 +8,7 @@ export function resolveLocalizedRow<T extends { locale: string }>(
   return (
     rows.find((row) => row.locale === locale) ??
     rows.find((row) => row.locale === fallbackLocale) ??
+    rows[0] ??
     null
   );
 }

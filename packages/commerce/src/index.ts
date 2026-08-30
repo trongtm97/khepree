@@ -15,13 +15,24 @@ export {
   MOCK_SIGNATURE_HEADER,
   signMockWebhook,
   type PaymentProvider,
+  type PaymentProviderCapabilities,
 } from "./provider";
-export { createCommerceService, CommerceService, addBillingInterval } from "./service";
+export {
+  SePayPaymentProvider,
+  SEPAY_PROVIDER_ID,
+  SEPAY_CHECKOUT_HOSTS,
+  signSepayFields,
+  sepayInvoiceNumber,
+  sepayCheckoutInitUrl,
+  sanitizeSepayIpnPayload,
+} from "./sepay";
+export { createCommerceService, CommerceService, addBillingInterval, createPaymentProvider } from "./service";
 export type { CreateCommerceServiceOverrides } from "./service";
 export type { CommerceRepository } from "./store";
 export type {
   BillingAccount,
   CatalogReader,
+  CheckoutAction,
   CheckoutIntentResult,
   CommerceEventType,
   CommerceLifecycleHooks,

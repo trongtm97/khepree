@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   authRateLimitPolicy,
+  clientIp,
   consumeRateLimit,
   RATE_LIMITS,
   resetRateLimitStoreForTests,
@@ -34,5 +35,30 @@ describe("authRateLimitPolicy", () => {
     expect(authRateLimitPolicy("/api/auth/forget-password").name).toBe("auth.password");
     expect(authRateLimitPolicy("/api/auth/send-verification-email").name).toBe("auth.verify");
     expect(authRateLimitPolicy("/api/auth/ok").name).toBe("auth.generic");
+  });
+});
+
+describe("clientIp", () => {
+  it("ignores spoofable forwarding headers when TRUSTED_PROXY is none", () => {
+    const previous = process.env.TRUSTED_PROXY;
+    process.env.TRUSTED_PROXY = "none";
+    const request = new Request("http://localhost/x", {
+      headers: { "x-forwarded-for": "1.2.3.4", "x-real-ip": "5.6.7.8" },
+    });
+    expect(clientIp(request)).toBe("unknown");
+    process.env.TRUSTED_PROXY = previous;
+  });
+
+  it("uses CF-Connecting-IP when TRUSTED_PROXY=cloudflare", () => {
+    const previous = process.env.TRUSTED_PROXY;
+    process.env.TRUSTED_PROXY = "cloudflare";
+    const request = new Request("http://localhost/x", {
+      headers: {
+        "x-forwarded-for": "1.2.3.4",
+        "cf-connecting-ip": "9.9.9.9",
+      },
+    });
+    expect(clientIp(request)).toBe("9.9.9.9");
+    process.env.TRUSTED_PROXY = previous;
   });
 });

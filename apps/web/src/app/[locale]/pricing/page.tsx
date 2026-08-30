@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION } from "@khepree/config";
 import { EmptyState } from "@khepree/ui";
 import { notFound } from "next/navigation";
 import { PricingPlanCard } from "@/components/catalog/pricing-plan-card";
@@ -57,7 +58,8 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
                     plan={plan}
                     locale={locale}
                     messages={messages}
-                    preferredCurrency={locale === "vi" ? "VND" : "USD"}
+                    preferredCurrency={DEFAULT_CURRENCY}
+                    preferredRegion={DEFAULT_MARKET_REGION}
                     accountUrl={accountPublicUrl()}
                   />
                 ))}

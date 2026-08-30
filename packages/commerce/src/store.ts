@@ -8,6 +8,8 @@ import type {
   OrderStatus,
   PaymentRecord,
   PaymentStatus,
+  RefundRecord,
+  RefundStatus,
   SubscriptionRecord,
   SubscriptionStatus,
 } from "./types";
@@ -31,6 +33,7 @@ export interface NewOrderItemInput {
   productNameSnapshot: string;
   planNameSnapshot: string;
   billingIntervalSnapshot: string | null;
+  accessTermDaysSnapshot?: number | null;
 }
 
 export interface NewPaymentInput {
@@ -40,6 +43,7 @@ export interface NewPaymentInput {
   amountMinor: bigint;
   currency: string;
   status?: PaymentStatus;
+  method?: string | null;
 }
 
 export interface NewSubscriptionInput {
@@ -78,8 +82,24 @@ export interface CommerceRepository {
   listPaymentsForOrders(orderIds: string[]): Promise<PaymentRecord[]>;
   updatePayment(
     id: string,
-    patch: { status?: PaymentStatus; providerPaymentId?: string | null },
+    patch: { status?: PaymentStatus; providerPaymentId?: string | null; method?: string | null },
   ): Promise<PaymentRecord>;
+
+  insertRefund(input: {
+    paymentId: string;
+    provider: string;
+    providerRefundId?: string | null;
+    amountMinor: bigint;
+    currency: string;
+    status: RefundStatus;
+    reason?: string | null;
+    initiatedBy?: string | null;
+  }): Promise<RefundRecord>;
+  listRefundsByPayment(paymentId: string): Promise<RefundRecord[]>;
+  updateRefund(
+    id: string,
+    patch: { status?: RefundStatus; providerRefundId?: string | null },
+  ): Promise<RefundRecord>;
 
   insertSubscription(input: NewSubscriptionInput): Promise<SubscriptionRecord>;
   listSubscriptionsByCustomer(customerId: string): Promise<SubscriptionRecord[]>;
@@ -109,6 +129,7 @@ export class MemoryCommerceRepository implements CommerceRepository {
   items: OrderItemRecord[] = [];
   payments: PaymentRecord[] = [];
   subscriptions: SubscriptionRecord[] = [];
+  refunds: RefundRecord[] = [];
   webhooks: MemoryWebhook[] = [];
 
   constructor(private readonly now: () => Date = () => new Date()) {}
@@ -183,7 +204,11 @@ export class MemoryCommerceRepository implements CommerceRepository {
   }
 
   async insertOrderItem(input: NewOrderItemInput): Promise<OrderItemRecord> {
-    const row: OrderItemRecord = { id: crypto.randomUUID(), ...input };
+    const row: OrderItemRecord = {
+      id: crypto.randomUUID(),
+      ...input,
+      accessTermDaysSnapshot: input.accessTermDaysSnapshot ?? null,
+    };
     this.items.push(row);
     return row;
   }
@@ -216,6 +241,7 @@ export class MemoryCommerceRepository implements CommerceRepository {
       status: input.status ?? "pending",
       amountMinor: input.amountMinor,
       currency: input.currency,
+      method: input.method ?? null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -249,11 +275,12 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async updatePayment(
     id: string,
-    patch: { status?: PaymentStatus; providerPaymentId?: string | null },
+    patch: { status?: PaymentStatus; providerPaymentId?: string | null; method?: string | null },
   ): Promise<PaymentRecord> {
     const row = requireRow(this.payments.find((item) => item.id === id), "Payment");
     if (patch.status) row.status = patch.status;
     if (patch.providerPaymentId !== undefined) row.providerPaymentId = patch.providerPaymentId;
+    if (patch.method !== undefined) row.method = patch.method;
     row.updatedAt = this.now();
     return row;
   }
@@ -282,6 +309,53 @@ export class MemoryCommerceRepository implements CommerceRepository {
     );
     row.status = status;
     row.updatedAt = this.now();
+  }
+
+  async insertRefund(input: {
+    paymentId: string;
+    provider: string;
+    providerRefundId?: string | null;
+    amountMinor: bigint;
+    currency: string;
+    status: RefundStatus;
+    reason?: string | null;
+    initiatedBy?: string | null;
+  }): Promise<RefundRecord> {
+    const timestamp = this.now();
+    const row: RefundRecord = {
+      id: crypto.randomUUID(),
+      publicId: createPublicId("refnd"),
+      paymentId: input.paymentId,
+      provider: input.provider,
+      providerRefundId: input.providerRefundId ?? null,
+      amountMinor: input.amountMinor,
+      currency: input.currency,
+      status: input.status,
+      reason: input.reason ?? null,
+      initiatedBy: input.initiatedBy ?? null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    this.refunds.push(row);
+    return row;
+  }
+
+  async listRefundsByPayment(paymentId: string): Promise<RefundRecord[]> {
+    return this.refunds.filter((row) => row.paymentId === paymentId);
+  }
+
+  async updateRefund(
+    id: string,
+    patch: { status?: RefundStatus; providerRefundId?: string | null },
+  ): Promise<RefundRecord> {
+    const row = requireRow(
+      this.refunds.find((item) => item.id === id),
+      "Refund",
+    );
+    if (patch.status) row.status = patch.status;
+    if (patch.providerRefundId !== undefined) row.providerRefundId = patch.providerRefundId;
+    row.updatedAt = this.now();
+    return row;
   }
 
   async claimWebhookEvent(input: {

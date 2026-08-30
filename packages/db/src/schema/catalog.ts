@@ -33,6 +33,14 @@ export const planBillingTypeEnum = pgEnum("plan_billing_type", [
 export const productPlatformSchema = ["desktop", "web", "mobile"] as const;
 export type ProductPlatform = (typeof productPlatformSchema)[number];
 
+export const licensingModeEnum = pgEnum("licensing_mode", [
+  "NONE",
+  "ACCOUNT",
+  "DEVICE_LEASE",
+  "LICENSE_KEY_DEVICE",
+]);
+export type LicensingMode = (typeof licensingModeEnum.enumValues)[number];
+
 export const planStatusEnum = pgEnum("plan_status", ["draft", "active", "archived"]);
 
 export const featureValueTypeEnum = pgEnum("feature_value_type", [
@@ -54,6 +62,7 @@ export const products = pgTable(
       .$type<ProductPlatform[]>()
       .notNull()
       .default([]),
+    licensingMode: licensingModeEnum("licensing_mode").notNull().default("LICENSE_KEY_DEVICE"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     ...timestamps,
   },
@@ -97,6 +106,8 @@ export const plans = pgTable(
       .references(() => products.id, { onDelete: "restrict" }),
     slug: text("slug").notNull(),
     billingType: planBillingTypeEnum("billing_type").notNull().default("free"),
+    /** null = perpetual access. 30/365 = fixed term in days. Not a provider subscription. */
+    accessTermDays: integer("access_term_days"),
     status: planStatusEnum("status").notNull().default("draft"),
     ...timestamps,
   },

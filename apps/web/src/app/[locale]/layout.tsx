@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getMessages } from "@/lib/i18n/get-messages";
-import { isSupportedLocale, SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/i18n/config";
+import { isSupportedLocale, htmlLang, SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/i18n/config";
 import { organizationJsonLd } from "@/lib/seo/json-ld";
 import { accountPublicUrl } from "@/lib/urls";
 
@@ -28,7 +28,7 @@ export default async function LocaleLayout({
   const messages = getMessages(locale);
 
   return (
-    <html lang={locale} suppressHydrationWarning className={GeistSans.variable}>
+    <html lang={htmlLang(locale)} suppressHydrationWarning className={GeistSans.variable}>
       <body>
         <JsonLd data={organizationJsonLd()} />
         <div className="flex min-h-screen flex-col">

@@ -1,5 +1,5 @@
 import { createProductService } from "@khepree/catalog";
-import { getEnv, type Env } from "@khepree/config";
+import { getEnv, sepayIpnSecret, type Env } from "@khepree/config";
 import {
   createDrizzleAuditService,
   getDb,
@@ -14,6 +14,7 @@ import {
   MockDevelopmentPaymentProvider,
   type PaymentProvider,
 } from "./provider";
+import { SePayPaymentProvider, SEPAY_PROVIDER_ID } from "./sepay";
 import type { CommerceRepository } from "./store";
 import type {
   BillingAccount,
@@ -80,6 +81,7 @@ export class CommerceService {
         productNameSnapshot: input.offer.product.name,
         planNameSnapshot: input.offer.plan.name,
         billingIntervalSnapshot: input.offer.price.interval,
+        accessTermDaysSnapshot: input.offer.plan.accessTermDays,
       });
       return { order, item };
     });
@@ -92,6 +94,7 @@ export class CommerceService {
     locale: string;
     successUrl: string;
     cancelUrl: string;
+    errorUrl?: string;
     actorUserId?: string;
   }): Promise<CheckoutIntentResult> {
     const offer = await this.options.catalog.getPurchasableOffer(
@@ -113,6 +116,9 @@ export class CommerceService {
         currency: order.currency,
         successUrl: input.successUrl,
         cancelUrl: input.cancelUrl,
+        errorUrl: input.errorUrl ?? input.cancelUrl,
+        customerId: input.owner.type === "user" ? input.owner.userId : input.owner.organizationId,
+        description: `${offer.product.name} — ${offer.plan.name}`,
       });
     } catch (error) {
       await this.cancelOrder({ orderId: order.id, actorUserId: input.actorUserId });
@@ -144,7 +150,40 @@ export class CommerceService {
     return {
       orderPublicId: order.publicId,
       paymentPublicId: payment.publicId,
-      checkoutUrl: checkout.checkoutUrl,
+      checkoutAction: checkout.checkoutAction,
+      provider: this.options.provider.id,
+    };
+  }
+
+  async rebuildCheckoutAction(input: {
+    orderPublicId: string;
+    owner: CustomerOwner;
+    successUrl: string;
+    cancelUrl: string;
+    errorUrl?: string;
+  }): Promise<CheckoutIntentResult | null> {
+    const session = await this.getCheckoutSession(input.orderPublicId, input.owner);
+    if (!session) return null;
+    const pending =
+      session.payments.find((row) => row.status === "pending") ?? session.payments[0];
+    if (!pending || session.order.status === "cancelled" || session.order.status === "paid") {
+      return null;
+    }
+    const item = session.items[0];
+    const checkout = await this.options.provider.createCheckout({
+      orderPublicId: session.order.publicId,
+      amountMinor: session.order.totalMinor,
+      currency: session.order.currency,
+      successUrl: input.successUrl,
+      cancelUrl: input.cancelUrl,
+      errorUrl: input.errorUrl ?? input.cancelUrl,
+      customerId: input.owner.type === "user" ? input.owner.userId : input.owner.organizationId,
+      description: item ? `${item.productNameSnapshot} — ${item.planNameSnapshot}` : session.order.publicId,
+    });
+    return {
+      orderPublicId: session.order.publicId,
+      paymentPublicId: pending.publicId,
+      checkoutAction: checkout.checkoutAction,
       provider: this.options.provider.id,
     };
   }
@@ -192,16 +231,26 @@ export class CommerceService {
     return this.options.store.withTransaction((repo) => this.failPaymentOn(repo, input));
   }
 
+  async requestRefund(input: {
+    paymentId: string;
+    amountMinor: bigint;
+    actorUserId?: string;
+    reason?: string;
+  }): Promise<PaymentRecord> {
+    const payment = await this.options.store.withTransaction((repo) =>
+      this.requestRefundOn(repo, input),
+    );
+    await this.invokeAfterRefunded(payment);
+    return payment;
+  }
+
+  /** @deprecated Use requestRefund for commands and applyProviderRefundEvent for webhooks. */
   async refundPayment(input: {
     paymentId: string;
     amountMinor: bigint;
     actorUserId?: string;
   }): Promise<PaymentRecord> {
-    const payment = await this.options.store.withTransaction((repo) =>
-      this.refundPaymentOn(repo, input),
-    );
-    await this.invokeAfterRefunded(payment);
-    return payment;
+    return this.requestRefund(input);
   }
 
   async cancelOrder(input: { orderId: string; actorUserId?: string }): Promise<OrderRecord> {
@@ -260,7 +309,7 @@ export class CommerceService {
       return { status: "processed" as const, event };
     });
 
-    if (event && (result.status === "processed" || result.status === "duplicate")) {
+    if (result.status === "processed" && event) {
       await this.invokeHooksForEvent(event);
     }
     return result;
@@ -314,7 +363,7 @@ export class CommerceService {
 
   private async confirmPaymentOn(
     repo: CommerceRepository,
-    input: { paymentId: string; actorUserId?: string },
+    input: { paymentId: string; actorUserId?: string; paymentMethod?: string },
   ): Promise<PaymentRecord> {
     const payment = await requirePayment(repo, input.paymentId);
     const order = await requireOrder(repo, payment.orderId);
@@ -323,7 +372,10 @@ export class CommerceService {
     }
     assertPaymentTransition(payment.status, "succeeded");
     assertOrderTransition(order.status, "paid");
-    const updated = await repo.updatePayment(payment.id, { status: "succeeded" });
+    const updated = await repo.updatePayment(payment.id, {
+      status: "succeeded",
+      method: input.paymentMethod ?? payment.method,
+    });
     await repo.updateOrderStatus(order.id, "paid");
     await this.activateSubscriptionIfNeeded(repo, order, payment);
     await this.options.audit.record({
@@ -355,27 +407,124 @@ export class CommerceService {
     return updated;
   }
 
-  private async refundPaymentOn(
+  private async requestRefundOn(
     repo: CommerceRepository,
-    input: { paymentId: string; amountMinor: bigint; actorUserId?: string },
+    input: { paymentId: string; amountMinor: bigint; actorUserId?: string; reason?: string },
   ): Promise<PaymentRecord> {
     const amountMinor = parseMoneyMinor(input.amountMinor);
     const payment = await requirePayment(repo, input.paymentId);
     const order = await requireOrder(repo, payment.orderId);
-    if (amountMinor > payment.amountMinor) {
-      throw new CommerceError("INVALID_AMOUNT", "Refund exceeds payment amount");
+    const existing = await repo.listRefundsByPayment(payment.id);
+    const alreadyRefunded = existing
+      .filter((row) => row.status === "succeeded")
+      .reduce((sum, row) => sum + row.amountMinor, 0n);
+    if (alreadyRefunded + amountMinor > payment.amountMinor) {
+      throw new CommerceError("INVALID_AMOUNT", "Refund exceeds remaining payment amount");
     }
-    const full = amountMinor === payment.amountMinor;
-    const nextOrderStatus = full ? "refunded" : "partially_refunded";
-    if (order.status === nextOrderStatus && (!full || payment.status === "refunded")) {
-      return payment;
+
+    const caps = this.options.provider.capabilities;
+    const full = alreadyRefunded + amountMinor === payment.amountMinor;
+    if (full ? !caps.supportsRefund : !caps.supportsPartialRefund) {
+      await repo.insertRefund({
+        paymentId: payment.id,
+        provider: payment.provider,
+        amountMinor,
+        currency: payment.currency,
+        status: "manual_required",
+        reason: input.reason ?? "unsupported_provider_refund",
+        initiatedBy: input.actorUserId ?? null,
+      });
+      await this.options.audit.record({
+        actorUserId: input.actorUserId ?? null,
+        action: "commerce.refund.manual_required",
+        resourceType: "payment",
+        resourceId: payment.publicId,
+        metadata: { amountMinor: amountMinor.toString() },
+      });
+      throw new CommerceError(
+        "UNSUPPORTED",
+        "This payment provider does not support automated refunds",
+      );
     }
-    assertOrderTransition(order.status, nextOrderStatus);
-    await this.options.provider.refund({
+
+    const providerResult = await this.options.provider.refund({
       providerPaymentId: payment.providerPaymentId ?? payment.publicId,
       amountMinor,
       currency: payment.currency,
     });
+
+    return this.applyLocalRefund(repo, {
+      payment,
+      order,
+      amountMinor,
+      alreadyRefunded,
+      providerRefundId: providerResult.providerRefundId,
+      actorUserId: input.actorUserId,
+      reason: input.reason,
+    });
+  }
+
+  private async applyProviderRefundEventOn(
+    repo: CommerceRepository,
+    input: {
+      paymentId: string;
+      amountMinor: bigint;
+      providerRefundId?: string;
+      paymentMethod?: string;
+    },
+  ): Promise<PaymentRecord> {
+    const amountMinor = parseMoneyMinor(input.amountMinor);
+    const payment = await requirePayment(repo, input.paymentId);
+    const order = await requireOrder(repo, payment.orderId);
+    const existing = await repo.listRefundsByPayment(payment.id);
+    const alreadyRefunded = existing
+      .filter((row) => row.status === "succeeded")
+      .reduce((sum, row) => sum + row.amountMinor, 0n);
+    if (alreadyRefunded + amountMinor > payment.amountMinor) {
+      throw new CommerceError("INVALID_AMOUNT", "Refund exceeds remaining payment amount");
+    }
+    return this.applyLocalRefund(repo, {
+      payment,
+      order,
+      amountMinor,
+      alreadyRefunded,
+      providerRefundId: input.providerRefundId ?? null,
+      actorUserId: undefined,
+      reason: "provider_event",
+    });
+  }
+
+  private async applyLocalRefund(
+    repo: CommerceRepository,
+    input: {
+      payment: PaymentRecord;
+      order: Awaited<ReturnType<typeof requireOrder>>;
+      amountMinor: bigint;
+      alreadyRefunded: bigint;
+      providerRefundId: string | null;
+      actorUserId?: string;
+      reason?: string;
+    },
+  ): Promise<PaymentRecord> {
+    const { payment, order, amountMinor, alreadyRefunded } = input;
+    const full = alreadyRefunded + amountMinor === payment.amountMinor;
+    const nextOrderStatus = full ? "refunded" : "partially_refunded";
+    if (order.status === nextOrderStatus && (!full || payment.status === "refunded")) {
+      return payment;
+    }
+
+    await repo.insertRefund({
+      paymentId: payment.id,
+      provider: payment.provider,
+      providerRefundId: input.providerRefundId,
+      amountMinor,
+      currency: payment.currency,
+      status: "succeeded",
+      reason: input.reason ?? null,
+      initiatedBy: input.actorUserId ?? null,
+    });
+
+    assertOrderTransition(order.status, nextOrderStatus);
     if (full) {
       if (payment.status !== "refunded") {
         assertPaymentTransition(payment.status, "refunded");
@@ -446,16 +595,29 @@ export class CommerceService {
             "Webhook amount or currency does not match the stored payment",
           );
         }
-        await this.confirmPaymentOn(repo, { paymentId: payment.id });
+        await this.confirmPaymentOn(repo, {
+          paymentId: payment.id,
+          paymentMethod: event.paymentMethod,
+        });
         return;
       case "payment_failed":
         await this.failPaymentOn(repo, { paymentId: payment.id });
         return;
       case "payment_refunded":
-        await this.refundPaymentOn(repo, { paymentId: payment.id, amountMinor: payment.amountMinor });
+        await this.applyProviderRefundEventOn(repo, {
+          paymentId: payment.id,
+          amountMinor: payment.amountMinor,
+          providerRefundId: event.providerEventId,
+          paymentMethod: event.paymentMethod,
+        });
         return;
       case "payment_partially_refunded":
-        await this.refundPaymentOn(repo, { paymentId: payment.id, amountMinor: event.amountMinor });
+        await this.applyProviderRefundEventOn(repo, {
+          paymentId: payment.id,
+          amountMinor: event.amountMinor,
+          providerRefundId: event.providerEventId,
+          paymentMethod: event.paymentMethod,
+        });
         return;
       default: {
         const _exhaustive: never = event.type;
@@ -469,9 +631,14 @@ export class CommerceService {
     order: OrderRecord,
     payment: PaymentRecord,
   ): Promise<void> {
+    if (!this.options.provider.capabilities.supportsRecurring) return;
     const items = await repo.listOrderItems(order.id);
     const item = items[0];
-    if (!item?.billingIntervalSnapshot) return;
+    if (!item) return;
+    if (item.billingIntervalSnapshot && !this.options.provider.capabilities.supportsRecurring) return;
+
+    const providerSubscriptionId = payment.providerPaymentId;
+    if (!providerSubscriptionId) return;
 
     const existing = (await repo.listSubscriptionsByCustomer(order.customerId)).find(
       (row) => row.planId === item.planId && (row.status === "active" || row.status === "trialing"),
@@ -485,10 +652,10 @@ export class CommerceService {
       productId: item.productId,
       priceId: item.priceId,
       provider: payment.provider,
-      providerSubscriptionId: payment.providerPaymentId,
+      providerSubscriptionId,
       status: "active",
       currentPeriodStart: start,
-      currentPeriodEnd: addBillingInterval(start, item.billingIntervalSnapshot),
+      currentPeriodEnd: addBillingInterval(start, item.billingIntervalSnapshot ?? "year"),
     });
   }
 
@@ -579,6 +746,34 @@ function mockWebhookSecret(env: Env): string {
   throw new CommerceError("NOT_CONFIGURED", "MOCK_PAYMENT_WEBHOOK_SECRET is required");
 }
 
+export function createPaymentProvider(
+  env: Env,
+  options: { hostedBaseUrl: string },
+): PaymentProvider {
+  if (env.PAYMENT_PROVIDER === SEPAY_PROVIDER_ID) {
+    const ipnSecret = sepayIpnSecret(env);
+    if (!env.SEPAY_ENV || !env.SEPAY_MERCHANT_ID || !env.SEPAY_SECRET_KEY || !ipnSecret) {
+      throw new CommerceError("NOT_CONFIGURED", "SePay credentials are missing");
+    }
+    return new SePayPaymentProvider({
+      env: env.SEPAY_ENV,
+      merchantId: env.SEPAY_MERCHANT_ID,
+      secretKey: env.SEPAY_SECRET_KEY,
+      ipnSecret,
+    });
+  }
+  if (env.PAYMENT_PROVIDER === "mock") {
+    if (env.NODE_ENV === "production") {
+      throw new CommerceError("NOT_CONFIGURED", "Mock payment provider is not allowed in production");
+    }
+    return new MockDevelopmentPaymentProvider({
+      webhookSecret: mockWebhookSecret(env),
+      hostedBaseUrl: options.hostedBaseUrl,
+    });
+  }
+  throw new CommerceError("UNKNOWN_PROVIDER", `Unknown payment provider: ${env.PAYMENT_PROVIDER}`);
+}
+
 export interface CreateCommerceServiceOverrides {
   db?: Database | null;
   store?: CommerceRepository;
@@ -613,12 +808,7 @@ export function createCommerceService(
 
   const hostedBaseUrl =
     overrides.checkoutBaseUrl ?? env.ACCOUNT_URL ?? "http://localhost:3001";
-  const provider =
-    overrides.provider ??
-    new MockDevelopmentPaymentProvider({
-      webhookSecret: mockWebhookSecret(env),
-      hostedBaseUrl,
-    });
+  const provider = overrides.provider ?? createPaymentProvider(env, { hostedBaseUrl });
 
   return new CommerceService({
     store,

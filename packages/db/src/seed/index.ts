@@ -156,6 +156,7 @@ async function upsertPlan(
     nameEn: string;
     nameVi: string;
     billingType: "free" | "one_time" | "recurring" | "perpetual" | "custom";
+    accessTermDays?: number | null;
   },
 ) {
   const [existing] = await db
@@ -174,12 +175,22 @@ async function upsertPlan(
           productId,
           slug: input.slug,
           billingType: input.billingType,
+          accessTermDays: input.accessTermDays ?? null,
           status: "active",
         })
         .returning()
     )[0];
 
   if (!plan) throw new Error(`Failed to seed plan ${input.slug}`);
+
+  await db
+    .update(plans)
+    .set({
+      billingType: input.billingType,
+      accessTermDays: input.accessTermDays ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(plans.id, plan.id));
 
   for (const [locale, name] of [
     ["en", input.nameEn],
@@ -236,7 +247,16 @@ async function upsertPrice(
       region: input.region ?? null,
       isActive: true,
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: prices.publicId,
+      set: {
+        amountMinor: input.amountMinor,
+        interval: input.interval ?? null,
+        region: input.region ?? null,
+        isActive: true,
+        updatedAt: new Date(),
+      },
+    });
 }
 
 async function seed() {
@@ -249,6 +269,7 @@ async function seed() {
       slug: DEV_SAMPLE_SLUG,
       status: "active",
       platformCapabilities: ["web", "desktop", "mobile"],
+      licensingMode: "LICENSE_KEY_DEVICE",
       metadata: MARKETING_METADATA,
     })
     .onConflictDoNothing({ target: products.slug })
@@ -306,7 +327,8 @@ async function seed() {
     slug: "sample-pro",
     nameEn: "Sample Pro",
     nameVi: "Mẫu Pro",
-    billingType: "recurring",
+    billingType: "one_time",
+    accessTermDays: 365,
   });
   const lifetimePlan = await upsertPlan(db, product.id, {
     slug: "sample-lifetime",
@@ -345,13 +367,13 @@ async function seed() {
     publicId: "price_sample_pro_usd",
     currency: "USD",
     amountMinor: 1900n,
-    interval: "month",
+    interval: "year",
   });
   await upsertPrice(db, proPlan.id, {
     publicId: "price_sample_pro_vnd",
     currency: "VND",
-    amountMinor: 490000n,
-    interval: "month",
+    amountMinor: 599000n,
+    interval: "year",
     region: "VN",
   });
   await upsertPrice(db, lifetimePlan.id, {
@@ -359,6 +381,13 @@ async function seed() {
     currency: "USD",
     amountMinor: 19900n,
     interval: null,
+  });
+  await upsertPrice(db, lifetimePlan.id, {
+    publicId: "price_sample_lifetime_vnd",
+    currency: "VND",
+    amountMinor: 499000n,
+    interval: null,
+    region: "VN",
   });
 
   const [tierInserted] = await db

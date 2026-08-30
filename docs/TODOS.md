@@ -1,31 +1,31 @@
-# Remaining work ledger (Phase 12 audit)
+# Remaining work ledger (Phase 13)
 
-Items are categorized as they stood at the end of Phase 12. **BLOCKER** means do not send real customers to production until it is resolved. This list is not an implementation backlog for a later product phase.
+Items are categorized as they stood after Phase 13. **BLOCKER** means do not send real customers to production until it is resolved. This list is not an implementation backlog for a later product phase.
 
 ## BLOCKER
 
 | ID | Item | Notes |
 |----|------|--------|
-| B1 | Live payment provider | `PAYMENT_PROVIDER` is only `mock`. Mock checkout is development-only. Production cannot take real money. |
-| B2 | Transactional email delivery | `createEmailAdapter()` always returns `DevPreviewEmailAdapter`. Production env requires `EMAIL_PROVIDER_API_KEY` but mail is not sent. Password reset / receipts will appear to succeed. |
-| B3 | Production secrets | Production Ed25519 private key, `BETTER_AUTH_SECRET`, R2 keys, webhook secrets, and a real `DATABASE_URL` must exist in secret infrastructure — not in git. None of these are created by this phase. |
-| B4 | Production database + migrate | Empty or unmigrated DB. Seed must not run in production. |
+| B1 | Live payment provider | SePay adapter is implemented (`PAYMENT_PROVIDER=sepay`). Development may still use `mock`. **Not resolved:** verified SePay Sandbox checkout + IPN (amount/currency checks, idempotency) per `docs/SEPAY-SANDBOX.md`. Production cannot take real money until that gate passes. |
+| B2 | Transactional email delivery | Templates exist (VI default, EN secondary). `createEmailAdapter()` still returns `DevPreviewEmailAdapter`. Production env requires `EMAIL_PROVIDER_API_KEY` but mail is not sent. |
+| B3 | Production secrets | Production Ed25519 private key, `BETTER_AUTH_SECRET`, R2 keys, SePay credentials, and a real `DATABASE_URL` must exist in secret infrastructure — not in git. |
+| B4 | Production database + migrate | Empty or unmigrated DB. Apply through `0008_phase13_vietnam_sepay`. Seed must not run in production. |
 | B5 | Object storage buckets | Public + private buckets, DNS for cdn/download, CORS if browser upload is used. |
-| B6 | Counsel-reviewed legal | Privacy/terms on the site describe **current** behavior. They are not a substitute for jurisdiction-specific legal review before collecting customer payments. |
+| B6 | Counsel-reviewed legal | Privacy/terms on the site describe **current** behavior. They are not a substitute for Vietnam/jurisdiction-specific legal review before collecting customer payments. |
 
 ## BEFORE PRODUCTION
 
 | ID | Item | Notes |
 |----|------|--------|
-| P1 | Shared rate-limit store | In-memory limiter (`ponytail:` Redis). Multi-instance production will not share counters. |
-| P2 | Payment webhook secret for the live PSP | Replace mock webhook verification; keep provider objects out of the domain model. |
+| P1 | Shared rate-limit store | In-memory limiter (`ponytail:` Redis). Multi-instance production will not share counters. **Launch restriction:** single instance until Redis (or equivalent). `TRUSTED_PROXY=none\|cloudflare` — do not trust raw `X-Forwarded-For`. |
+| P2 | Live PSP webhook proof | SePay IPN verifies `X-Secret-Key`. Remaining work is the sandbox proof in B1, not a second mock secret. |
 | P3 | Email provider adapter | Wire a real sender when B2 is addressed; fail closed if send fails. |
 | P4 | Staging environment | Separate DB, buckets, auth URLs, keys (`docs/ENVIRONMENTS.md`). Restore drill (`docs/DATABASE.md`). |
 | P5 | DNS + TLS | All hostnames in `docs/DEPLOYMENT.md`. |
 | P6 | OAuth redirect URIs | Google (if enabled) must list production account origin only. |
 | P7 | CSP nonces | CSP still allows `'unsafe-inline'` for scripts/styles (Phase 11). Tighten before a high-threat launch if required. |
 | P8 | Backup + restore drill | Postgres and object storage. |
-| P9 | Playwright against staging | `E2E=1 pnpm test:e2e` is local; CI default job does not run it. |
+| P9 | Playwright against staging | `E2E=1 pnpm test:e2e` is local; CI default job does not run it. Sandbox payment E2E is manual (`docs/SEPAY-SANDBOX.md`). |
 | P10 | Catalog/CMS content | Production products, prices, and published blog/docs — no development seed. |
 
 ## POST-MVP
@@ -42,3 +42,5 @@ Items are categorized as they stood at the end of Phase 12. **BLOCKER** means do
 | M8 | Markdown rendering | Blog/docs split on blank lines only; no markdown library. |
 | M9 | In-memory commerce store path | `ponytail:` in commerce store — production uses Drizzle. Confirm no production traffic hits the memory store. |
 | M10 | Partner 30-day reseller term | `ponytail:` in reseller service. |
+| M11 | SePay recurring | Official docs: Coming Soon. Renewals are a new one-time purchase. |
+| M12 | SePay automated refunds | Unsupported in current integration; use refund ledger + manual finance. |

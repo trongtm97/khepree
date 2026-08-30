@@ -111,7 +111,7 @@ export const userProfiles = pgTable(
       .unique()
       .references(() => user.id, { onDelete: "cascade" }),
     globalRole: globalRoleEnum("global_role").notNull().default("USER"),
-    locale: text("locale").notNull().default("en"),
+    locale: text("locale").notNull().default("vi"),
     timezone: text("timezone"),
     suspendedAt: timestamp("suspended_at", { withTimezone: true }),
     ...timestamps,

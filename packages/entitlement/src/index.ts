@@ -16,6 +16,7 @@ export {
   type GrantResult,
   type CreateEntitlementServiceOverrides,
 } from "./service";
+export { nextExpiresAt, requiresLicense, accessTermType } from "./access";
 export { createEntitlementCommerceHooks, principalFromCustomer } from "./commerce-hooks";
 export type {
   CatalogReader,

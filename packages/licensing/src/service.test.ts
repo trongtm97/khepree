@@ -33,6 +33,8 @@ async function seeded() {
             productSlug: "sample",
             planId: "plan-1",
             planSlug: "sample-pro",
+            licensingMode: "LICENSE_KEY_DEVICE",
+            accessTermDays: null,
             features: [
               { key: "api_access", value: { valueType: "boolean" as const, booleanValue: true } },
               { key: "devices.max", value: { valueType: "integer" as const, integerValue: 1 } },

@@ -69,6 +69,7 @@ export {
 } from "./product/pricing";
 export { parseProductMarketingMetadata } from "./product/metadata";
 export type {
+  LicensingMode,
   PlanBillingType,
   PricingDisplayMode,
   PricingProductGroup,

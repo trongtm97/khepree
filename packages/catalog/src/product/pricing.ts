@@ -1,37 +1,27 @@
-import { DEFAULT_CURRENCY } from "@khepree/config";
-import { moneyMinorToSafeNumber } from "@khepree/types";
+import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@khepree/config";
+import {
+  currencyExponent,
+  formatMoneyMinor,
+  moneyMinorToSafeNumber,
+  parseMoneyMinor,
+} from "@khepree/types";
 import type { PlanBillingType, PricingDisplayMode, PublicPrice } from "./types";
 
-/** ISO 4217 minor-unit exponents for common currencies; default 2 for unknown. */
-const CURRENCY_MINOR_UNITS: Record<string, number> = {
-  USD: 2,
-  VND: 0,
-  EUR: 2,
-  GBP: 2,
-  JPY: 0,
-};
-
-export function currencyMinorUnits(currency: string): number {
-  return CURRENCY_MINOR_UNITS[currency.toUpperCase()] ?? 2;
-}
+/** @deprecated Use currencyExponent from @khepree/types. */
+export const currencyMinorUnits = currencyExponent;
 
 export function minorToMajor(amountMinor: bigint, currency: string): number {
-  const exponent = currencyMinorUnits(currency);
+  const exponent = currencyExponent(currency);
   return moneyMinorToSafeNumber(amountMinor) / 10 ** exponent;
 }
 
 export function formatPriceAmount(
   amountMinor: bigint | string | number,
   currency: string,
-  locale = "en",
+  locale: string = DEFAULT_LOCALE,
 ): string {
-  const minor = typeof amountMinor === "bigint" ? amountMinor : BigInt(amountMinor);
-  const major = minorToMajor(minor, currency);
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currency.toUpperCase(),
-    currencyDisplay: "narrowSymbol",
-  }).format(major);
+  const minor = typeof amountMinor === "bigint" ? amountMinor : parseMoneyMinor(amountMinor);
+  return formatMoneyMinor(minor, currency, locale);
 }
 
 export function resolvePricingDisplayMode(billingType: PlanBillingType): PricingDisplayMode {
@@ -98,7 +88,7 @@ export function selectDisplayPrice(
   return ranked[0] ?? null;
 }
 
-export function formatBillingInterval(interval: string | null, locale = "en"): string | null {
+export function formatBillingInterval(interval: string | null, locale = DEFAULT_LOCALE): string | null {
   if (!interval) return null;
   const normalized = interval.toLowerCase();
   if (normalized === "month") {

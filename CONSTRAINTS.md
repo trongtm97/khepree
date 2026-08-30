@@ -1,6 +1,6 @@
 # Constraints
 
-Last reviewed: 2026-08-30 — Phase 12 production readiness
+Last reviewed: 2026-08-30 — Phase 13 Vietnam-first + SePay
 
 Read this file before writing code. Do not weaken it to make a change pass.
 

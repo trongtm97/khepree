@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { memberships, organizations, requireDb, userProfiles } from "@khepree/db";
+import { isSupportedLocale, type SupportedLocale } from "@khepree/config";
 import type { Database } from "@khepree/db";
 
 export async function ensureUserProfile(
@@ -22,6 +23,12 @@ export async function ensureUserProfile(
 export async function ensureUserProfileById(userId: string): Promise<void> {
   const db = requireDb();
   await ensureUserProfile(db, { userId });
+}
+
+export async function setUserPreferredLocale(userId: string, locale: SupportedLocale): Promise<void> {
+  if (!isSupportedLocale(locale)) return;
+  const db = requireDb();
+  await db.update(userProfiles).set({ locale }).where(eq(userProfiles.userId, userId));
 }
 
 export async function getUserOrgMemberships(userId: string) {

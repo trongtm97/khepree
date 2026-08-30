@@ -5,6 +5,7 @@ import {
   type AuditService,
   type Database,
 } from "@khepree/db";
+import { nextExpiresAt, requiresLicense } from "./access";
 import { DrizzleCatalogReader } from "./catalog-reader";
 import { DrizzleEntitlementRepository } from "./drizzle-store";
 import { EntitlementError } from "./errors";
@@ -30,7 +31,7 @@ export interface EntitlementServiceOptions {
 
 export interface GrantResult {
   entitlement: EntitlementRecord;
-  license: LicenseRecord;
+  license: LicenseRecord | null;
   /** Present only when a new key is issued. Never persisted. */
   licenseKey?: string;
 }
@@ -251,23 +252,43 @@ export class EntitlementService {
     if (input.orderPublicId && input.orderItemId) {
       const replayed = await repo.findByOrderItem(input.orderPublicId, input.orderItemId);
       if (replayed) {
-        const license = await this.requireLicense(repo, replayed.id);
+        const license = await repo.getLicenseByEntitlementId(replayed.id);
         return { entitlement: replayed, license };
       }
     }
 
     const existing = await repo.findOpenForProduct(input.principal, input.productId);
+    const expiresAt =
+      input.expiresAt !== undefined
+        ? input.expiresAt
+        : nextExpiresAt({
+            accessTermDays: snapshot.accessTermDays,
+            now: this.now(),
+            existingExpiresAt: existing?.expiresAt,
+            existingStatus: existing?.status,
+          });
+
     if (existing) {
       const updated = await repo.updateEntitlement(existing.id, {
         status: "active",
         planId: input.planId,
         source: input.source,
-        expiresAt: input.expiresAt === undefined ? existing.expiresAt : (input.expiresAt ?? null),
+        expiresAt,
         metadata: { ...existing.metadata, ...metadata },
         featureSnapshot: snapshot.featureSnapshot,
         featureSnapshotVersion: snapshot.featureSnapshot.version,
         revokedAt: null,
       });
+      if (!requiresLicense(snapshot.licensingMode)) {
+        await this.options.audit.record({
+          actorUserId: input.actorUserId ?? null,
+          action: "entitlement.updated",
+          resourceType: "entitlement",
+          resourceId: updated.publicId,
+          metadata: { source: input.source },
+        });
+        return { entitlement: updated, license: await repo.getLicenseByEntitlementId(updated.id) };
+      }
       const license = await this.ensureLicense(repo, updated.id);
       await repo.updateLicense(license.id, { status: "active", revokedAt: null, revokedReason: null });
       await this.options.audit.record({
@@ -286,11 +307,21 @@ export class EntitlementService {
       planId: input.planId,
       source: input.source,
       startsAt: input.startsAt ?? this.now(),
-      expiresAt: input.expiresAt ?? null,
+      expiresAt,
       metadata,
       featureSnapshot: snapshot.featureSnapshot,
       featureSnapshotVersion: snapshot.featureSnapshot.version,
     });
+    if (!requiresLicense(snapshot.licensingMode)) {
+      await this.options.audit.record({
+        actorUserId: input.actorUserId ?? null,
+        action: "entitlement.granted",
+        resourceType: "entitlement",
+        resourceId: entitlement.publicId,
+        metadata: { source: input.source },
+      });
+      return { entitlement, license: null };
+    }
     const issued = createHumanLicenseKey();
     const license = await repo.insertLicense({
       entitlementId: entitlement.id,
@@ -321,6 +352,8 @@ export class EntitlementService {
     return {
       productId: plan.productId,
       featureSnapshot: snapshotFromEntries(plan.features),
+      licensingMode: plan.licensingMode,
+      accessTermDays: plan.accessTermDays,
     };
   }
 

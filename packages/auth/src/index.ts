@@ -16,7 +16,7 @@ export {
 export { recordAuthAudit, type AuthAuditAction } from "./audit";
 export { getAuthBaseUrl } from "./email";
 export { safeReturnPath } from "./safe-return-path";
-export { ensureUserProfile, ensureUserProfileById, getUserOrgMemberships } from "./profile";
+export { ensureUserProfile, ensureUserProfileById, getUserOrgMemberships, setUserPreferredLocale } from "./profile";
 export {
   IdentityDirectory,
   IdentityError,

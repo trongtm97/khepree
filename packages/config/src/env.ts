@@ -2,7 +2,8 @@ import { z } from "zod";
 
 export type IntegrationStatus = "configured" | "not_configured" | "mock";
 
-export const DEFAULT_CURRENCY = "USD";
+export const DEFAULT_CURRENCY = "VND";
+export const DEFAULT_MARKET_REGION = "VN";
 
 const optionalUrl = z.string().url().optional().or(z.literal(""));
 
@@ -27,8 +28,17 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().optional(),
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
 
-  PAYMENT_PROVIDER: z.enum(["mock"]).default("mock"),
+  PAYMENT_PROVIDER: z.enum(["mock", "sepay"]).default("mock"),
   MOCK_PAYMENT_WEBHOOK_SECRET: z.string().optional(),
+
+  SEPAY_ENV: z.enum(["sandbox", "production"]).optional(),
+  SEPAY_MERCHANT_ID: z.string().optional(),
+  SEPAY_SECRET_KEY: z.string().optional(),
+  /** Optional. When unset, IPN uses SEPAY_SECRET_KEY (official X-Secret-Key). */
+  SEPAY_IPN_SECRET: z.string().optional(),
+
+  /** none = ignore spoofable forwarding headers. cloudflare = CF-Connecting-IP only. */
+  TRUSTED_PROXY: z.enum(["none", "cloudflare"]).default("none"),
 
   APP_URL: optionalUrl,
   ACCOUNT_URL: optionalUrl,
@@ -85,6 +95,27 @@ export function isLicenseSigningConfigured(env: Env = getEnv()): boolean {
 
 export function isMockPaymentConfigured(env: Env = getEnv()): boolean {
   return env.PAYMENT_PROVIDER === "mock";
+}
+
+export function isSePayConfigured(env: Env = getEnv()): boolean {
+  return Boolean(
+    env.PAYMENT_PROVIDER === "sepay" &&
+      env.SEPAY_ENV &&
+      env.SEPAY_MERCHANT_ID &&
+      !env.SEPAY_MERCHANT_ID.includes("CHANGE_ME") &&
+      env.SEPAY_SECRET_KEY &&
+      !env.SEPAY_SECRET_KEY.includes("CHANGE_ME"),
+  );
+}
+
+export function sepayIpnSecret(env: Env = getEnv()): string | undefined {
+  if (env.SEPAY_IPN_SECRET && !env.SEPAY_IPN_SECRET.includes("CHANGE_ME")) {
+    return env.SEPAY_IPN_SECRET;
+  }
+  if (env.SEPAY_SECRET_KEY && !env.SEPAY_SECRET_KEY.includes("CHANGE_ME")) {
+    return env.SEPAY_SECRET_KEY;
+  }
+  return undefined;
 }
 
 export function integrationStatus(check: boolean): IntegrationStatus {

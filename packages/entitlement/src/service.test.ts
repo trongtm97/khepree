@@ -15,6 +15,8 @@ const snapshot: CatalogSnapshot = {
   productSlug: "sample",
   planId: "plan-1",
   planSlug: "sample-pro",
+  licensingMode: "LICENSE_KEY_DEVICE",
+  accessTermDays: 365,
   features: [
     { key: "api_access", value: { valueType: "boolean", booleanValue: true } },
     { key: "devices.max", value: { valueType: "integer", integerValue: 2 } },
@@ -55,7 +57,7 @@ describe("entitlement engine", () => {
 
     expect(result.entitlement.status).toBe("active");
     expect(result.licenseKey).toMatch(/^KHPR-[A-Z2-9]{4}(?:-[A-Z2-9]{4}){3}$/);
-    expect(result.license.keyHash).toBe(hashLicenseKey(result.licenseKey ?? ""));
+    expect(result.license?.keyHash).toBe(hashLicenseKey(result.licenseKey ?? ""));
     expect(store.entitlements).toHaveLength(1);
     expect(service.resolveFeaturesFor(result.entitlement).map((row) => row.key)).toContain(
       "devices.max",
@@ -168,7 +170,8 @@ describe("commerce entitlement hooks", () => {
       currency: "USD",
       productNameSnapshot: "Sample",
       planNameSnapshot: "Pro",
-      billingIntervalSnapshot: "month",
+      billingIntervalSnapshot: "year",
+      accessTermDaysSnapshot: 365,
     };
     const payment = {
       id: "pay-1",
@@ -179,6 +182,7 @@ describe("commerce entitlement hooks", () => {
       status: "succeeded" as const,
       amountMinor: 1900n,
       currency: "USD",
+      method: null,
       createdAt: NOW,
       updatedAt: NOW,
     };
@@ -206,7 +210,7 @@ describe("commerce entitlement hooks", () => {
       subscriptions: [subscription],
     });
     expect(store.entitlements[0]?.source).toBe("subscription");
-    expect(store.entitlements[0]?.expiresAt).toEqual(subscription.currentPeriodEnd);
+    expect(store.entitlements[0]?.expiresAt).toEqual(new Date("2027-08-29T12:00:00.000Z"));
 
     await hooks.afterRefunded({
       order: { ...order, status: "refunded" },
@@ -254,6 +258,7 @@ describe("commerce entitlement hooks", () => {
           productNameSnapshot: "Sample",
           planNameSnapshot: "Life",
           billingIntervalSnapshot: null,
+          accessTermDaysSnapshot: null,
         },
       ],
       customer: {
@@ -273,6 +278,7 @@ describe("commerce entitlement hooks", () => {
         status: "succeeded",
         amountMinor: 19900n,
         currency: "USD",
+        method: null,
         createdAt: NOW,
         updatedAt: NOW,
       },
@@ -313,5 +319,67 @@ describe("commerce entitlement hooks", () => {
     expect(reissued.licenseKey).not.toBe(granted.licenseKey);
     expect(store.licenses[0]?.keyHash).toBe(hashLicenseKey(reissued.licenseKey ?? ""));
     expect(records.some((row) => row.action === "license.reissued")).toBe(true);
+  });
+});
+
+describe("licensing mode and access term", () => {
+  it("grants a web product entitlement without a license", async () => {
+    const web: CatalogSnapshot = {
+      ...snapshot,
+      productId: "prod-web",
+      productSlug: "web-app",
+      planId: "plan-web",
+      licensingMode: "ACCOUNT",
+      accessTermDays: 365,
+    };
+    const store = new MemoryEntitlementRepository(() => NOW);
+    const { audit } = recordingAudit();
+    const service = createEntitlementService({
+      store,
+      catalog: new MemoryCatalogReader(new Map([[web.planId, web]])),
+      audit,
+      now: () => NOW,
+    });
+    const result = await service.grantEntitlement({
+      principal: PRINCIPAL,
+      productId: "prod-web",
+      planId: "plan-web",
+      source: "subscription",
+    });
+    expect(result.license).toBeNull();
+    expect(result.licenseKey).toBeUndefined();
+    expect(store.licenses).toHaveLength(0);
+    expect(result.entitlement.expiresAt).toEqual(new Date("2027-08-29T12:00:00.000Z"));
+  });
+
+  it("still issues a license for LICENSE_KEY_DEVICE products", async () => {
+    const { service, store } = createService();
+    const result = await service.grantEntitlement({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      planId: "plan-1",
+      source: "perpetual",
+    });
+    expect(result.license).not.toBeNull();
+    expect(result.licenseKey).toMatch(/^KHPR-/);
+    expect(store.licenses).toHaveLength(1);
+  });
+
+  it("extends an active future expiry on renewal", async () => {
+    const { service } = createService();
+    const first = await service.grantEntitlement({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      planId: "plan-1",
+      source: "subscription",
+    });
+    const second = await service.grantEntitlement({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      planId: "plan-1",
+      source: "subscription",
+    });
+    expect(second.entitlement.id).toBe(first.entitlement.id);
+    expect(second.entitlement.expiresAt).toEqual(new Date("2028-08-28T12:00:00.000Z"));
   });
 });

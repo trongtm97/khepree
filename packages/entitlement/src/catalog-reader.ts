@@ -28,6 +28,8 @@ export class DrizzleCatalogReader implements CatalogReader {
         planSlug: plans.slug,
         productId: plans.productId,
         productSlug: products.slug,
+        licensingMode: products.licensingMode,
+        accessTermDays: plans.accessTermDays,
       })
       .from(plans)
       .innerJoin(products, eq(plans.productId, products.id))
@@ -62,6 +64,8 @@ export class DrizzleCatalogReader implements CatalogReader {
       planId: plan.planId,
       planSlug: plan.planSlug,
       features: featureEntries,
+      licensingMode: plan.licensingMode,
+      accessTermDays: plan.accessTermDays,
     };
   }
 }

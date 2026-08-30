@@ -5,6 +5,7 @@ import {
   orderItems,
   orders,
   payments,
+  refunds,
   subscriptions,
   webhookEvents,
   withTransaction,
@@ -20,6 +21,8 @@ import type {
   OrderStatus,
   PaymentRecord,
   PaymentStatus,
+  RefundRecord,
+  RefundStatus,
   SubscriptionRecord,
   SubscriptionStatus,
 } from "./types";
@@ -143,6 +146,7 @@ export class DrizzleCommerceRepository implements CommerceRepository {
         amountMinor: input.amountMinor,
         currency: input.currency,
         status: input.status ?? "pending",
+        method: input.method ?? null,
       })
       .returning();
     if (!row) throw new CommerceError("CONFLICT", "Could not create payment");
@@ -179,7 +183,7 @@ export class DrizzleCommerceRepository implements CommerceRepository {
 
   async updatePayment(
     id: string,
-    patch: { status?: PaymentStatus; providerPaymentId?: string | null },
+    patch: { status?: PaymentStatus; providerPaymentId?: string | null; method?: string | null },
   ): Promise<PaymentRecord> {
     const [row] = await this.db
       .update(payments)
@@ -218,6 +222,52 @@ export class DrizzleCommerceRepository implements CommerceRepository {
       .where(eq(subscriptions.id, id))
       .returning({ id: subscriptions.id });
     if (!row) throw new CommerceError("NOT_FOUND", "Subscription not found");
+  }
+
+  async insertRefund(input: {
+    paymentId: string;
+    provider: string;
+    providerRefundId?: string | null;
+    amountMinor: bigint;
+    currency: string;
+    status: RefundStatus;
+    reason?: string | null;
+    initiatedBy?: string | null;
+  }): Promise<RefundRecord> {
+    const [row] = await this.db
+      .insert(refunds)
+      .values({
+        publicId: createPublicId("rfnd"),
+        paymentId: input.paymentId,
+        provider: input.provider,
+        providerRefundId: input.providerRefundId ?? null,
+        amountMinor: input.amountMinor,
+        currency: input.currency,
+        status: input.status,
+        reason: input.reason ?? null,
+        initiatedBy: input.initiatedBy ?? null,
+      })
+      .returning();
+    if (!row) throw new CommerceError("CONFLICT", "Could not create refund");
+    return mapRefund(row);
+  }
+
+  async listRefundsByPayment(paymentId: string): Promise<RefundRecord[]> {
+    const rows = await this.db.select().from(refunds).where(eq(refunds.paymentId, paymentId));
+    return rows.map(mapRefund);
+  }
+
+  async updateRefund(
+    id: string,
+    patch: { status?: RefundStatus; providerRefundId?: string | null },
+  ): Promise<RefundRecord> {
+    const [row] = await this.db
+      .update(refunds)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(refunds.id, id))
+      .returning();
+    if (!row) throw new CommerceError("NOT_FOUND", "Refund not found");
+    return mapRefund(row);
   }
 
   async claimWebhookEvent(input: {
@@ -291,6 +341,7 @@ function mapItem(row: typeof orderItems.$inferSelect): OrderItemRecord {
     productNameSnapshot: row.productNameSnapshot,
     planNameSnapshot: row.planNameSnapshot,
     billingIntervalSnapshot: row.billingIntervalSnapshot,
+    accessTermDaysSnapshot: row.accessTermDaysSnapshot,
   };
 }
 
@@ -304,6 +355,7 @@ function mapPayment(row: typeof payments.$inferSelect): PaymentRecord {
     status: row.status,
     amountMinor: row.amountMinor,
     currency: row.currency,
+    method: row.method ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -322,6 +374,23 @@ function mapSubscription(row: typeof subscriptions.$inferSelect): SubscriptionRe
     status: row.status,
     currentPeriodStart: row.currentPeriodStart,
     currentPeriodEnd: row.currentPeriodEnd,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapRefund(row: typeof refunds.$inferSelect): RefundRecord {
+  return {
+    id: row.id,
+    publicId: row.publicId,
+    paymentId: row.paymentId,
+    provider: row.provider,
+    providerRefundId: row.providerRefundId,
+    amountMinor: row.amountMinor,
+    currency: row.currency,
+    status: row.status,
+    reason: row.reason,
+    initiatedBy: row.initiatedBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

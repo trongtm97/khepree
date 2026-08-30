@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@khepree/config";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, SUPPORTED_LOCALES, isSupportedLocale } from "@khepree/config";
 import { attachSecurityHeaders, isMaintenanceMode } from "@khepree/security";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -35,11 +35,24 @@ export function proxy(request: NextRequest) {
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
 
-  if (hasLocale) return finish(request, NextResponse.next());
+  if (hasLocale) {
+    const locale = pathname.split("/")[1] ?? DEFAULT_LOCALE;
+    const response = finish(request, NextResponse.next());
+    if (isSupportedLocale(locale)) {
+      response.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    }
+    return response;
+  }
 
   const url = request.nextUrl.clone();
   url.pathname = `/${DEFAULT_LOCALE}${pathname === "/" ? "" : pathname}`;
-  return finish(request, NextResponse.redirect(url));
+  const redirectResponse = finish(request, NextResponse.redirect(url, 308));
+  redirectResponse.cookies.set(LOCALE_COOKIE, DEFAULT_LOCALE, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+  return redirectResponse;
 }
 
 export const config = {

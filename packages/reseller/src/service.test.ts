@@ -24,6 +24,8 @@ const snapshot: CatalogSnapshot = {
   productSlug: "sample",
   planId: PLAN_ID,
   planSlug: "sample-pro",
+  licensingMode: "LICENSE_KEY_DEVICE",
+  accessTermDays: 365,
   features: [{ key: "api_access", value: { valueType: "boolean", booleanValue: true } }],
 };
 
@@ -460,6 +462,7 @@ function paidOrder(orderId: string, userId: string, totalMinor: bigint): PaidOrd
       status: "succeeded",
       amountMinor: totalMinor,
       currency: "USD",
+      method: null,
       createdAt: NOW,
       updatedAt: NOW,
     },

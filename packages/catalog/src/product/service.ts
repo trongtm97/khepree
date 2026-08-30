@@ -217,6 +217,7 @@ export class ProductService {
         publicId: product.publicId,
         slug: product.slug,
         name: productTranslation.name,
+        licensingMode: product.licensingMode,
       },
       plan: {
         id: plan.id,
@@ -224,6 +225,7 @@ export class ProductService {
         slug: plan.slug,
         name: planTranslation.name,
         billingType: plan.billingType,
+        accessTermDays: plan.accessTermDays,
       },
       price: {
         id: price.id,

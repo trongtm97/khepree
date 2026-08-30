@@ -95,6 +95,7 @@ export const orderItems = pgTable(
     productNameSnapshot: text("product_name_snapshot").notNull(),
     planNameSnapshot: text("plan_name_snapshot").notNull(),
     billingIntervalSnapshot: text("billing_interval_snapshot"),
+    accessTermDaysSnapshot: integer("access_term_days_snapshot"),
     ...timestamps,
   },
   (table) => [index("order_items_order_id_idx").on(table.orderId)],
@@ -120,6 +121,7 @@ export const payments = pgTable(
     status: paymentStatusEnum("status").notNull().default("pending"),
     amountMinor: bigint("amount_minor", { mode: "bigint" }).notNull(),
     currency: text("currency").notNull(),
+    method: text("method"),
     ...timestamps,
   },
   (table) => [
@@ -186,6 +188,38 @@ export const webhookEvents = pgTable(
     unique("webhook_provider_event_unique").on(table.provider, table.eventId),
     index("webhook_events_created_at_idx").on(table.createdAt),
     index("webhook_events_event_id_idx").on(table.eventId),
+  ],
+);
+
+export const refundStatusEnum = pgEnum("refund_status", [
+  "pending",
+  "succeeded",
+  "failed",
+  "manual_required",
+]);
+
+export const refunds = pgTable(
+  "refunds",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    publicId: text("public_id").notNull().unique(),
+    paymentId: uuid("payment_id")
+      .notNull()
+      .references(() => payments.id, { onDelete: "restrict" }),
+    provider: text("provider").notNull(),
+    providerRefundId: text("provider_refund_id"),
+    amountMinor: bigint("amount_minor", { mode: "bigint" }).notNull(),
+    currency: text("currency").notNull(),
+    status: refundStatusEnum("status").notNull().default("pending"),
+    reason: text("reason"),
+    initiatedBy: text("initiated_by"),
+    ...timestamps,
+  },
+  (table) => [
+    index("refunds_payment_id_idx").on(table.paymentId),
+    uniqueIndex("refunds_provider_refund_unique")
+      .on(table.provider, table.providerRefundId)
+      .where(sql`${table.providerRefundId} IS NOT NULL`),
   ],
 );
 

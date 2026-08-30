@@ -38,6 +38,7 @@ pnpm db:seed
 - **Phase 10:** admin control center — complete
 - **Phase 11:** production security, testing, observability — complete
 - **Phase 12:** final production readiness (docs, CI, public IA) — complete; **not** a production-ready claim
+- **Phase 13:** Vietnam-first locale, VND, SePay payment adapter, commerce hardening — complete; **not** a production-ready claim; B1 sandbox IPN proof still open
 
 Packages already implemented: `@khepree/auth`, `@khepree/catalog`, `@khepree/commerce`, `@khepree/storage`, `@khepree/db`, `@khepree/ui`, `@khepree/config`, `@khepree/security`, `@khepree/entitlement`, `@khepree/licensing`, `@khepree/reseller`, `@khepree/sdk`.
 

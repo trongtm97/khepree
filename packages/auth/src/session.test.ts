@@ -15,20 +15,30 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@khepree/db", () => {
   const profileQuery = {
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([{ globalRole: "USER" }]),
+    from() {
+      return this;
+    },
+    where() {
+      return this;
+    },
+    limit: async () => [{ globalRole: "USER", locale: "vi" }],
   };
   const orgQuery = {
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockResolvedValue([]),
+    from() {
+      return this;
+    },
+    where: async () => [],
   };
-  const select = vi.fn().mockReturnValueOnce(profileQuery).mockReturnValueOnce(orgQuery);
+  let calls = 0;
+  const select = vi.fn(() => {
+    calls += 1;
+    return calls % 2 === 1 ? profileQuery : orgQuery;
+  });
 
   return {
     requireDb: vi.fn(() => ({ select })),
-    userProfiles: {},
-    memberships: {},
+    userProfiles: { globalRole: "global_role", locale: "locale", userId: "user_id" },
+    memberships: { organizationId: "organization_id", userId: "user_id" },
   };
 });
 
@@ -42,7 +52,10 @@ vi.mock("./server", () => ({
 
 describe("requireSession", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGetSession.mockReset();
+    mockRedirect.mockImplementation((url: string) => {
+      throw new Error(`REDIRECT:${url}`);
+    });
   });
 
   it("redirects to sign-in when no session", async () => {
@@ -69,12 +82,13 @@ describe("requireSession", () => {
 
     expect(session.user.email).toBe("a@example.com");
     expect(session.session.id).toBe("s1");
+    expect(session.locale).toBe("vi");
   });
 });
 
 describe("getSession", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockGetSession.mockReset();
   });
 
   it("returns null without a Better Auth session", async () => {

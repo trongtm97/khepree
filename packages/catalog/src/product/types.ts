@@ -1,10 +1,11 @@
 import type { FeatureValueType, PlanFeatureValue } from "@khepree/db";
-import type { ProductPlatform } from "@khepree/db";
+import type { LicensingMode, ProductPlatform } from "@khepree/db";
 
 export type ProductStatus = "draft" | "active" | "hidden" | "retired";
 export type PlanBillingType = "free" | "one_time" | "recurring" | "perpetual" | "custom";
 export type PlanStatus = "draft" | "active" | "archived";
 export type PricingDisplayMode = "free" | "recurring" | "one_time" | "perpetual" | "contact_sales";
+export type { LicensingMode };
 
 export const PURCHASABLE_BILLING_TYPES = ["one_time", "recurring", "perpetual"] as const;
 export type PurchasableBillingType = (typeof PURCHASABLE_BILLING_TYPES)[number];
@@ -15,13 +16,20 @@ export function isPurchasableBillingType(value: PlanBillingType): value is Purch
 
 /** Server-side checkout snapshot — includes internal ids for order item FKs. */
 export interface PurchasableOffer {
-  product: { id: string; publicId: string; slug: string; name: string };
+  product: {
+    id: string;
+    publicId: string;
+    slug: string;
+    name: string;
+    licensingMode: LicensingMode;
+  };
   plan: {
     id: string;
     publicId: string;
     slug: string;
     name: string;
     billingType: PlanBillingType;
+    accessTermDays: number | null;
   };
   price: {
     id: string;

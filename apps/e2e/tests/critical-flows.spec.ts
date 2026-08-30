@@ -7,6 +7,20 @@ test.beforeEach(() => {
 });
 
 test.describe("marketing site", () => {
+  test("root redirects to Vietnamese without indexing a duplicate home", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "web");
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/vi(\/|$|\?)/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "vi");
+  });
+
+  test("English locale remains available", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "web");
+    await page.goto("/en");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.locator("body")).not.toContainText("TypeError");
+  });
+
   test("browses products", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "web");
     await page.goto("/en/products");
