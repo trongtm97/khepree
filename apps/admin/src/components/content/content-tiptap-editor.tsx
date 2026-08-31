@@ -11,11 +11,19 @@ import { createTiptapExtensions } from "@/lib/tiptap/create-extensions";
 
 type EditorMode = "visual" | "html";
 
+type EditorSize = "default" | "large";
+
 type Props = {
   name?: string;
   defaultValue?: string;
   placeholder?: string;
   onValueChange?: (value: string) => void;
+  size?: EditorSize;
+};
+
+const SURFACE_SIZE_CLASS: Record<EditorSize, string> = {
+  default: "min-h-[480px] max-h-[75vh]",
+  large: "min-h-[640px] max-h-[85vh]",
 };
 
 const defaultLinkDialog: LinkDialogState = {
@@ -25,8 +33,8 @@ const defaultLinkDialog: LinkDialogState = {
   nofollow: false,
 };
 
-const surfaceClass =
-  "min-h-[480px] max-h-[75vh] overflow-y-auto w-full rounded-lg border border-khepree-mist bg-white px-4 py-3 text-sm leading-7 text-khepree-slate outline-none focus-within:ring-2 focus-within:ring-khepree-teal/30 [&_.ProseMirror]:min-h-[inherit] [&_.ProseMirror]:outline-none [&_a]:text-khepree-teal [&_a]:underline [&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:border-khepree-mist [&_blockquote]:pl-4 [&_blockquote]:italic [&_h2]:mb-3 [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-bold [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:mb-2 [&_h4]:mt-3 [&_h4]:text-base [&_h4]:font-semibold [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-khepree-mist [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-khepree-mist [&_th]:bg-khepree-cloud/50 [&_th]:px-3 [&_th]:py-2 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5 [&_img]:my-3 [&_img]:max-w-full [&_img]:rounded-lg";
+const surfaceBaseClass =
+  "overflow-y-auto w-full rounded-lg border border-khepree-mist bg-white px-4 py-3 text-sm leading-7 text-khepree-slate outline-none focus-within:ring-2 focus-within:ring-khepree-teal/30 [&_.ProseMirror]:min-h-[inherit] [&_.ProseMirror]:outline-none [&_a]:text-khepree-teal [&_a]:underline [&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:border-khepree-mist [&_blockquote]:pl-4 [&_blockquote]:italic [&_h2]:mb-3 [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-bold [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:mb-2 [&_h4]:mt-3 [&_h4]:text-base [&_h4]:font-semibold [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-khepree-mist [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-khepree-mist [&_th]:bg-khepree-cloud/50 [&_th]:px-3 [&_th]:py-2 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5 [&_img]:my-3 [&_img]:max-w-full [&_img]:rounded-lg";
 
 function buildLinkRel(input: LinkDialogState) {
   const parts: string[] = [];
@@ -35,7 +43,15 @@ function buildLinkRel(input: LinkDialogState) {
   return parts.length > 0 ? parts.join(" ") : undefined;
 }
 
-export function ContentTiptapEditor({ name = "body", defaultValue = "", placeholder, onValueChange }: Props) {
+export function ContentTiptapEditor({
+  name = "body",
+  defaultValue = "",
+  placeholder,
+  onValueChange,
+  size = "default",
+}: Props) {
+  const surfaceClass = `${SURFACE_SIZE_CLASS[size]} ${surfaceBaseClass}`;
+  const htmlTextareaMinHeight = size === "large" ? "min-h-[640px]" : "min-h-[480px]";
   const [value, setValue] = useState(defaultValue);
   const [mode, setMode] = useState<EditorMode>("visual");
   const [htmlDraft, setHtmlDraft] = useState("");
@@ -207,7 +223,7 @@ export function ContentTiptapEditor({ name = "body", defaultValue = "", placehol
         />
       ) : (
         <textarea
-          className="min-h-[480px] w-full resize-y rounded-lg border border-khepree-mist bg-white px-3 py-2 font-mono text-sm leading-7 text-khepree-slate outline-none focus:ring-2 focus:ring-khepree-teal/30"
+          className={`${htmlTextareaMinHeight} w-full resize-y rounded-lg border border-khepree-mist bg-white px-3 py-2 font-mono text-sm leading-7 text-khepree-slate outline-none focus:ring-2 focus:ring-khepree-teal/30`}
           onChange={(event) => {
             const html = event.target.value;
             setHtmlDraft(html);

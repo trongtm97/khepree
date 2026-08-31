@@ -465,6 +465,38 @@ async function seed() {
     .onConflictDoNothing({ target: desktopClients.clientId });
   console.log(`[seed] Desktop client registered: ${DEV_DESKTOP_CLIENT_ID}`);
 
+  const NOVEL_AI_SLUG = "novel-ai";
+  const [novelAiProductInserted] = await db
+    .insert(products)
+    .values({
+      publicId: createPublicId("prod"),
+      slug: NOVEL_AI_SLUG,
+      status: "hidden",
+      platformCapabilities: ["desktop"],
+      licensingMode: "LICENSE_KEY_DEVICE",
+      metadata: { seed: true, app: "Khepree Novel AI" },
+    })
+    .onConflictDoNothing({ target: products.slug })
+    .returning();
+  const novelAiProduct =
+    novelAiProductInserted ??
+    (await db.select().from(products).where(eq(products.slug, NOVEL_AI_SLUG)).limit(1))[0];
+
+  if (novelAiProduct) {
+    const NOVEL_AI_DESKTOP_CLIENT_ID = "khepree-novel-ai-desktop";
+    await db
+      .insert(desktopClients)
+      .values({
+        clientId: NOVEL_AI_DESKTOP_CLIENT_ID,
+        productId: novelAiProduct.id,
+        displayName: "Khepree Novel AI",
+        allowedRedirectUris: ["khepree-novel-ai://auth/callback"],
+        status: "active",
+      })
+      .onConflictDoNothing({ target: desktopClients.clientId });
+    console.log(`[seed] Desktop client registered: ${NOVEL_AI_DESKTOP_CLIENT_ID}`);
+  }
+
   console.log(
     `[seed] Partner ${partner.slug} is ACTIVE (referral+reseller). Attach a partner_memberships row after creating an account.`,
   );

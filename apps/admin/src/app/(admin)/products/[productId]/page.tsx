@@ -30,8 +30,9 @@ import { formatDate } from "@/lib/format";
 import { labelStatus } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
 import { DangerFields } from "@/components/danger-fields";
+import { ProductContentFormFields } from "@/components/product-studio/product-content-form-fields";
 import { ProductMarketingForm } from "@/components/product-studio/product-marketing-form";
-import { resolveStudioTab } from "@/components/product-studio/product-studio-tabs";
+import { resolveStudioTab } from "@/components/product-studio/studio-tab-ids";
 import { requireAdmin } from "@/lib/admin-session";
 import { getProductStudio } from "@/lib/product-studio";
 import { formatPriceAmount } from "@khepree/catalog";
@@ -130,19 +131,27 @@ export default async function ProductStudioPage({
 
   if (tab === "content") {
     return (
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-8">
         {(["vi", "en"] as const).map((locale) => {
           const tr = snapshot.translations.find((t) => t.locale === locale);
           return (
-            <AdminFormSection key={locale} title={locale === "vi" ? "Tiếng Việt" : "English"}>
+            <AdminFormSection
+              key={locale}
+              title={locale === "vi" ? "Tiếng Việt" : "English"}
+              description="TipTap WYSIWYG — định dạng đầy đủ, chèn ảnh, bảng, link"
+            >
               {canWrite ? (
                 <ActionForm action={saveContentAction} submitLabel="Lưu nội dung">
                   <input type="hidden" name="productId" value={productId} />
                   <input type="hidden" name="locale" value={locale} />
-                  <Textarea name="description" label="Mô tả dài" defaultValue={tr?.description ?? ""} />
-                  <Textarea name="content" label="Nội dung (markdown/HTML)" defaultValue={tr?.content ?? ""} />
+                  <ProductContentFormFields
+                    defaultDescription={tr?.description ?? ""}
+                    defaultContent={tr?.content ?? ""}
+                  />
                 </ActionForm>
-              ) : null}
+              ) : (
+                <p className="text-sm">Chế độ chỉ xem.</p>
+              )}
             </AdminFormSection>
           );
         })}

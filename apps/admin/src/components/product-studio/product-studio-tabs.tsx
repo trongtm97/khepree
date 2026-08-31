@@ -3,19 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@khepree/ui";
-
-const TABS = [
-  { id: "overview", label: "Tổng quan" },
-  { id: "content", label: "Nội dung" },
-  { id: "marketing", label: "Trang TM" },
-  { id: "plans", label: "Gói & Giá" },
-  { id: "features", label: "Tính năng" },
-  { id: "media", label: "Media" },
-  { id: "licensing", label: "Bản quyền" },
-  { id: "releases", label: "Phiên bản" },
-  { id: "seo", label: "SEO" },
-  { id: "publish", label: "Xuất bản" },
-] as const;
+import { STUDIO_TABS } from "@/components/product-studio/studio-tab-ids";
 
 export function ProductStudioTabs({ productId: _productId }: { productId: string }) {
   const pathname = usePathname();
@@ -24,7 +12,7 @@ export function ProductStudioTabs({ productId: _productId }: { productId: string
 
   return (
     <nav aria-label="Product Studio tabs" className="flex gap-1 overflow-x-auto border-b border-khepree-mist pb-px">
-      {TABS.map((tab) => {
+      {STUDIO_TABS.map((tab) => {
         const href = `${pathname}?tab=${tab.id}`;
         return (
           <Link
@@ -44,11 +32,4 @@ export function ProductStudioTabs({ productId: _productId }: { productId: string
       })}
     </nav>
   );
-}
-
-export type StudioTabId = (typeof TABS)[number]["id"];
-
-export function resolveStudioTab(raw: string | null | undefined): StudioTabId {
-  const hit = TABS.find((tab) => tab.id === raw);
-  return hit?.id ?? "overview";
 }
