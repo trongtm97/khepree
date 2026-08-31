@@ -1,8 +1,8 @@
 import {
   createContentService,
   createMediaService,
+  renderContentBody,
   verifyContentPreviewToken,
-  renderContentMarkdown,
   type ProductCtaBlock,
 } from "@khepree/catalog";
 import { getEnv } from "@khepree/config";
@@ -52,12 +52,16 @@ export async function getContentPreview(
 }
 
 export async function buildProductBlocks(body: string, locale: string): Promise<Record<string, ProductCtaBlock>> {
-  const slugs = [...body.matchAll(/\[\[product:([a-z0-9-]+)\]\]/gi)].map((match) => match[1]!);
-  if (slugs.length === 0) return {};
+  const slugs = [
+    ...body.matchAll(/\[\[product:([a-z0-9-]+)\]\]/gi),
+    ...body.matchAll(/data-product-slug="([a-z0-9-]+)"/gi),
+  ].map((match) => match[1]!);
+  const unique = [...new Set(slugs)];
+  if (unique.length === 0) return {};
   const { getPublicProductBySlug } = await import("./catalog");
   const { localePath } = await import("./i18n/config");
   const blocks: Record<string, ProductCtaBlock> = {};
-  for (const slug of slugs) {
+  for (const slug of unique) {
     const product = await getPublicProductBySlug(slug, locale);
     if (!product) continue;
     blocks[slug] = {
@@ -71,7 +75,7 @@ export async function buildProductBlocks(body: string, locale: string): Promise<
 }
 
 export function renderArticleHtml(body: string, productBlocks: Record<string, ProductCtaBlock>): string {
-  return renderContentMarkdown(body, { productBlocks });
+  return renderContentBody(body, { productBlocks });
 }
 
 export async function getFeaturedImage(

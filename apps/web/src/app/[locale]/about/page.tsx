@@ -6,7 +6,7 @@ import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd } from "@/lib/seo/page-breadcrumbs";
 import { notFound } from "next/navigation";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -28,22 +28,18 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   const messages = getMessages(locale);
   const content = messages.pages.about;
 
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
-    { label: content.breadcrumb },
-  ];
+  const breadcrumbs = createPageBreadcrumbs(locale, messages, {
+    label: content.breadcrumb,
+    href: localePath(locale, "/about"),
+  });
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <section className="tech-section relative overflow-hidden border-b border-white/10">
         <GradientMesh tone="mixed" className="opacity-50" />
         <HeroEnergyField intensity="soft" />
-        <Container className="relative px-5 py-14 sm:px-6 sm:py-16 lg:py-24">
+        <Container className="relative z-10 px-5 py-14 sm:px-6 sm:py-16 lg:py-24">
           <Breadcrumbs items={breadcrumbs} />
           <HeroTitle className="mt-6 max-w-3xl text-foreground">{content.headline}</HeroTitle>
           <BodyText className="mt-4 max-w-2xl text-lg text-muted">{content.lead}</BodyText>

@@ -6,7 +6,8 @@ import { ProductChangelogSection } from "@/components/catalog/product-changelog-
 import { getMessages } from "@/lib/i18n/get-messages";
 import { getPublicProductBySlug, getProductPreviewBySlug } from "@/lib/catalog";
 import { getPublicChangelog } from "@/lib/releases";
-import { breadcrumbJsonLd, faqPageJsonLd, productPlanOffersJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
+import { faqPageJsonLd, productPlanOffersJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd } from "@/lib/seo/page-breadcrumbs";
 import { createPageMetadata, siteUrl } from "@/lib/seo/metadata";
 import { accountPublicUrl } from "@/lib/urls";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
@@ -77,21 +78,16 @@ export default async function ProductDetailPage({
   const path = localePath(locale, `/products/${slug}`);
   const pageUrl = siteUrl(path);
   const offers = productPlanOffersJsonLd(product, pageUrl);
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
+  const breadcrumbs = createPageBreadcrumbs(
+    locale,
+    messages,
     { label: messages.pages.products.title, href: localePath(locale, "/products") },
-    { label: product.name },
-  ];
+    { label: product.name, href: path },
+  );
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs
-            .filter((item) => item.href)
-            .map((item) => ({ name: item.label, href: item.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <JsonLd
         data={softwareApplicationJsonLd({
           name: product.name,
@@ -103,7 +99,7 @@ export default async function ProductDetailPage({
         })}
       />
       {product.marketing.faq?.length ? <JsonLd data={faqPageJsonLd(product.marketing.faq)} /> : null}
-      <div className="border-b border-khepree-slate/10">
+      <div className="border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-6 lg:px-8">
           {isPreview ? (
             <p className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -120,7 +116,7 @@ export default async function ProductDetailPage({
         accountUrl={accountPublicUrl()}
       />
       {releases.length > 0 ? (
-        <div className="border-b border-khepree-slate/10">
+        <div className="border-b border-border">
           <div className="mx-auto max-w-6xl px-4 lg:px-8">
             <ProductChangelogSection
               entries={releases}

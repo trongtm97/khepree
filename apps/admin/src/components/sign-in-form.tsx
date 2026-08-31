@@ -1,15 +1,12 @@
 "use client";
 
-import { safeReturnPath } from "@khepree/auth/safe-return-path";
+import { signInAction } from "@/app/(auth)/actions";
 import { Alert, Button, Input } from "@khepree/ui";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
 
 export function SignInForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const next = safeReturnPath(searchParams.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -19,14 +16,16 @@ export function SignInForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const result = await authClient.signIn.email({ email, password });
-    setLoading(false);
-    if (result.error) {
-      setError(result.error.message ?? "Sign in failed");
-      return;
+    try {
+      const result = await signInAction({ email, password, next: searchParams.get("next") });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      window.location.assign(result.redirectTo);
+    } finally {
+      setLoading(false);
     }
-    router.push(next === "/sign-in" ? "/dashboard" : next);
-    router.refresh();
   }
 
   return (

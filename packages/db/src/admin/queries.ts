@@ -34,6 +34,7 @@ import {
   user,
   userProfiles,
   wallets,
+  webhookEvents,
 } from "../schema";
 
 export const ADMIN_PAGE_SIZE = 50;
@@ -369,6 +370,21 @@ export async function listAdminPayments(
     .orderBy(desc(payments.createdAt))
     .limit(ADMIN_PAGE_SIZE)
     .offset(offset);
+}
+
+export async function listAdminWebhookEvents(
+  input: { provider?: string; limit?: number } = {},
+  db: Database = requireDb(),
+) {
+  const filters: SQL[] = [];
+  if (input.provider?.trim()) filters.push(eq(webhookEvents.provider, input.provider.trim()));
+  const where = filters.length ? and(...filters) : undefined;
+  return db
+    .select()
+    .from(webhookEvents)
+    .where(where)
+    .orderBy(desc(webhookEvents.createdAt))
+    .limit(Math.min(input.limit ?? 20, 50));
 }
 
 export async function listAdminSubscriptions(

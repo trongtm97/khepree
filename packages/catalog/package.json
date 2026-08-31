@@ -20,7 +20,8 @@
     "@khepree/db": "workspace:*",
     "@khepree/storage": "workspace:*",
     "@khepree/types": "workspace:*",
-    "drizzle-orm": "^0.44.5"
+    "drizzle-orm": "^0.44.5",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@khepree/eslint-config": "workspace:*",

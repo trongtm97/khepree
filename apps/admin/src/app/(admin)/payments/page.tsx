@@ -1,5 +1,6 @@
 import { ADMIN_PAGE_SIZE, listAdminPayments } from "@khepree/db";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AdminPageHeader, AdminStatusBadge, AdminTable, AdminTd, statusTone } from "@/components/admin";
 import { Pagination, SearchForm } from "@/components/search-form";
 import { requireAdmin } from "@/lib/admin-session";
@@ -21,6 +22,11 @@ export default async function PaymentsPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader title="Thanh toán" description="Danh sách thanh toán. Tìm theo mã thanh toán." />
+      <p className="text-sm">
+        <Link className="text-khepree-teal underline" href="/payments/sepay">
+          Cấu hình SePay & IPN
+        </Link>
+      </p>
       <SearchForm q={q} />
       <AdminTable headers={["Thanh toán", "Trạng thái", "Số tiền", "Cổng", "Ngày tạo"]} empty={rows.length === 0}>
         {rows.map((row) => (

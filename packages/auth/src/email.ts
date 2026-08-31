@@ -1,18 +1,23 @@
 import { getEnv, isEmailConfigured, DEFAULT_LOCALE, isSupportedLocale } from "@khepree/config";
 import { createEmailAdapter, renderTransactionalEmail } from "@khepree/email";
 
-const env = getEnv();
-
 export function getAuthBaseUrl(): string {
+  const env = getEnv();
   return env.BETTER_AUTH_URL ?? env.ACCOUNT_URL ?? "http://localhost:3001";
 }
 
 export function getTrustedOrigins(): string[] {
+  const env = getEnv();
   return Array.from(
     new Set(
-      [env.BETTER_AUTH_URL, env.ACCOUNT_URL, env.APP_URL, env.ADMIN_URL, env.PARTNER_URL].filter(
-        (v): v is string => Boolean(v),
-      ),
+      [
+        env.BETTER_AUTH_URL,
+        env.ACCOUNT_URL,
+        env.WEB_URL,
+        env.APP_URL,
+        env.ADMIN_URL,
+        env.PARTNER_URL,
+      ].filter((v): v is string => Boolean(v)),
     ),
   );
 }

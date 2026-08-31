@@ -16,7 +16,7 @@ import { listPublishedContent } from "@/lib/content";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd } from "@/lib/seo/page-breadcrumbs";
 import { notFound } from "next/navigation";
 
 function resolveCategoryHref(
@@ -52,18 +52,14 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
     .sort((a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0))
     .slice(0, 6);
 
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
-    { label: content.title },
-  ];
+  const breadcrumbs = createPageBreadcrumbs(locale, messages, {
+    label: content.breadcrumb,
+    href: localePath(locale, "/support"),
+  });
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <section className="tech-section relative overflow-hidden border-b border-white/10">
         <GradientMesh tone="mixed" className="opacity-50" />
         <HeroEnergyField intensity="soft" />

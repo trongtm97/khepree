@@ -4,8 +4,9 @@ import { BodyText, Container, GradientMesh, HeroEnergyField, HeroTitle, Title } 
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
+import { getMessages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd } from "@/lib/seo/page-breadcrumbs";
 
 export interface LegalSectionContent {
   heading: string;
@@ -17,6 +18,7 @@ export interface LegalSectionContent {
 
 export interface LegalPageContent {
   title: string;
+  breadcrumb: string;
   description: string;
   headline: string;
   lead: string;
@@ -51,33 +53,28 @@ function formatLegalDate(iso: string, locale: SupportedLocale): string {
 
 export function LegalDocumentPage({
   locale,
-  siteName,
   content,
   meta,
   contactEmail,
 }: {
   locale: SupportedLocale;
-  siteName: string;
   content: LegalPageContent;
   meta: LegalPageMeta;
   contactEmail?: string;
 }) {
-  const breadcrumbs = [
-    { label: siteName, href: localePath(locale) },
-    { label: content.title },
-  ];
+  const messages = getMessages(locale);
+  const breadcrumbs = createPageBreadcrumbs(locale, messages, {
+    label: content.breadcrumb,
+    href: localePath(locale, meta.path),
+  });
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <section className="tech-section relative overflow-hidden border-b border-white/10">
         <GradientMesh tone="mixed" className="opacity-50" />
         <HeroEnergyField intensity="soft" />
-        <Container className="relative px-5 py-14 sm:px-6 sm:py-16 lg:py-24">
+        <Container className="relative z-10 px-5 py-14 sm:px-6 sm:py-16 lg:py-24">
           <Breadcrumbs items={breadcrumbs} />
           <HeroTitle className="mt-6 max-w-3xl text-foreground">{content.headline}</HeroTitle>
           <BodyText className="mt-4 max-w-2xl text-lg text-muted">{content.lead}</BodyText>

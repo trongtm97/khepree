@@ -2,7 +2,7 @@ import { Container, PageHeader } from "@khepree/ui";
 import type { ReactNode } from "react";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { pageBreadcrumbJsonLd } from "@/lib/seo/page-breadcrumbs";
 
 export interface MarketingPageLayoutProps {
   title: string;
@@ -22,7 +22,7 @@ export function MarketingPageLayout({
 }: MarketingPageLayoutProps) {
   return (
     <>
-      <JsonLd data={breadcrumbJsonLd(breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })))} />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <Container className="px-5 py-12 sm:px-6 lg:py-16">
         <Breadcrumbs items={breadcrumbs} />
         <PageHeader title={title} description={description} />
@@ -30,7 +30,7 @@ export function MarketingPageLayout({
           plain ? (
             <div className="mt-8">{children}</div>
           ) : (
-            <div className="prose-khepree mt-8 max-w-3xl text-khepree-slate/80">{children}</div>
+            <div className="prose-khepree mt-8 max-w-3xl text-muted">{children}</div>
           )
         ) : null}
       </Container>

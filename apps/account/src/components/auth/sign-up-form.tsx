@@ -9,7 +9,7 @@ import { signUpWithLegalConsentAction } from "@/app/(auth)/actions";
 import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { PasswordInput } from "@/components/auth/password-input";
 import { authClient } from "@/lib/auth-client";
-import { mapAuthError, type AuthCopy } from "@/lib/auth-ui";
+import { mapAuthError, mapOAuthCallbackError, type AuthCopy } from "@/lib/auth-ui";
 import type { SupportedLocale } from "@khepree/config";
 import { LegalConsentNotice } from "@/components/legal-consent-notice";
 import { AUTH_ROUTES } from "@/lib/routes";
@@ -30,20 +30,21 @@ export function SignUpForm({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() =>
+    mapOAuthCallbackError(searchParams.get("error"), copy),
+  );
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   async function onGoogleSignUp() {
     setError(null);
     setGoogleLoading(true);
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: `${window.location.origin}${next}`,
-      });
-    } catch {
-      setError(copy.errors.googleFailed);
+    const result = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: `${window.location.origin}${next}`,
+    });
+    if (result.error) {
+      setError(mapAuthError(result.error.message, copy));
       setGoogleLoading(false);
     }
   }
@@ -78,7 +79,12 @@ export function SignUpForm({
 
       {googleEnabled ? (
         <>
-          <GoogleSignInButton copy={copy} disabled={googleLoading || loading} onClick={() => void onGoogleSignUp()} />
+          <GoogleSignInButton
+            copy={copy}
+            loading={googleLoading}
+            disabled={googleLoading || loading}
+            onClick={() => void onGoogleSignUp()}
+          />
           <AuthDivider label={copy.or} />
         </>
       ) : null}

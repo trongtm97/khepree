@@ -6,7 +6,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { listPublishedContent } from "@/lib/content";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd, pageBreadcrumbLabel } from "@/lib/seo/page-breadcrumbs";
 
 function sortByDate(entries: PublishedContent[]) {
   return [...entries].sort((a, b) => {
@@ -28,18 +28,14 @@ export async function BlogIndex({
   const [featured, ...recent] = entries;
   const categories = [...new Set(entries.map((e) => e.categoryName).filter(Boolean))] as string[];
 
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
-    { label: page.title },
-  ];
+  const breadcrumbs = createPageBreadcrumbs(locale, messages, {
+    label: pageBreadcrumbLabel(page),
+    href: localePath(locale, "/blog"),
+  });
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <Container className="px-5 py-12 sm:px-6 lg:py-16">
         <Breadcrumbs items={breadcrumbs} />
         <header className="mt-6 max-w-3xl">

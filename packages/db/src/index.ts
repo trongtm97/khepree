@@ -35,6 +35,7 @@ export {
   listAdminPrices,
   listAdminOrders,
   listAdminPayments,
+  listAdminWebhookEvents,
   listAdminSubscriptions,
   listAdminEntitlements,
   listAdminLicenses,

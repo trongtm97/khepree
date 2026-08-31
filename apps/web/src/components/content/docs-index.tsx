@@ -6,7 +6,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { listPublishedContent } from "@/lib/content";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd, pageBreadcrumbLabel } from "@/lib/seo/page-breadcrumbs";
 
 export async function DocsIndex({
   locale,
@@ -18,18 +18,14 @@ export async function DocsIndex({
   const page = messages.pages.docs;
   const entries = await listPublishedContent("doc", locale);
 
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
-    { label: page.title },
-  ];
+  const breadcrumbs = createPageBreadcrumbs(locale, messages, {
+    label: pageBreadcrumbLabel(page),
+    href: localePath(locale, "/docs"),
+  });
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <Container className="py-12 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
           <aside className="hidden lg:block">

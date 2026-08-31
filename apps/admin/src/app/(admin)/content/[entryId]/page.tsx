@@ -1,6 +1,5 @@
 import { listAdminContentCategories } from "@khepree/db";
 import { hasPermission } from "@khepree/security";
-import { Input, Select, Textarea } from "@khepree/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -19,7 +18,7 @@ import {
   statusTone,
 } from "@/components/admin";
 import { ActionForm } from "@/components/action-form";
-import { ContentMarkdownEditor } from "@/components/content/content-markdown-editor";
+import { ContentDraftFormFields } from "@/components/content/content-draft-form-fields";
 import { requireAdmin } from "@/lib/admin-session";
 import { getContentService } from "@/lib/admin";
 import { labelStatus } from "@/lib/labels";
@@ -98,18 +97,18 @@ export default async function ContentEditorPage({
           <ActionForm action={saveContentDraftAction} submitLabel="Lưu nháp">
             <input type="hidden" name="versionId" value={draft.id} />
             <input type="hidden" name="entryId" value={entryId} />
-            <Input name="title" label="Tiêu đề" defaultValue={draft.title} required />
-            <Textarea name="excerpt" label="Tóm tắt" defaultValue={draft.excerpt ?? ""} />
-            <ContentMarkdownEditor defaultValue={body ?? ""} />
-            <Input name="featuredMediaPublicId" label="Ảnh đại diện" defaultValue={draft.featuredMediaPublicId ?? ""} />
-            <Select
-              name="categoryId"
-              label="Danh mục"
-              defaultValue={draft.categoryId ?? ""}
-              options={[{ value: "", label: "—" }, ...categories.map((c) => ({ value: c.id, label: c.name }))]}
+            <ContentDraftFormFields
+              contentType={draft.contentType}
+              slug={draft.slug}
+              defaultTitle={draft.title}
+              defaultExcerpt={draft.excerpt ?? ""}
+              defaultBody={body ?? ""}
+              defaultSeoTitle={draft.seoTitle ?? ""}
+              defaultSeoDescription={draft.seoDescription ?? ""}
+              defaultFeaturedMediaPublicId={draft.featuredMediaPublicId ?? ""}
+              defaultCategoryId={draft.categoryId ?? ""}
+              categories={categories.map((c) => ({ value: c.id, label: c.name }))}
             />
-            <Input name="seoTitle" label="SEO Title" defaultValue={draft.seoTitle ?? ""} />
-            <Textarea name="seoDescription" label="Meta Description" defaultValue={draft.seoDescription ?? ""} />
             <p className="text-xs text-khepree-slate/60">
               Lên lịch xuất bản: chưa hỗ trợ tự động — cột scheduled_at chỉ chuẩn bị schema.
             </p>

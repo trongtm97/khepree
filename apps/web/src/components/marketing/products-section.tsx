@@ -18,7 +18,7 @@ export async function ProductsSection({
       <Container>
         <div className="max-w-2xl">
           <h2 className="text-3xl font-semibold tracking-tight">{messages.products.heading}</h2>
-          <p className="mt-4 text-khepree-slate/80">{messages.products.copy}</p>
+          <p className="mt-4 text-muted">{messages.products.copy}</p>
         </div>
 
         {products.length > 0 ? (

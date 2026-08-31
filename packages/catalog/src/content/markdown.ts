@@ -91,6 +91,12 @@ export function renderMarkdownToHtml(markdown: string): string {
       continue;
     }
 
+    if (trimmed.startsWith("#### ")) {
+      html.push(`<h4>${renderInline(trimmed.slice(5))}</h4>`);
+      i += 1;
+      continue;
+    }
+
     if (trimmed.startsWith("> ")) {
       const quoteLines: string[] = [];
       while (i < lines.length && lines[i]!.trim().startsWith("> ")) {

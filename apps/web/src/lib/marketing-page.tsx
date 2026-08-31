@@ -5,6 +5,7 @@ import { MarketingPageLayout } from "@/components/marketing/marketing-page-layou
 import { getMessages, type Messages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo/metadata";
+import { createPageBreadcrumbs, pageBreadcrumbLabel } from "@/lib/seo/page-breadcrumbs";
 
 type MarketingPageKey = {
   [K in keyof Messages["pages"]]: Messages["pages"][K] extends { intro: string } ? K : never;
@@ -47,10 +48,10 @@ export function createMarketingPage(config: MarketingPageConfig) {
       <MarketingPageLayout
         title={content.title}
         description={content.description}
-        breadcrumbs={[
-          { label: messages.meta.siteName, href: localePath(locale) },
-          { label: content.title },
-        ]}
+        breadcrumbs={createPageBreadcrumbs(locale, messages, {
+          label: pageBreadcrumbLabel(content),
+          href: localePath(locale, path),
+        })}
       >
         <p>{content.intro}</p>
         {renderBody?.(messages, locale)}

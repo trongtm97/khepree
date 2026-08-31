@@ -46,6 +46,8 @@ export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
+    /** Better Auth 1.7+ — credential accounts use `local:credential`. */
+    issuer: text("issuer").notNull().default("local:credential"),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")

@@ -46,7 +46,6 @@ export function createLegalRoute(pageId: LegalPageId, contactEmail?: () => strin
     return (
       <LegalDocumentPage
         locale={locale}
-        siteName={messages.meta.siteName}
         content={content}
         meta={meta}
         contactEmail={contactEmail?.()}

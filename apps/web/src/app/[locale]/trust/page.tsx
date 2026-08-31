@@ -14,7 +14,7 @@ import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd } from "@/lib/seo/page-breadcrumbs";
 import { notFound } from "next/navigation";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -36,18 +36,14 @@ export default async function TrustPage({ params }: { params: Promise<{ locale: 
   const messages = getMessages(locale);
   const content = messages.pages.trust;
 
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
-    { label: content.breadcrumb },
-  ];
+  const breadcrumbs = createPageBreadcrumbs(locale, messages, {
+    label: content.breadcrumb,
+    href: localePath(locale, "/trust"),
+  });
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <section className="tech-section relative overflow-hidden border-b border-white/10">
         <GradientMesh tone="mixed" className="opacity-50" />
         <HeroEnergyField intensity="soft" />

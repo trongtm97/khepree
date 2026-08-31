@@ -26,7 +26,17 @@ SePay must be able to POST to:
 
 `https://<public-api-host>/api/v1/webhooks/payments/sepay`
 
-Localhost is not sufficient unless you expose that path with a tunnel.
+Localhost is not sufficient unless you expose that path with a tunnel (ngrok, Cloudflare Tunnel, etc.).
+
+### Simulate IPN (after a pending checkout exists)
+
+```bash
+# Pending order from checkout — replace ord_... with real public id
+API_URL=https://api.khepree.com SEPAY_IPN_SECRET=<secret> \
+  node scripts/integrations/sepay-send-test-ipn.mjs --order ord_xxxxxxxx --amount 599000
+```
+
+Expect HTTP 200 and `status: processed` (or `duplicate` on retry). Verify in admin **Bán hàng → SePay → IPN gần đây**.
 
 ## Happy path
 

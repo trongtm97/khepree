@@ -16,9 +16,10 @@ import {
   listPublishedContent,
   renderArticleHtml,
 } from "@/lib/content";
-import { extractMarkdownHeadings, injectHeadingIds } from "@/lib/content-headings";
+import { extractContentHeadings, injectHeadingIds } from "@/lib/content-headings";
 import { getMessages } from "@/lib/i18n/get-messages";
-import { articleJsonLd, breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { articleJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd, pageBreadcrumbLabel } from "@/lib/seo/page-breadcrumbs";
 import { createPageMetadata, siteUrl } from "@/lib/seo/metadata";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 
@@ -103,17 +104,18 @@ export async function PublishedContentArticle({
         : { title: "Trang", description: entry.excerpt ?? entry.title, tocLabel: "Mục lục" };
   const body = await getPublishedBody(entry.bodyObjectKey);
   const productBlocks = body ? await buildProductBlocks(body, locale) : {};
-  const headings = body ? extractMarkdownHeadings(body) : [];
+  const headings = body ? extractContentHeadings(body) : [];
   const rawHtml = body ? renderArticleHtml(body, productBlocks) : "";
   const html = rawHtml ? injectHeadingIds(rawHtml, headings) : "";
   const featuredImage = await getFeaturedImage(entry.featuredMediaPublicId);
   const path = localePath(locale, `${pathPrefix}/${slug}`);
 
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
-    { label: index.title, href: localePath(locale, pathPrefix) },
-    { label: entry.title },
-  ];
+  const breadcrumbs = createPageBreadcrumbs(
+    locale,
+    messages,
+    { label: pageBreadcrumbLabel(index), href: localePath(locale, pathPrefix) },
+    { label: entry.title, href: path },
+  );
 
   const previewBanner = isPreview ? (
     <p className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -150,11 +152,7 @@ export async function PublishedContentArticle({
     const docEntries = await listPublishedContent("doc", locale);
     return (
       <>
-        <JsonLd
-          data={breadcrumbJsonLd(
-            breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-          )}
-        />
+        <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
         <JsonLd
           data={articleJsonLd({
             headline: entry.title,
@@ -186,11 +184,7 @@ export async function PublishedContentArticle({
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <JsonLd
         data={articleJsonLd({
           headline: entry.title,

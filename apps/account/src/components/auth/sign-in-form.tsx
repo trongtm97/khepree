@@ -8,7 +8,7 @@ import { useState } from "react";
 import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { PasswordInput } from "@/components/auth/password-input";
 import { authClient } from "@/lib/auth-client";
-import { mapAuthError, type AuthCopy } from "@/lib/auth-ui";
+import { mapAuthError, mapOAuthCallbackError, type AuthCopy } from "@/lib/auth-ui";
 import type { SupportedLocale } from "@khepree/config";
 import { AUTH_ROUTES } from "@/lib/routes";
 
@@ -25,20 +25,21 @@ export function SignInForm({
   const next = safeAccountNextPath(searchParams.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() =>
+    mapOAuthCallbackError(searchParams.get("error"), copy),
+  );
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   async function onGoogleSignIn() {
     setError(null);
     setGoogleLoading(true);
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: `${window.location.origin}${next}`,
-      });
-    } catch {
-      setError(copy.errors.googleFailed);
+    const result = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: `${window.location.origin}${next}`,
+    });
+    if (result.error) {
+      setError(mapAuthError(result.error.message, copy));
       setGoogleLoading(false);
     }
   }
@@ -75,7 +76,12 @@ export function SignInForm({
 
       {googleEnabled ? (
         <>
-          <GoogleSignInButton copy={copy} disabled={googleLoading || loading} onClick={() => void onGoogleSignIn()} />
+          <GoogleSignInButton
+            copy={copy}
+            loading={googleLoading}
+            disabled={googleLoading || loading}
+            onClick={() => void onGoogleSignIn()}
+          />
           <AuthDivider label={copy.or} />
         </>
       ) : null}

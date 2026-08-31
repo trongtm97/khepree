@@ -1,6 +1,5 @@
 import { requireSession, type AuthenticatedSession } from "@khepree/auth/session";
 import {
-  adminMfaRequired,
   hasAnyPermission,
   hasPermission,
   type Permission,
@@ -13,14 +12,6 @@ export async function requireAdmin(permission?: Permission): Promise<Authenticat
   const ctx = { globalRole: session.globalRole };
   if (!hasPermission(ctx, "admin.access")) {
     redirect("/unauthorized");
-  }
-  if (
-    adminMfaRequired({
-      globalRole: session.globalRole,
-      twoFactorEnabled: Boolean(session.user.twoFactorEnabled),
-    })
-  ) {
-    redirect("/mfa-required");
   }
   if (permission && !hasPermission(ctx, permission)) {
     redirect("/forbidden");

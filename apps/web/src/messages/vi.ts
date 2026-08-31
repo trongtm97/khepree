@@ -1,6 +1,9 @@
 import type { Messages } from "./contract";
 
 export const vi = {
+  common: {
+    home: "Trang chủ",
+  },
   meta: {
     siteName: "Khepree — Biến AI thành đòn bẩy để tạo ra nhiều hơn",
     defaultDescription:
@@ -356,6 +359,7 @@ export const vi = {
     },
     contact: {
       title: "Liên hệ Khepree",
+      breadcrumb: "Liên hệ",
       description:
         "Liên hệ Khepree để được hỗ trợ sản phẩm, hỏi về tài khoản, thanh toán, bảo mật hoặc hợp tác.",
       headline: "Liên hệ Khepree",
@@ -400,6 +404,7 @@ export const vi = {
     },
     support: {
       title: "Trung tâm hỗ trợ Khepree",
+      breadcrumb: "Hỗ trợ",
       description:
         "Tìm hướng dẫn cho tài khoản, sản phẩm, license, thiết bị, tải xuống và thanh toán Khepree.",
       headline: "Chúng tôi giúp bạn quay lại công việc nhanh nhất có thể.",
@@ -607,6 +612,7 @@ export const vi = {
     },
     privacy: {
       title: "Chính sách quyền riêng tư",
+      breadcrumb: "Quyền riêng tư",
       description: "Cách Khepree thu thập, sử dụng và bảo vệ dữ liệu cần thiết cho tài khoản, sản phẩm và dịch vụ.",
       headline: "Chính sách quyền riêng tư",
       lead: "Khepree chỉ muốn thu thập và sử dụng dữ liệu cần thiết để cung cấp tài khoản, sản phẩm, thanh toán, hỗ trợ và vận hành dịch vụ.",
@@ -705,6 +711,7 @@ export const vi = {
     },
     terms: {
       title: "Điều khoản dịch vụ",
+      breadcrumb: "Điều khoản",
       description: "Điều khoản áp dụng khi bạn sử dụng website, tài khoản, sản phẩm và dịch vụ Khepree.",
       headline: "Điều khoản dịch vụ",
       lead: "Các điều khoản này áp dụng khi bạn sử dụng website, tài khoản, sản phẩm và dịch vụ Khepree.",
@@ -784,6 +791,7 @@ export const vi = {
     },
     refund: {
       title: "Chính sách hoàn tiền",
+      breadcrumb: "Chính sách hoàn tiền",
       description: "Điều kiện và cách xử lý yêu cầu hoàn tiền với giao dịch Khepree.",
       headline: "Chính sách hoàn tiền",
       lead: "Chúng tôi muốn điều kiện mua và hoàn tiền được rõ trước khi bạn thanh toán.",
@@ -833,6 +841,7 @@ export const vi = {
     },
     eula: {
       title: "Thỏa thuận cấp phép phần mềm",
+      breadcrumb: "Thỏa thuận cấp phép phần mềm",
       description: "Quyền sử dụng chung đối với phần mềm Khepree.",
       headline: "Thỏa thuận cấp phép phần mềm",
       lead: "EULA này mô tả quyền sử dụng chung đối với phần mềm Khepree. Điều kiện riêng của từng sản phẩm hoặc gói có thể bổ sung cho các điều khoản này.",
@@ -882,6 +891,7 @@ export const vi = {
     },
     cookies: {
       title: "Cookie và lưu trữ trên trình duyệt",
+      breadcrumb: "Cookie",
       description: "Khi nào Khepree sử dụng cookie hoặc cơ chế lưu trữ tương tự.",
       headline: "Cookie và lưu trữ trên trình duyệt",
       lead: "Trang này giải thích khi nào Khepree sử dụng cookie hoặc cơ chế lưu trữ tương tự.",

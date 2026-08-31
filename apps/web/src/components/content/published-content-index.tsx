@@ -5,6 +5,7 @@ import { MarketingPageLayout } from "@/components/marketing/marketing-page-layou
 import { listPublishedContent } from "@/lib/content";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
+import { createPageBreadcrumbs, pageBreadcrumbLabel } from "@/lib/seo/page-breadcrumbs";
 
 export async function PublishedContentIndex({
   locale,
@@ -24,10 +25,10 @@ export async function PublishedContentIndex({
     <MarketingPageLayout
       title={page.title}
       description={page.description}
-      breadcrumbs={[
-        { label: messages.meta.siteName, href: localePath(locale) },
-        { label: page.title },
-      ]}
+      breadcrumbs={createPageBreadcrumbs(locale, messages, {
+        label: pageBreadcrumbLabel(page),
+        href: localePath(locale, pathPrefix),
+      })}
     >
       <p>{page.intro}</p>
       {entries.length > 0 ? (
@@ -36,11 +37,11 @@ export async function PublishedContentIndex({
             <li key={entry.entryPublicId}>
               <Link
                 href={localePath(locale, `${pathPrefix}/${entry.slug}`)}
-                className="block rounded-[var(--radius-card)] border border-khepree-mist p-5 hover:border-khepree-teal/40"
+                className="block rounded-[var(--radius-card)] border border-border p-5 transition-colors hover:border-teal/40"
               >
-                <h2 className="text-lg font-semibold text-khepree-ink">{entry.title}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{entry.title}</h2>
                 {entry.excerpt ? (
-                  <p className="mt-2 text-sm text-khepree-slate/80">{entry.excerpt}</p>
+                  <p className="mt-2 text-sm text-muted">{entry.excerpt}</p>
                 ) : null}
               </Link>
             </li>

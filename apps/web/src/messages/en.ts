@@ -1,4 +1,7 @@
 export const en = {
+  common: {
+    home: "Home",
+  },
   meta: {
     siteName: "Khepree — Turn AI into leverage to create more",
     defaultDescription:
@@ -305,7 +308,7 @@ export const en = {
     },
     about: {
       title: "About Khepree | Software that keeps work simpler",
-      breadcrumb: "About",
+      breadcrumb: "About Khepree",
       description:
         "Khepree builds tools that cut repetitive work, speed up slow tasks, and bring technology into your workflow in a way that's easy to use.",
       headline: "Khepree builds software so work stays less cluttered.",
@@ -354,6 +357,7 @@ export const en = {
     },
     contact: {
       title: "Contact Khepree",
+      breadcrumb: "Contact",
       description:
         "Contact Khepree for product support, account and billing questions, security reports, or partnership inquiries.",
       headline: "Contact Khepree",
@@ -398,6 +402,7 @@ export const en = {
     },
     support: {
       title: "Khepree Support Center",
+      breadcrumb: "Support",
       description:
         "Find help for Khepree accounts, products, licenses, devices, downloads, and billing.",
       headline: "We help you get back to work as quickly as we can.",
@@ -605,6 +610,7 @@ export const en = {
     },
     privacy: {
       title: "Privacy Policy",
+      breadcrumb: "Privacy",
       description: "How Khepree collects, uses, and protects the data needed to run accounts, products, and services.",
       headline: "Privacy Policy",
       lead: "Khepree only wants to collect and use the data needed to provide accounts, products, payments, support, and service operations.",
@@ -703,6 +709,7 @@ export const en = {
     },
     terms: {
       title: "Terms of Service",
+      breadcrumb: "Terms",
       description: "Terms that apply when you use the Khepree website, account, products, and services.",
       headline: "Terms of Service",
       lead: "These terms apply when you use the Khepree website, account, products, and services.",
@@ -782,6 +789,7 @@ export const en = {
     },
     refund: {
       title: "Refund Policy",
+      breadcrumb: "Refund policy",
       description: "Conditions and handling for refund requests on Khepree transactions.",
       headline: "Refund Policy",
       lead: "We want purchase and refund conditions to be clear before you pay.",
@@ -831,6 +839,7 @@ export const en = {
     },
     eula: {
       title: "Software License Agreement",
+      breadcrumb: "Software license agreement",
       description: "General usage rights for Khepree software.",
       headline: "Software License Agreement",
       lead: "This EULA describes general usage rights for Khepree software. Product- or plan-specific conditions may add to these terms.",
@@ -880,6 +889,7 @@ export const en = {
     },
     cookies: {
       title: "Cookies and browser storage",
+      breadcrumb: "Cookies",
       description: "When Khepree uses cookies or similar browser storage.",
       headline: "Cookies and browser storage",
       lead: "This page explains when Khepree uses cookies or similar storage mechanisms.",

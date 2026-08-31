@@ -7,8 +7,7 @@ export default function MfaRequiredPage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">MFA required</h1>
       <p className="text-sm text-khepree-slate/70">
-        ADMIN and SUPER_ADMIN must enable two-factor authentication before using admin in production.
-        Enable MFA on your account, then return here.
+        Two-factor authentication is optional for admin staff in this deployment.
       </p>
     </div>
   );

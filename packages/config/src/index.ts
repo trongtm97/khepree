@@ -7,5 +7,6 @@ export * from "./legal-pages";
 export * from "./logger";
 export * from "./request-id";
 export * from "./alert";
+export * from "./sepay-status";
 export * from "./error-reporter";
 export * from "./products";

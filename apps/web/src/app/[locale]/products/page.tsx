@@ -5,6 +5,7 @@ import { MarketingPageLayout } from "@/components/marketing/marketing-page-layou
 import { getMessages } from "@/lib/i18n/get-messages";
 import { getPublicProducts } from "@/lib/catalog";
 import { createPageMetadata } from "@/lib/seo/metadata";
+import { createPageBreadcrumbs, pageBreadcrumbLabel } from "@/lib/seo/page-breadcrumbs";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 
 export const revalidate = 3600;
@@ -34,10 +35,10 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
     <MarketingPageLayout
       title={content.title}
       description={content.description}
-      breadcrumbs={[
-        { label: messages.meta.siteName, href: localePath(locale) },
-        { label: content.title },
-      ]}
+      breadcrumbs={createPageBreadcrumbs(locale, messages, {
+        label: pageBreadcrumbLabel(content),
+        href: localePath(locale, "/products"),
+      })}
     >
       <p>{content.intro}</p>
       {products.length > 0 ? (

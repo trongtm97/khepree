@@ -11,6 +11,25 @@ export {
   expandProductBlocks,
   type ProductCtaBlock,
 } from "./content/markdown";
+export {
+  contentToEditorHtml,
+  isLikelyHtmlContent,
+  normalizeContentHeadings,
+  renderContentBody,
+  serializeEditorHtml,
+} from "./content/body-html";
+export {
+  countHeadings,
+  countInternalLinks,
+  countWords,
+  estimateReadingMinutes,
+  getContentSeoIssues,
+  getContentSeoScore,
+  warnSeoDescriptionLength,
+  warnSeoTitleLength,
+  type ContentSeoCheckInput,
+  type ContentSeoIssue,
+} from "./content/seo-validation";
 export { sanitizeContentHtml, escapeHtml, stripUnsafeMarkdownSource } from "./content/sanitize";
 export {
   createContentPreviewToken,

@@ -116,6 +116,13 @@ if [[ "${PAYMENT_PROVIDER:-}" != "sepay" ]]; then
   warn "PAYMENT_PROVIDER must be sepay"
 else
   ok "PAYMENT_PROVIDER=sepay"
+  check_set SEPAY_MERCHANT_ID
+  check_set SEPAY_SECRET_KEY
+  if [[ -z "${SEPAY_IPN_SECRET:-}" ]]; then
+    ok "SEPAY_IPN_SECRET unset (will use SEPAY_SECRET_KEY for IPN)"
+  else
+    check_set SEPAY_IPN_SECRET
+  fi
 fi
 
 if [[ "${SEPAY_ENV:-}" == "production" && "${KHEPREE_ALLOW_SEPAY_PRODUCTION:-}" != "1" ]]; then

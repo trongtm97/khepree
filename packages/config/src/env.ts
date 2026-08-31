@@ -74,6 +74,8 @@ const envSchema = z.object({
   SEPAY_SECRET_KEY: z.string().optional(),
   /** Optional. When unset, IPN uses SEPAY_SECRET_KEY (official X-Secret-Key). */
   SEPAY_IPN_SECRET: z.string().optional(),
+  /** Manual go-live ack — required with SEPAY_ENV=production (see verify-production-config.sh). */
+  KHEPREE_ALLOW_SEPAY_PRODUCTION: z.string().optional(),
 
   /** none = ignore spoofable forwarding headers. cloudflare = CF-Connecting-IP only. */
   TRUSTED_PROXY: z.enum(["none", "cloudflare"]).default("none"),

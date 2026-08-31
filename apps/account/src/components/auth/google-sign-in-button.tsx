@@ -29,25 +29,28 @@ function GoogleIcon() {
 export function GoogleSignInButton({
   copy,
   disabled,
+  loading,
   onClick,
 }: {
   copy: AuthCopy;
   disabled?: boolean;
+  loading?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      disabled={disabled}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       onClick={onClick}
       className={cn(
         "inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius-button)] font-semibold leading-[1.25] whitespace-nowrap",
         buttonSizes.md,
-        "border border-[#dadce0] bg-white text-[#3c4043] shadow-sm transition-colors hover:bg-[#f8f9fa] disabled:cursor-not-allowed disabled:opacity-60",
+        "border border-[#dadce0] bg-white text-[#3c4043] shadow-sm transition-colors hover:bg-[#f8f9fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-khepree-teal/40 disabled:cursor-not-allowed disabled:opacity-60",
       )}
     >
       <GoogleIcon />
-      {copy.google}
+      {loading ? copy.signingInWithGoogle : copy.google}
     </button>
   );
 }

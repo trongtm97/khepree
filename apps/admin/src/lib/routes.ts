@@ -62,6 +62,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { label: "Đơn hàng", href: "/orders", anyOf: ["finance.read", "support.read"] },
       { label: "Thanh toán", href: "/payments", anyOf: ["finance.read"] },
+      { label: "SePay", href: "/payments/sepay", anyOf: ["finance.read"] },
       { label: "Hoàn tiền", href: "/refunds", anyOf: ["finance.read"] },
     ],
   },

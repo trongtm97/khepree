@@ -14,7 +14,32 @@ function slugify(text: string): string {
     .replace(/\s+/g, "-");
 }
 
-/** Extract h2/h3 headings from markdown for TOC. */
+/** Extract h2/h3 headings from markdown or HTML for TOC. */
+export function extractContentHeadings(content: string): ContentHeading[] {
+  if (/<h[23][\s>]/i.test(content)) {
+    return extractHtmlHeadings(content);
+  }
+  return extractMarkdownHeadings(content);
+}
+
+function extractHtmlHeadings(html: string): ContentHeading[] {
+  const headings: ContentHeading[] = [];
+  const seen = new Map<string, number>();
+  const pattern = /<h([23])[^>]*>([^<]+)<\/h\1>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(html)) !== null) {
+    const level = Number(match[1]) as 2 | 3;
+    const text = match[2]!.trim();
+    let id = slugify(text);
+    const count = seen.get(id) ?? 0;
+    if (count > 0) id = `${id}-${count + 1}`;
+    seen.set(slugify(text), count + 1);
+    headings.push({ id, text, level });
+  }
+  return headings;
+}
+
+/** @deprecated Use extractContentHeadings */
 export function extractMarkdownHeadings(markdown: string): ContentHeading[] {
   const headings: ContentHeading[] = [];
   const seen = new Map<string, number>();

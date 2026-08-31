@@ -12,7 +12,7 @@ import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { getMessages, type Messages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { createPageBreadcrumbs, pageBreadcrumbJsonLd } from "@/lib/seo/page-breadcrumbs";
 import { notFound } from "next/navigation";
 
 function ContactCard({
@@ -159,18 +159,14 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const partner = getPartnerContact();
   const cards = buildContactCards(messages, addresses, partner);
 
-  const breadcrumbs = [
-    { label: messages.meta.siteName, href: localePath(locale) },
-    { label: content.title },
-  ];
+  const breadcrumbs = createPageBreadcrumbs(locale, messages, {
+    label: content.breadcrumb,
+    href: localePath(locale, "/contact"),
+  });
 
   return (
     <>
-      <JsonLd
-        data={breadcrumbJsonLd(
-          breadcrumbs.filter((b) => b.href).map((b) => ({ name: b.label, href: b.href! })),
-        )}
-      />
+      <JsonLd data={pageBreadcrumbJsonLd(breadcrumbs)} />
       <section className="tech-section relative overflow-hidden border-b border-white/10">
         <GradientMesh tone="mixed" className="opacity-50" />
         <HeroEnergyField intensity="soft" />

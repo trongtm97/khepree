@@ -1,8 +1,10 @@
 import {
   getEnv,
+  getSepayIntegrationStatus,
   isDatabaseConfigured,
   isEmailConfigured,
   isGoogleAuthConfigured,
+  isSePayConfigured,
   isStorageConfigured,
 } from "@khepree/config";
 import { ADMIN_PAGE_SIZE, listAdminSystemEvents } from "@khepree/db";
@@ -31,6 +33,14 @@ export default async function SystemPage({
     {
       label: "Google Login",
       value: isGoogleAuthConfigured(env) ? "Đã cấu hình" : "Chưa cấu hình",
+    },
+    {
+      label: "SePay",
+      value: isSePayConfigured(env)
+        ? `${env.SEPAY_ENV ?? "?"} — ${getSepayIntegrationStatus(env).configured ? "OK" : "thiếu IPN secret"}`
+        : env.PAYMENT_PROVIDER === "mock"
+          ? "mock (dev)"
+          : "Chưa cấu hình",
     },
     {
       label: "MFA admin (prod)",
