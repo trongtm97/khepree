@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, LOCALE_COOKIE, SUPPORTED_LOCALES, isSupportedLocale } from "@khepree/config";
+import { DEFAULT_LOCALE, DOMAINS, LOCALE_COOKIE, SUPPORTED_LOCALES, isSupportedLocale } from "@khepree/config";
 import { attachSecurityHeaders, isMaintenanceMode } from "@khepree/security";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -9,6 +9,16 @@ const PUBLIC_FILE = /\.(.*)$/;
 function finish(request: NextRequest, response: NextResponse) {
   attachSecurityHeaders(request, response);
   return response;
+}
+
+/** Locale redirects are Khepree-only — never poison foreign hosts (e.g. chapmee.com) with /vi 308s. */
+function isKhepreeMarketingHost(hostHeader: string | null): boolean {
+  const host = hostHeader?.split(":")[0]?.toLowerCase();
+  if (!host) return false;
+  if (host === "localhost" || host.endsWith(".localhost")) {
+    return process.env.NODE_ENV === "development";
+  }
+  return host === DOMAINS.web || host === `www.${DOMAINS.web}`;
 }
 
 export async function proxy(request: NextRequest) {
@@ -50,6 +60,10 @@ export async function proxy(request: NextRequest) {
   const hasLocale = SUPPORTED_LOCALES.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
+
+  if (!isKhepreeMarketingHost(request.headers.get("host"))) {
+    return finish(request, NextResponse.next());
+  }
 
   if (hasLocale) {
     const locale = pathname.split("/")[1] ?? DEFAULT_LOCALE;
