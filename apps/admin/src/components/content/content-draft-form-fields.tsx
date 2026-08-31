@@ -64,20 +64,25 @@ export function ContentDraftFormFields({
   const [seoDescription, setSeoDescription] = useState(defaultSeoDescription);
   const [featuredMediaPublicId, setFeaturedMediaPublicId] = useState(defaultFeaturedMediaPublicId);
   const [slugInput, setSlugInput] = useState(defaultSlug || slug);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [resolvedCoverUrl, setResolvedCoverUrl] = useState<string | null>(null);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
+
+  const trimmedFeaturedId = featuredMediaPublicId.trim();
+  const coverPreviewUrl = trimmedFeaturedId ? resolvedCoverUrl : null;
 
   const effectiveSlug = showSlug ? slugInput : slug;
   const canonicalPath = buildContentCanonicalPath(contentType, effectiveSlug);
 
   useEffect(() => {
-    const id = featuredMediaPublicId.trim();
-    if (!id) {
-      setCoverPreviewUrl(null);
-      return;
-    }
-    void resolveMediaPublicUrlAction(id).then((result) => setCoverPreviewUrl(result.url));
-  }, [featuredMediaPublicId]);
+    if (!trimmedFeaturedId) return;
+    let cancelled = false;
+    void resolveMediaPublicUrlAction(trimmedFeaturedId).then((result) => {
+      if (!cancelled) setResolvedCoverUrl(result.url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [trimmedFeaturedId]);
 
   const seoInput = useMemo(
     () => ({
@@ -151,7 +156,7 @@ export function ContentDraftFormFields({
           onClose={() => setShowCoverPicker(false)}
           onPick={(image) => {
             if (image.publicId) setFeaturedMediaPublicId(image.publicId);
-            setCoverPreviewUrl(image.url);
+            setResolvedCoverUrl(image.url);
           }}
           open={showCoverPicker}
           pickPublicId

@@ -26,20 +26,27 @@ export function ContentImageDialog({
   pickPublicId = false,
 }: Props) {
   const [library, setLibrary] = useState<EditorMediaImage[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [altText, setAltText] = useState("");
 
   useEffect(() => {
-    if (!open) return;
-    setError(null);
-    setLoading(true);
+    let cancelled = false;
     void listEditorMediaImagesAction()
-      .then(setLibrary)
-      .catch(() => setError("Không tải được thư viện ảnh."))
-      .finally(() => setLoading(false));
-  }, [open]);
+      .then((items) => {
+        if (!cancelled) setLibrary(items);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Không tải được thư viện ảnh.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!open) return null;
 
