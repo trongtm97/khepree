@@ -113,6 +113,16 @@ docker network inspect chapmee_chapmee_net >/dev/null
 
 If missing, CHAPMEE is not running correctly — fix CHAPMEE first; do not create a conflicting network.
 
+### DNS alias collision (chapmee.com shows Khepree)
+
+On `chapmee_chapmee_net`, Docker Compose registers each **service name** as a network DNS alias. If Khepree services are named `web`, `account`, etc., they collide with CHAPMEE aliases (e.g. both `chapmee-web` and `khepree-web` answer as `web`). Caddy blocks that use `reverse_proxy web:3000` may then hit the wrong app.
+
+**Fix:**
+
+1. Khepree `compose.shared-vps.yml` — use prefixed service names (`khepree-web`, not `web`).
+2. CHAPMEE Caddy — use `chapmee-web:3000`, never bare `web:3000`.
+3. Recreate Khepree stack: `docker compose ... up -d --remove-orphans`.
+
 ## 5. Build or pull images
 
 **Option A — build on VPS:**

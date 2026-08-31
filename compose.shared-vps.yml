@@ -1,4 +1,6 @@
 # Khepree on a shared VPS — reuses existing chapmee-caddy via chapmee_chapmee_net.
+# App service names MUST be prefixed (khepree-web, not web): generic names like `web`
+# become Docker DNS aliases on the shared network and collide with CHAPMEE routing.
 # Does NOT publish 80/443, 5432, 6379, or app ports to the host.
 #
 # Usage (on VPS as deploy user):
@@ -156,7 +158,7 @@ services:
     restart: "no"
     logging: *default-logging
 
-  web:
+  khepree-web:
     container_name: khepree-web
     image: ${KHEPREE_WEB_IMAGE:-khepree-web:production}
     build:
@@ -188,7 +190,7 @@ services:
           cpus: "1.0"
           memory: 768M
 
-  account:
+  khepree-account:
     container_name: khepree-account
     image: ${KHEPREE_ACCOUNT_IMAGE:-khepree-account:production}
     build:
@@ -219,7 +221,7 @@ services:
           cpus: "1.0"
           memory: 768M
 
-  admin:
+  khepree-admin:
     container_name: khepree-admin
     image: ${KHEPREE_ADMIN_IMAGE:-khepree-admin:production}
     build:
@@ -250,7 +252,7 @@ services:
           cpus: "1.0"
           memory: 768M
 
-  partner:
+  khepree-partner:
     container_name: khepree-partner
     image: ${KHEPREE_PARTNER_IMAGE:-khepree-partner:production}
     build:
@@ -281,7 +283,7 @@ services:
           cpus: "1.0"
           memory: 768M
 
-  api:
+  khepree-api:
     container_name: khepree-api
     image: ${KHEPREE_API_IMAGE:-khepree-api:production}
     build:
