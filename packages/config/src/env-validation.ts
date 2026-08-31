@@ -41,7 +41,7 @@ export function validatePaymentProviderConfiguration(env: Env = getEnv()): void 
   if (env.PAYMENT_PROVIDER === "sepay") {
     if (!isSePayConfigured(env)) {
       throw new EnvValidationError(
-        "SEPAY_ENV, SEPAY_MERCHANT_ID, and SEPAY_SECRET_KEY are required when PAYMENT_PROVIDER=sepay",
+        "SEPAY_BANK_CODE, SEPAY_BANK_ACCOUNT_NUMBER, SEPAY_BANK_ACCOUNT_NAME, and webhook auth credentials are required when PAYMENT_PROVIDER=sepay",
       );
     }
     return;

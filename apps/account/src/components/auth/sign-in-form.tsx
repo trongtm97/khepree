@@ -9,6 +9,7 @@ import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-i
 import { PasswordInput } from "@/components/auth/password-input";
 import { authClient } from "@/lib/auth-client";
 import { mapAuthError, mapOAuthCallbackError, type AuthCopy } from "@/lib/auth-ui";
+import { startGoogleOAuth } from "@/lib/google-oauth";
 import type { SupportedLocale } from "@khepree/config";
 import { AUTH_ROUTES } from "@/lib/routes";
 
@@ -34,12 +35,13 @@ export function SignInForm({
   async function onGoogleSignIn() {
     setError(null);
     setGoogleLoading(true);
-    const result = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: `${window.location.origin}${next}`,
+    const callbackURL = `${window.location.origin}${next}`;
+    const result = await startGoogleOAuth({
+      callbackURL,
+      errorCallbackURL: `${AUTH_ROUTES.signIn}?error=google_oauth_failed&next=${encodeURIComponent(next)}`,
     });
     if (result.error) {
-      setError(mapAuthError(result.error.message, copy));
+      setError(mapAuthError(result.error, copy));
       setGoogleLoading(false);
     }
   }

@@ -1,9 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { parseDecimalToMinor, parseMoneyMinor } from "@khepree/types";
+import { parseMoneyMinor } from "@khepree/types";
 import { CommerceError } from "./errors";
 import type { PaymentProvider, PaymentProviderCapabilities } from "./provider";
 import type {
-  CheckoutFormField,
   CreateCheckoutInput,
   CreateCheckoutResult,
   NormalizedCommerceEvent,
@@ -15,68 +14,30 @@ import type {
 
 export const SEPAY_PROVIDER_ID = "sepay";
 
-/** Official SePay checkout field order. Signature is last. Do not derive this from object insertion. */
-export const SEPAY_FORM_FIELD_ORDER = [
-  "order_amount",
-  "merchant",
-  "currency",
-  "operation",
-  "order_description",
-  "order_invoice_number",
-  "customer_id",
-  "payment_method",
-  "success_url",
-  "error_url",
-  "cancel_url",
-  "signature",
-] as const;
+const DEFAULT_QR_BASE_URL = "https://qr.sepay.vn/img";
+const INVOICE_PREFIX = "KHP_";
 
-export type SepayFormFieldName = (typeof SEPAY_FORM_FIELD_ORDER)[number];
-
-const SIGN_FIELD_ORDER = SEPAY_FORM_FIELD_ORDER.filter((name) => name !== "signature");
-
-export type SepayCheckoutFieldValues = {
-  order_amount: string;
-  merchant: string;
-  currency: string;
-  operation: string;
-  order_description: string;
-  order_invoice_number: string;
-  customer_id?: string;
-  payment_method?: string;
-  success_url: string;
-  error_url: string;
-  cancel_url: string;
-};
-
-const CHECKOUT_HOSTS = {
-  sandbox: "https://pay-sandbox.sepay.vn/v1/checkout/init",
-  production: "https://pay.sepay.vn/v1/checkout/init",
-} as const;
-
-export const SEPAY_CHECKOUT_HOSTS = new Set([
-  "pay-sandbox.sepay.vn",
-  "pay.sepay.vn",
-]);
-
-/** Official IPN may include card/PII. Persist only reconciliation fields. */
-const SANITIZED_KEYS = [
-  "notificationType",
-  "providerOrderId",
-  "invoiceNumber",
-  "transactionId",
-  "paymentMethod",
-  "status",
-  "amount",
-  "currency",
-  "receivedAt",
+/** Official bank-transfer webhook fields we persist. */
+const SANITIZED_TRANSFER_KEYS = [
+  "sepayTransactionId",
+  "gateway",
+  "transferType",
+  "transferAmount",
+  "code",
+  "content",
+  "accountNumber",
+  "transactionDate",
 ] as const;
 
 export interface SePayProviderOptions {
-  env: "sandbox" | "production";
-  merchantId: string;
-  secretKey: string;
-  ipnSecret: string;
+  bankCode: string;
+  bankAccountNumber: string;
+  bankAccountName: string;
+  webhookSecret: string;
+  apiKey?: string;
+  webhookAuth?: "hmac_sha256" | "api_key";
+  qrBaseUrl?: string;
+  allowedAccountNumbers?: string[];
 }
 
 export const SEPAY_CAPABILITIES: PaymentProviderCapabilities = {
@@ -84,68 +45,29 @@ export const SEPAY_CAPABILITIES: PaymentProviderCapabilities = {
   supportsRecurring: false,
   supportsRefund: false,
   supportsPartialRefund: false,
-  supportsVoid: true,
+  supportsVoid: false,
 };
 
 export function sepayInvoiceNumber(orderPublicId: string): string {
   if (!orderPublicId || orderPublicId.includes("/")) {
     throw new CommerceError("INVALID_AMOUNT", "Order public id is required for SePay invoice");
   }
-  return `KHP_${orderPublicId}`;
+  return `${INVOICE_PREFIX}${orderPublicId}`;
 }
 
-export function sepayCheckoutInitUrl(env: "sandbox" | "production"): string {
-  return CHECKOUT_HOSTS[env];
-}
-
-/**
- * HMAC-SHA256 over `field=value,field=value` in official field order, then Base64.
- * Source: https://developer.sepay.vn/en/cong-thanh-toan/API/don-hang/form-thanh-toan
- */
-export function signSepayFields(fields: Record<string, string>, secretKey: string): string {
-  return createHmac("sha256", secretKey).update(sepaySigningString(fields)).digest("base64");
-}
-
-export function sepaySigningString(fields: Record<string, string>): string {
-  const signed: string[] = [];
-  for (const field of SIGN_FIELD_ORDER) {
-    const value = fields[field];
-    if (value === undefined || value === "") continue;
-    signed.push(`${field}=${value}`);
-  }
-  return signed.join(",");
-}
-
-/**
- * Build checkout inputs in official SePay order. Optional fields are omitted
- * without shifting remaining names. Signature is always last.
- */
-export function buildSepayCheckoutFields(
-  values: SepayCheckoutFieldValues,
-  secretKey: string,
-): CheckoutFormField[] {
-  const present: Record<string, string> = {};
-  for (const name of SIGN_FIELD_ORDER) {
-    const value = values[name];
-    if (value === undefined || value === "") continue;
-    present[name] = value;
-  }
-  const signature = signSepayFields(present, secretKey);
-  const ordered: CheckoutFormField[] = [];
-  for (const name of SEPAY_FORM_FIELD_ORDER) {
-    if (name === "signature") {
-      ordered.push({ name: "signature", value: signature });
-      continue;
-    }
-    const value = present[name];
-    if (value === undefined) continue;
-    ordered.push({ name, value });
-  }
-  return ordered;
-}
-
-export function sepayFormFieldNames(fields: CheckoutFormField[]): string[] {
-  return fields.map((field) => field.name);
+export function generateSepayQrUrl(input: {
+  accountNumber: string;
+  bankCode: string;
+  amountMinor: bigint;
+  transferContent: string;
+  qrBaseUrl?: string;
+}): string {
+  const url = new URL(input.qrBaseUrl?.trim() || DEFAULT_QR_BASE_URL);
+  url.searchParams.set("acc", input.accountNumber);
+  url.searchParams.set("bank", input.bankCode);
+  url.searchParams.set("amount", input.amountMinor.toString());
+  url.searchParams.set("des", input.transferContent);
+  return url.toString();
 }
 
 function headerValue(headers: Record<string, string>, name: string): string | undefined {
@@ -171,76 +93,120 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 function asString(value: unknown): string | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-export function sanitizeSepayIpnPayload(payload: Record<string, unknown>): Record<string, unknown> {
-  const order = asRecord(payload.order);
-  const transaction = asRecord(payload.transaction);
+function parseTransferAmount(payload: Record<string, unknown>): bigint | null {
+  const raw = payload.transferAmount ?? payload.transfer_amount ?? payload.amount;
+  if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+    return BigInt(Math.round(raw));
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      return parseMoneyMinor(raw.trim());
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function resolveInvoiceNumber(payload: Record<string, unknown>): string | null {
+  const code = asString(payload.code);
+  if (code?.startsWith(INVOICE_PREFIX)) return code;
+
+  const content = asString(payload.content) ?? asString(payload.transfer_content);
+  if (content) {
+    const match = content.match(new RegExp(`${INVOICE_PREFIX}[A-Za-z0-9_]+`));
+    if (match) return match[0];
+  }
+
+  return code?.startsWith(INVOICE_PREFIX) ? code : null;
+}
+
+export function sanitizeSepayTransferPayload(payload: Record<string, unknown>): Record<string, unknown> {
   const sanitized: Record<string, unknown> = {
-    notificationType: payload.notification_type,
-    providerOrderId: order?.order_id ?? order?.id,
-    invoiceNumber: order?.order_invoice_number,
-    transactionId: transaction?.transaction_id ?? transaction?.id,
-    paymentMethod: transaction?.payment_method,
-    status: transaction?.transaction_status ?? order?.order_status,
-    amount: transaction?.transaction_amount ?? order?.order_amount,
-    currency: transaction?.transaction_currency ?? order?.order_currency,
-    receivedAt: payload.timestamp,
+    sepayTransactionId: payload.id,
+    gateway: payload.gateway,
+    transferType: payload.transferType ?? payload.transfer_type,
+    transferAmount: payload.transferAmount ?? payload.transfer_amount,
+    code: payload.code,
+    content: payload.content ?? payload.transfer_content,
+    accountNumber: payload.accountNumber ?? payload.account_number,
+    transactionDate: payload.transactionDate ?? payload.transaction_date,
   };
   for (const key of Object.keys(sanitized)) {
-    if (!SANITIZED_KEYS.includes(key as (typeof SANITIZED_KEYS)[number])) {
+    if (!SANITIZED_TRANSFER_KEYS.includes(key as (typeof SANITIZED_TRANSFER_KEYS)[number])) {
       delete sanitized[key];
     }
   }
   return sanitized;
 }
 
-export function parseSepayIpn(payload: Record<string, unknown>): {
-  notificationType: string;
-  invoiceNumber: string;
-  transactionId: string;
+export function parseSepayTransferWebhook(payload: Record<string, unknown>): {
+  sepayTransactionId: string;
   eventId: string;
+  invoiceNumber: string;
   amountMinor: bigint;
-  currency: string;
-  paymentMethod: string | undefined;
+  transferType: string;
+  accountNumber: string | undefined;
 } | null {
-  const notificationType = asString(payload.notification_type);
-  const order = asRecord(payload.order);
-  const transaction = asRecord(payload.transaction);
-  if (!notificationType || !order) return null;
-
-  const invoiceNumber = asString(order.order_invoice_number);
-  const transactionId =
-    asString(transaction?.transaction_id) ?? asString(transaction?.id) ?? asString(order.id);
-  if (!invoiceNumber || !transactionId) return null;
-
-  const currency = (
-    asString(transaction?.transaction_currency) ??
-    asString(order.order_currency) ??
-    ""
-  ).toUpperCase();
-  const amountRaw = asString(transaction?.transaction_amount) ?? asString(order.order_amount);
-  if (!currency || !amountRaw) return null;
-
-  let amountMinor: bigint;
-  try {
-    amountMinor = amountRaw.includes(".")
-      ? parseDecimalToMinor(amountRaw, currency)
-      : parseMoneyMinor(amountRaw);
-  } catch {
-    return null;
-  }
+  const sepayTransactionId = asString(payload.id);
+  const transferType = (asString(payload.transferType) ?? asString(payload.transfer_type) ?? "").toLowerCase();
+  const invoiceNumber = resolveInvoiceNumber(payload);
+  const amountMinor = parseTransferAmount(payload);
+  if (!sepayTransactionId || !invoiceNumber || amountMinor === null || !transferType) return null;
 
   return {
-    notificationType,
+    sepayTransactionId,
+    eventId: `transfer:${sepayTransactionId}`,
     invoiceNumber,
-    transactionId,
-    eventId: `${notificationType}:${transactionId}`,
     amountMinor,
-    currency,
-    paymentMethod: asString(transaction?.payment_method),
+    transferType,
+    accountNumber: asString(payload.accountNumber) ?? asString(payload.account_number),
   };
+}
+
+function verifyTransferWebhookAuth(
+  request: WebhookRequest,
+  options: SePayProviderOptions,
+): void {
+  const auth = options.webhookAuth ?? "hmac_sha256";
+  if (auth === "api_key") {
+    const received =
+      headerValue(request.headers, "x-api-key") ??
+      headerValue(request.headers, "x-sepay-api-key") ??
+      headerValue(request.headers, "authorization")?.replace(/^Apikey\s+/i, "") ??
+      headerValue(request.headers, "authorization")?.replace(/^Bearer\s+/i, "");
+    if (!received || !options.apiKey || !safeEqualString(received.trim(), options.apiKey.trim())) {
+      throw new CommerceError("WEBHOOK_INVALID", "SePay webhook API key is invalid");
+    }
+    return;
+  }
+
+  const received =
+    headerValue(request.headers, "x-sepay-signature") ??
+    headerValue(request.headers, "x-signature") ??
+    headerValue(request.headers, "x-hub-signature-256");
+  const signature = received?.replace(/^sha256=/i, "").trim() ?? "";
+  const timestamp = headerValue(request.headers, "x-sepay-timestamp")?.trim() ?? "";
+  const expectedTimestamped =
+    timestamp && /^\d+$/.test(timestamp)
+      ? createHmac("sha256", options.webhookSecret)
+          .update(`${timestamp}.${request.rawBody}`, "utf8")
+          .digest("hex")
+      : "";
+  const expectedRaw = createHmac("sha256", options.webhookSecret)
+    .update(request.rawBody, "utf8")
+    .digest("hex");
+
+  if (!signature) {
+    throw new CommerceError("WEBHOOK_INVALID", "SePay webhook signature is missing");
+  }
+  if (expectedTimestamped && safeEqualString(signature, expectedTimestamped)) return;
+  if (safeEqualString(signature, expectedRaw)) return;
+  throw new CommerceError("WEBHOOK_INVALID", "SePay webhook signature is invalid");
 }
 
 export class SePayPaymentProvider implements PaymentProvider {
@@ -248,14 +214,21 @@ export class SePayPaymentProvider implements PaymentProvider {
   readonly capabilities = SEPAY_CAPABILITIES;
 
   constructor(private readonly options: SePayProviderOptions) {
-    if (!options.merchantId || options.merchantId.includes("CHANGE_ME")) {
-      throw new CommerceError("NOT_CONFIGURED", "SEPAY_MERCHANT_ID is required");
+    if (!options.bankCode || options.bankCode.includes("CHANGE_ME")) {
+      throw new CommerceError("NOT_CONFIGURED", "SEPAY_BANK_CODE is required");
     }
-    if (!options.secretKey || options.secretKey.includes("CHANGE_ME")) {
-      throw new CommerceError("NOT_CONFIGURED", "SEPAY_SECRET_KEY is required");
+    if (!options.bankAccountNumber || options.bankAccountNumber.includes("CHANGE_ME")) {
+      throw new CommerceError("NOT_CONFIGURED", "SEPAY_BANK_ACCOUNT_NUMBER is required");
     }
-    if (!options.ipnSecret || options.ipnSecret.includes("CHANGE_ME")) {
-      throw new CommerceError("NOT_CONFIGURED", "SePay IPN secret is required");
+    if (!options.bankAccountName || options.bankAccountName.includes("CHANGE_ME")) {
+      throw new CommerceError("NOT_CONFIGURED", "SEPAY_BANK_ACCOUNT_NAME is required");
+    }
+    const auth = options.webhookAuth ?? "hmac_sha256";
+    if (auth === "hmac_sha256" && (!options.webhookSecret || options.webhookSecret.includes("CHANGE_ME"))) {
+      throw new CommerceError("NOT_CONFIGURED", "SEPAY_WEBHOOK_SECRET is required");
+    }
+    if (auth === "api_key" && (!options.apiKey || options.apiKey.includes("CHANGE_ME"))) {
+      throw new CommerceError("NOT_CONFIGURED", "SEPAY_API_KEY is required");
     }
   }
 
@@ -268,106 +241,87 @@ export class SePayPaymentProvider implements PaymentProvider {
     }
 
     const invoice = sepayInvoiceNumber(input.orderPublicId);
-    const fields = buildSepayCheckoutFields(
-      {
-        order_amount: input.amountMinor.toString(),
-        merchant: this.options.merchantId,
-        currency: "VND",
-        operation: "PURCHASE",
-        order_description: input.description ?? `Khepree ${input.orderPublicId}`,
-        order_invoice_number: invoice,
-        customer_id: input.customerId,
-        payment_method: input.paymentMethod,
-        success_url: input.successUrl,
-        error_url: input.errorUrl ?? input.cancelUrl,
-        cancel_url: input.cancelUrl,
-      },
-      this.options.secretKey,
-    );
+    const qrUrl = generateSepayQrUrl({
+      accountNumber: this.options.bankAccountNumber,
+      bankCode: this.options.bankCode,
+      amountMinor: input.amountMinor,
+      transferContent: invoice,
+      qrBaseUrl: this.options.qrBaseUrl,
+    });
 
     return {
       providerCheckoutId: invoice,
       checkoutAction: {
-        mode: "form_post",
-        action: sepayCheckoutInitUrl(this.options.env),
-        fields,
+        mode: "qr_display",
+        qrUrl,
+        bankCode: this.options.bankCode,
+        accountNumber: this.options.bankAccountNumber,
+        accountName: this.options.bankAccountName,
+        transferContent: invoice,
+        amountMinor: input.amountMinor,
+        currency: "VND",
       },
     };
   }
 
   async verifyWebhook(request: WebhookRequest): Promise<VerifiedWebhook> {
-    const secret = headerValue(request.headers, "x-secret-key");
-    if (!secret || !safeEqualString(secret, this.options.ipnSecret)) {
-      throw new CommerceError("WEBHOOK_INVALID", "SePay IPN secret is invalid");
-    }
+    verifyTransferWebhookAuth(request, this.options);
 
     let parsed: unknown;
     try {
       parsed = JSON.parse(request.rawBody) as unknown;
     } catch {
-      throw new CommerceError("WEBHOOK_INVALID", "SePay IPN body is not JSON");
+      throw new CommerceError("WEBHOOK_INVALID", "SePay webhook body is not JSON");
     }
 
     const payload = asRecord(parsed);
     if (!payload) {
-      throw new CommerceError("WEBHOOK_INVALID", "SePay IPN payload is invalid");
+      throw new CommerceError("WEBHOOK_INVALID", "SePay webhook payload is invalid");
     }
 
-    const parsedIpn = parseSepayIpn(payload);
-    if (!parsedIpn) {
-      throw new CommerceError("WEBHOOK_INVALID", "SePay IPN payload is missing required fields");
-    }
+    const transfer = parseSepayTransferWebhook(payload);
+    const sepayTransactionId = asString(payload.id) ?? "unknown";
 
     return {
       provider: SEPAY_PROVIDER_ID,
-      eventId: parsedIpn.eventId,
-      eventType: parsedIpn.notificationType,
-      payload: sanitizeSepayIpnPayload(payload),
+      eventId: transfer?.eventId ?? `transfer:${sepayTransactionId}`,
+      eventType: transfer?.transferType ?? asString(payload.transferType) ?? "unknown",
+      payload: sanitizeSepayTransferPayload(payload),
     };
   }
 
   normalizeWebhookEvent(verified: VerifiedWebhook): NormalizedCommerceEvent | null {
-    const notificationType = asString(verified.payload.notificationType) ?? verified.eventType;
-    const invoiceNumber = asString(verified.payload.invoiceNumber);
-    const currency = asString(verified.payload.currency);
-    const amountRaw = verified.payload.amount;
-    if (!invoiceNumber || !currency || amountRaw === undefined || amountRaw === null) return null;
+    const transferType = asString(verified.payload.transferType)?.toLowerCase();
+    if (transferType && transferType !== "in") return null;
+
+    const invoiceNumber = resolveInvoiceNumber(verified.payload);
+    const amountRaw = verified.payload.transferAmount;
+    if (!invoiceNumber || amountRaw === undefined || amountRaw === null) return null;
 
     let amountMinor: bigint;
     try {
-      amountMinor =
-        typeof amountRaw === "string" && amountRaw.includes(".")
-          ? parseDecimalToMinor(amountRaw, currency)
-          : parseMoneyMinor(String(amountRaw));
+      amountMinor = parseMoneyMinor(String(amountRaw));
     } catch {
       return null;
     }
 
-    const type =
-      notificationType === "ORDER_PAID"
-        ? "payment_succeeded"
-        : notificationType === "TRANSACTION_VOID"
-          ? "payment_voided"
-          : null;
-    if (!type) return null;
-
     return {
-      type,
+      type: "payment_succeeded",
       provider: SEPAY_PROVIDER_ID,
       providerEventId: verified.eventId,
       providerPaymentId: invoiceNumber,
       amountMinor,
-      currency,
+      currency: "VND",
       occurredAt: new Date(),
-      rawType: notificationType,
-      paymentMethod: asString(verified.payload.paymentMethod),
+      rawType: transferType ?? "in",
+      paymentMethod: "BANK_TRANSFER",
     };
   }
 
   async refund(_input: RefundProviderInput): Promise<RefundProviderResult> {
     throw new CommerceError(
       "UNSUPPORTED",
-      "SePay does not support automated refunds in this integration; use the manual finance workflow",
+      "SePay QR transfers do not support automated refunds; use the manual finance workflow",
     );
   }
 }

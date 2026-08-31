@@ -26,9 +26,11 @@ describe("storage factory production fail-fast", () => {
     vi.stubEnv("SMTP_PORT", "587");
     vi.stubEnv("REDIS_URL", "redis://localhost:6379");
     vi.stubEnv("PAYMENT_PROVIDER", "sepay");
-    vi.stubEnv("SEPAY_ENV", "sandbox");
-    vi.stubEnv("SEPAY_MERCHANT_ID", "merchant");
-    vi.stubEnv("SEPAY_SECRET_KEY", "secret");
+    vi.stubEnv("SEPAY_ENV", "production");
+    vi.stubEnv("SEPAY_BANK_CODE", "MBBank");
+    vi.stubEnv("SEPAY_BANK_ACCOUNT_NUMBER", "0123456789");
+    vi.stubEnv("SEPAY_BANK_ACCOUNT_NAME", "KHEPREE");
+    vi.stubEnv("SEPAY_WEBHOOK_SECRET", "secret");
     vi.stubEnv("S3_ENDPOINT", "https://s3.example.com");
     vi.stubEnv("S3_ACCESS_KEY_ID", "key");
     vi.stubEnv("S3_SECRET_ACCESS_KEY", "secret");

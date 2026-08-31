@@ -1,9 +1,16 @@
 import { createAuthClient } from "better-auth/react";
 import { twoFactorClient } from "better-auth/client/plugins";
 
-export function createKhepreeAuthClient(baseURL: string) {
+function resolveClientBaseUrl(baseURL?: string): string | undefined {
+  if (baseURL) return baseURL;
+  if (typeof window !== "undefined") return window.location.origin;
+  return undefined;
+}
+
+export function createKhepreeAuthClient(baseURL?: string) {
+  const resolved = resolveClientBaseUrl(baseURL);
   return createAuthClient({
-    baseURL,
+    ...(resolved ? { baseURL: resolved } : {}),
     plugins: [twoFactorClient()],
   });
 }

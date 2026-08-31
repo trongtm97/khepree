@@ -1,5 +1,5 @@
 import { createProductService, defaultMarket } from "@khepree/catalog";
-import { getEnv, sepayIpnSecret, type Env } from "@khepree/config";
+import { getEnv, sepayWebhookSecret, type Env } from "@khepree/config";
 import {
   createDrizzleAuditService,
   getDb,
@@ -978,15 +978,24 @@ export function createPaymentProvider(
   options: { hostedBaseUrl: string },
 ): PaymentProvider {
   if (env.PAYMENT_PROVIDER === SEPAY_PROVIDER_ID) {
-    const ipnSecret = sepayIpnSecret(env);
-    if (!env.SEPAY_ENV || !env.SEPAY_MERCHANT_ID || !env.SEPAY_SECRET_KEY || !ipnSecret) {
-      throw new CommerceError("NOT_CONFIGURED", "SePay credentials are missing");
+    const webhookAuth = env.SEPAY_WEBHOOK_AUTH ?? "hmac_sha256";
+    if (
+      !env.SEPAY_BANK_CODE ||
+      !env.SEPAY_BANK_ACCOUNT_NUMBER ||
+      !env.SEPAY_BANK_ACCOUNT_NAME ||
+      (webhookAuth === "hmac_sha256" && !sepayWebhookSecret(env)) ||
+      (webhookAuth === "api_key" && !env.SEPAY_API_KEY)
+    ) {
+      throw new CommerceError("NOT_CONFIGURED", "SePay QR credentials are missing");
     }
     return new SePayPaymentProvider({
-      env: env.SEPAY_ENV,
-      merchantId: env.SEPAY_MERCHANT_ID,
-      secretKey: env.SEPAY_SECRET_KEY,
-      ipnSecret,
+      bankCode: env.SEPAY_BANK_CODE,
+      bankAccountNumber: env.SEPAY_BANK_ACCOUNT_NUMBER,
+      bankAccountName: env.SEPAY_BANK_ACCOUNT_NAME,
+      webhookSecret: sepayWebhookSecret(env) ?? "",
+      apiKey: env.SEPAY_API_KEY,
+      webhookAuth,
+      qrBaseUrl: env.SEPAY_QR_BASE_URL,
     });
   }
   if (env.PAYMENT_PROVIDER === "mock") {

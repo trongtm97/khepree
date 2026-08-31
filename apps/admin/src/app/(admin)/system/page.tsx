@@ -37,7 +37,7 @@ export default async function SystemPage({
     {
       label: "SePay",
       value: isSePayConfigured(env)
-        ? `${env.SEPAY_ENV ?? "?"} — ${getSepayIntegrationStatus(env).configured ? "OK" : "thiếu IPN secret"}`
+        ? `${env.SEPAY_ENV ?? "VietQR"} — ${getSepayIntegrationStatus(env).configured ? "OK" : "thiếu webhook/bank"}`
         : env.PAYMENT_PROVIDER === "mock"
           ? "mock (dev)"
           : "Chưa cấu hình",

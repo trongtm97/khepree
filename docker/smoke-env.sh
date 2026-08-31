@@ -24,7 +24,9 @@ export SMOKE_ENV=(
   -e EMAIL_PROVIDER=resend
   -e EMAIL_PROVIDER_API_KEY=smoke-email-key
   -e PAYMENT_PROVIDER=sepay
-  -e SEPAY_ENV=sandbox
-  -e SEPAY_MERCHANT_ID=smoke-merchant
-  -e SEPAY_SECRET_KEY=smoke-sepay-secret-key
+  -e SEPAY_ENV=production
+  -e SEPAY_BANK_CODE=MBBank
+  -e SEPAY_BANK_ACCOUNT_NUMBER=0123456789
+  -e SEPAY_BANK_ACCOUNT_NAME=Smoke Khepree
+  -e SEPAY_WEBHOOK_SECRET=smoke-sepay-webhook-secret
 )

@@ -28,15 +28,24 @@ export async function POST(
       requestId,
     });
     log.info({ event: "webhook_processed", requestId, provider, status: result.status });
+    if (provider === "sepay") {
+      return Response.json({ success: true });
+    }
     return jsonOk({ status: result.status }, requestId);
   } catch (error) {
     if (isCommerceError(error)) {
       log.warn({ event: "webhook_rejected", requestId, provider, code: error.code });
       if (error.code === "WEBHOOK_INVALID") {
         emitAlert("warn", "webhook_invalid", { requestId, provider });
+        if (provider === "sepay") {
+          return Response.json({ success: false }, { status: 401 });
+        }
         return jsonError("WEBHOOK_INVALID", "Webhook could not be verified", 400, requestId);
       }
       if (error.code === "NOT_FOUND") {
+        if (provider === "sepay") {
+          return Response.json({ success: true });
+        }
         return jsonError("NOT_FOUND", "Payment not found for provider event", 400, requestId);
       }
       if (error.code === "UNKNOWN_PROVIDER") {

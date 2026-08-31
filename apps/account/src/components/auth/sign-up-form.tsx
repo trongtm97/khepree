@@ -8,8 +8,8 @@ import { useState } from "react";
 import { signUpWithLegalConsentAction } from "@/app/(auth)/actions";
 import { AuthDivider, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { PasswordInput } from "@/components/auth/password-input";
-import { authClient } from "@/lib/auth-client";
 import { mapAuthError, mapOAuthCallbackError, type AuthCopy } from "@/lib/auth-ui";
+import { startGoogleOAuth } from "@/lib/google-oauth";
 import type { SupportedLocale } from "@khepree/config";
 import { LegalConsentNotice } from "@/components/legal-consent-notice";
 import { AUTH_ROUTES } from "@/lib/routes";
@@ -39,12 +39,13 @@ export function SignUpForm({
   async function onGoogleSignUp() {
     setError(null);
     setGoogleLoading(true);
-    const result = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: `${window.location.origin}${next}`,
+    const callbackURL = `${window.location.origin}${next}`;
+    const result = await startGoogleOAuth({
+      callbackURL,
+      errorCallbackURL: `${AUTH_ROUTES.signUp}?error=google_oauth_failed&next=${encodeURIComponent(next)}`,
     });
     if (result.error) {
-      setError(mapAuthError(result.error.message, copy));
+      setError(mapAuthError(result.error, copy));
       setGoogleLoading(false);
     }
   }

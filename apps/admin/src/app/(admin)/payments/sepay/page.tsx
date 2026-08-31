@@ -9,8 +9,8 @@ import { formatDate } from "@/lib/format";
 export const metadata: Metadata = { title: "SePay" };
 
 const B1_CHECKLIST = [
-  "Checkout sandbox hoàn tất trên account.khepree.com",
-  "IPN POST tới api.khepree.com với X-Secret-Key hợp lệ",
+  "Checkout QR hoàn tất trên account.khepree.com",
+  "Webhook chuyển khoản POST tới api.khepree.com với chữ ký/API key hợp lệ",
   "Đơn hàng + payment chuyển paid, entitlement kích hoạt",
   "Ghi nhận trong nhật ký ops (docs/SEPAY-SANDBOX.md)",
 ] as const;
@@ -23,8 +23,8 @@ export default async function SepaySettingsPage() {
   return (
     <div className="space-y-8">
       <AdminPageHeader
-        title="SePay Payment Gateway"
-        description="Cổng thanh toán form POST + IPN (khác mô hình chuyển khoản QR của CHAPMEE)."
+        title="SePay VietQR"
+        description="Thanh toán chuyển khoản QR + webhook ngân hàng (cùng mô hình CHAPMEE)."
         actions={
           <Link className="text-sm text-khepree-teal underline" href="/payments">
             ← Thanh toán
@@ -48,15 +48,18 @@ export default async function SepaySettingsPage() {
             ) : null}
           </li>
           <li>
-            <span className="font-medium">Merchant ID:</span> <code>{status.merchantIdMasked}</code>
+            <span className="font-medium">Ngân hàng:</span> {status.bankCode ?? "—"}
           </li>
           <li>
-            <span className="font-medium">Secret key:</span>{" "}
-            {status.secretKeyConfigured ? "Đã cấu hình" : "Thiếu"}
+            <span className="font-medium">Tài khoản:</span>{" "}
+            <code>{status.bankAccountMasked}</code> — {status.bankAccountName ?? "—"}
           </li>
           <li>
-            <span className="font-medium">IPN secret:</span>{" "}
-            {status.ipnSecretConfigured ? "Đã cấu hình" : "Thiếu"}
+            <span className="font-medium">Webhook auth:</span> {status.webhookAuth}
+            {" · "}
+            {status.webhookSecretConfigured || status.webhookAuth === "api_key"
+              ? "Đã cấu hình"
+              : "Thiếu secret"}
           </li>
           {status.missing.length > 0 ? (
             <li className="text-amber-700">Thiếu: {status.missing.join(", ")}</li>
@@ -67,20 +70,26 @@ export default async function SepaySettingsPage() {
       <AdminSection title="URL đăng ký với SePay">
         <dl className="space-y-3 text-sm">
           <div>
-            <dt className="font-medium text-khepree-slate">IPN (bắt buộc)</dt>
+            <dt className="font-medium text-khepree-slate">Webhook chuyển khoản (bắt buộc)</dt>
             <dd className="mt-1 break-all font-mono text-xs text-khepree-teal">
-              {status.ipnUrl ?? "Đặt API_URL (vd: https://api.khepree.com)"}
+              {status.webhookUrl ?? "Đặt API_URL (vd: https://api.khepree.com)"}
             </dd>
-            <dd className="mt-1 text-khepree-slate/70">Header: X-Secret-Key = SEPAY_IPN_SECRET hoặc SEPAY_SECRET_KEY</dd>
+            <dd className="mt-1 text-khepree-slate/70">
+              Xác thực: {status.webhookAuth === "api_key" ? "API Key (Authorization: Apikey …)" : "HMAC-SHA256 (x-sepay-signature)"}
+            </dd>
+            <dd className="mt-1 text-khepree-slate/70">
+              Tiền tố mã thanh toán trên SePay: <code>KHP</code> (nội dung chuyển khoản dạng{" "}
+              <code>KHP_ord_…</code>)
+            </dd>
           </div>
           <div>
-            <dt className="font-medium text-khepree-slate">Checkout init</dt>
-            <dd className="mt-1 break-all font-mono text-xs">{status.checkoutInitUrl ?? "—"}</dd>
+            <dt className="font-medium text-khepree-slate">QR base URL</dt>
+            <dd className="mt-1 break-all font-mono text-xs">{status.qrBaseUrl ?? "—"}</dd>
           </div>
           <div>
-            <dt className="font-medium text-khepree-slate">Success redirect</dt>
+            <dt className="font-medium text-khepree-slate">Trang thanh toán</dt>
             <dd className="mt-1 break-all font-mono text-xs">
-              {status.accountUrl ? `${status.accountUrl}/billing?checkout=processing` : "Đặt ACCOUNT_URL"}
+              {status.accountUrl ? `${status.accountUrl}/checkout/pay/{orderPublicId}` : "Đặt ACCOUNT_URL"}
             </dd>
           </div>
         </dl>
@@ -98,7 +107,7 @@ export default async function SepaySettingsPage() {
         </p>
       </AdminSection>
 
-      <AdminSection title="IPN gần đây">
+      <AdminSection title="Webhook gần đây">
         <AdminTable
           headers={["Thời gian", "Loại", "Event ID", "Đã xử lý"]}
           empty={webhooks.length === 0}

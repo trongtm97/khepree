@@ -69,11 +69,15 @@ const envSchema = z.object({
   PAYMENT_PROVIDER: z.enum(["mock", "sepay"]).default("mock"),
   MOCK_PAYMENT_WEBHOOK_SECRET: z.string().optional(),
 
+  /** SePay VietQR bank transfer (same model as CHAPMEE). */
   SEPAY_ENV: z.enum(["sandbox", "production"]).optional(),
-  SEPAY_MERCHANT_ID: z.string().optional(),
-  SEPAY_SECRET_KEY: z.string().optional(),
-  /** Optional. When unset, IPN uses SEPAY_SECRET_KEY (official X-Secret-Key). */
-  SEPAY_IPN_SECRET: z.string().optional(),
+  SEPAY_BANK_CODE: z.string().optional(),
+  SEPAY_BANK_ACCOUNT_NUMBER: z.string().optional(),
+  SEPAY_BANK_ACCOUNT_NAME: z.string().optional(),
+  SEPAY_WEBHOOK_SECRET: z.string().optional(),
+  SEPAY_API_KEY: z.string().optional(),
+  SEPAY_WEBHOOK_AUTH: z.enum(["hmac_sha256", "api_key"]).default("hmac_sha256"),
+  SEPAY_QR_BASE_URL: optionalUrl,
   /** Manual go-live ack — required with SEPAY_ENV=production (see verify-production-config.sh). */
   KHEPREE_ALLOW_SEPAY_PRODUCTION: z.string().optional(),
 
@@ -147,14 +151,28 @@ export function isMockPaymentConfigured(env: Env = getEnv()): boolean {
 }
 
 export function isSePayConfigured(env: Env = getEnv()): boolean {
+  const auth = env.SEPAY_WEBHOOK_AUTH ?? "hmac_sha256";
+  const webhookReady =
+    auth === "api_key"
+      ? Boolean(env.SEPAY_API_KEY && !env.SEPAY_API_KEY.includes("CHANGE_ME"))
+      : Boolean(env.SEPAY_WEBHOOK_SECRET && !env.SEPAY_WEBHOOK_SECRET.includes("CHANGE_ME"));
   return Boolean(
     env.PAYMENT_PROVIDER === "sepay" &&
-      env.SEPAY_ENV &&
-      env.SEPAY_MERCHANT_ID &&
-      !env.SEPAY_MERCHANT_ID.includes("CHANGE_ME") &&
-      env.SEPAY_SECRET_KEY &&
-      !env.SEPAY_SECRET_KEY.includes("CHANGE_ME"),
+      env.SEPAY_BANK_CODE &&
+      !env.SEPAY_BANK_CODE.includes("CHANGE_ME") &&
+      env.SEPAY_BANK_ACCOUNT_NUMBER &&
+      !env.SEPAY_BANK_ACCOUNT_NUMBER.includes("CHANGE_ME") &&
+      env.SEPAY_BANK_ACCOUNT_NAME &&
+      !env.SEPAY_BANK_ACCOUNT_NAME.includes("CHANGE_ME") &&
+      webhookReady,
   );
+}
+
+export function sepayWebhookSecret(env: Env = getEnv()): string | undefined {
+  if (env.SEPAY_WEBHOOK_SECRET && !env.SEPAY_WEBHOOK_SECRET.includes("CHANGE_ME")) {
+    return env.SEPAY_WEBHOOK_SECRET;
+  }
+  return undefined;
 }
 
 export function isRedisConfigured(env: Env = getEnv()): boolean {
@@ -173,13 +191,7 @@ export function isGoogleAuthConfigured(
 }
 
 export function sepayIpnSecret(env: Env = getEnv()): string | undefined {
-  if (env.SEPAY_IPN_SECRET && !env.SEPAY_IPN_SECRET.includes("CHANGE_ME")) {
-    return env.SEPAY_IPN_SECRET;
-  }
-  if (env.SEPAY_SECRET_KEY && !env.SEPAY_SECRET_KEY.includes("CHANGE_ME")) {
-    return env.SEPAY_SECRET_KEY;
-  }
-  return undefined;
+  return sepayWebhookSecret(env);
 }
 
 export function integrationStatus(check: boolean): IntegrationStatus {

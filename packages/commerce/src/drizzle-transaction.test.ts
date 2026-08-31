@@ -72,10 +72,11 @@ describe.skipIf(!pg)("Drizzle commerce transactions (Postgres)", () => {
       const commerce = createCommerceService({
         store,
         provider: new SePayPaymentProvider({
-          env: "sandbox",
-          merchantId: "MERCHANT_123",
-          secretKey: "test-sepay-secret",
-          ipnSecret: "test-ipn-secret",
+          bankCode: "MBBank",
+          bankAccountNumber: "0123456789",
+          bankAccountName: "KHEPREE",
+          webhookSecret: "test-webhook-secret",
+          webhookAuth: "hmac_sha256",
         }),
         catalog: { getPurchasableOffer: async () => null },
         audit: { record: async () => undefined },

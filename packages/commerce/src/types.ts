@@ -109,7 +109,17 @@ export type CheckoutFormField = { name: string; value: string };
 
 export type CheckoutAction =
   | { mode: "redirect"; url: string }
-  | { mode: "form_post"; action: string; fields: CheckoutFormField[] };
+  | { mode: "form_post"; action: string; fields: CheckoutFormField[] }
+  | {
+      mode: "qr_display";
+      qrUrl: string;
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+      transferContent: string;
+      amountMinor: MoneyMinor;
+      currency: string;
+    };
 
 export interface CheckoutIntentResult {
   orderPublicId: string;

@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import type { AuditService } from "@khepree/db";
 import { CommerceError } from "./errors";
@@ -363,14 +364,15 @@ describe("commerce checkout and payments", () => {
   });
 });
 
-const SEPAY_IPN_SECRET = "test-ipn-secret";
+const SEPAY_WEBHOOK_SECRET = "test-webhook-secret";
 
 function sepayProvider() {
   return new SePayPaymentProvider({
-    env: "sandbox",
-    merchantId: "MERCHANT_123",
-    secretKey: "test-sepay-secret",
-    ipnSecret: SEPAY_IPN_SECRET,
+    bankCode: "MBBank",
+    bankAccountNumber: "0123456789",
+    bankAccountName: "KHEPREE",
+    webhookSecret: SEPAY_WEBHOOK_SECRET,
+    webhookAuth: "hmac_sha256",
   });
 }
 
@@ -393,38 +395,30 @@ function createSepayCommerce(hooks?: {
   return { commerce, store, records, provider };
 }
 
-function sepayIpnBody(orderPublicId: string, notificationType: string, amount = "599000") {
+function sepayTransferBody(orderPublicId: string, amount = 599000) {
   return JSON.stringify({
-    timestamp: 1757058220,
-    notification_type: notificationType,
-    order: {
-      id: "order-1",
-      order_invoice_number: `KHP_${orderPublicId}`,
-      order_currency: "VND",
-      order_amount: amount,
-    },
-    transaction: {
-      transaction_id: `txn_${notificationType}_${orderPublicId}`,
-      transaction_amount: amount,
-      transaction_currency: "VND",
-      payment_method: "BANK_TRANSFER",
-    },
+    id: Date.now(),
+    gateway: "MBBank",
+    transactionDate: "2026-08-31 12:00:00",
+    accountNumber: "0123456789",
+    code: `KHP_${orderPublicId}`,
+    content: `KHP_${orderPublicId}`,
+    transferType: "in",
+    transferAmount: amount,
   });
 }
 
-async function postSepayIpn(
-  commerce: CommerceService,
-  orderPublicId: string,
-  notificationType: string,
-) {
+async function postSepayTransfer(commerce: CommerceService, orderPublicId: string, amount = 599000) {
+  const rawBody = sepayTransferBody(orderPublicId, amount);
+  const signature = createHmac("sha256", SEPAY_WEBHOOK_SECRET).update(rawBody, "utf8").digest("hex");
   return commerce.processWebhook({
     providerId: "sepay",
-    headers: { "X-Secret-Key": SEPAY_IPN_SECRET },
-    rawBody: sepayIpnBody(orderPublicId, notificationType),
+    headers: { "x-sepay-signature": signature },
+    rawBody,
   });
 }
 
-describe("SePay refund, void, and one-time access", () => {
+describe("SePay QR refund and one-time access", () => {
   it("persists manual_required without changing payment, order, or access", async () => {
     const refunded: string[] = [];
     const { commerce, store } = createSepayCommerce({
@@ -433,7 +427,7 @@ describe("SePay refund, void, and one-time access", () => {
       },
     });
     const intent = await startCheckout(commerce);
-    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    await postSepayTransfer(commerce, intent.orderPublicId);
     const payment = store.payments[0];
     if (!payment) throw new Error("missing payment");
 
@@ -459,7 +453,7 @@ describe("SePay refund, void, and one-time access", () => {
       },
     });
     const intent = await startCheckout(commerce);
-    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    await postSepayTransfer(commerce, intent.orderPublicId);
     const payment = store.payments[0];
     if (!payment) throw new Error("missing payment");
 
@@ -490,55 +484,11 @@ describe("SePay refund, void, and one-time access", () => {
     expect(refunded).toHaveLength(1);
   });
 
-  it("does not create a refund ledger row for TRANSACTION_VOID", async () => {
-    const voided: string[] = [];
-    const refunded: string[] = [];
-    const { commerce, store, provider } = createSepayCommerce({
-      afterVoided: async (ctx) => {
-        voided.push(ctx.payment.id);
-      },
-      afterRefunded: async (ctx) => {
-        refunded.push(ctx.payment.id);
-      },
-    });
-    const refundSpy = { calls: 0 };
-    provider.refund = async () => {
-      refundSpy.calls += 1;
-      return { providerRefundId: "should-not-run" };
-    };
-    const intent = await startCheckout(commerce);
-    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
-    await postSepayIpn(commerce, intent.orderPublicId, "TRANSACTION_VOID");
-
-    expect(store.payments[0]?.status).toBe("voided");
-    expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("voided");
-    expect(store.refunds).toHaveLength(0);
-    expect(voided).toHaveLength(1);
-    expect(refunded).toHaveLength(0);
-    expect(refundSpy.calls).toBe(0);
-  });
-
-  it("does not repeat void hooks on duplicate TRANSACTION_VOID IPN", async () => {
-    const voided: string[] = [];
-    const { commerce, store } = createSepayCommerce({
-      afterVoided: async (ctx) => {
-        voided.push(ctx.payment.id);
-      },
-    });
-    const intent = await startCheckout(commerce);
-    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
-    const first = await postSepayIpn(commerce, intent.orderPublicId, "TRANSACTION_VOID");
-    const second = await postSepayIpn(commerce, intent.orderPublicId, "TRANSACTION_VOID");
-    expect(first.status).toBe("processed");
-    expect(second.status).toBe("duplicate");
-    expect(store.payments[0]?.status).toBe("voided");
-    expect(voided).toHaveLength(1);
-  });
 
   it("does not create a provider subscription for a one-time annual SePay purchase", async () => {
     const { commerce, store } = createSepayCommerce();
     const intent = await startCheckout(commerce);
-    await postSepayIpn(commerce, intent.orderPublicId, "ORDER_PAID");
+    await postSepayTransfer(commerce, intent.orderPublicId);
     expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("paid");
     expect(store.subscriptions).toHaveLength(0);
   });

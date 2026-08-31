@@ -116,12 +116,13 @@ if [[ "${PAYMENT_PROVIDER:-}" != "sepay" ]]; then
   warn "PAYMENT_PROVIDER must be sepay"
 else
   ok "PAYMENT_PROVIDER=sepay"
-  check_set SEPAY_MERCHANT_ID
-  check_set SEPAY_SECRET_KEY
-  if [[ -z "${SEPAY_IPN_SECRET:-}" ]]; then
-    ok "SEPAY_IPN_SECRET unset (will use SEPAY_SECRET_KEY for IPN)"
+  check_set SEPAY_BANK_CODE
+  check_set SEPAY_BANK_ACCOUNT_NUMBER
+  check_set SEPAY_BANK_ACCOUNT_NAME
+  if [[ "${SEPAY_WEBHOOK_AUTH:-hmac_sha256}" == "api_key" ]]; then
+    check_set SEPAY_API_KEY
   else
-    check_set SEPAY_IPN_SECRET
+    check_set SEPAY_WEBHOOK_SECRET
   fi
 fi
 

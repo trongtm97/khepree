@@ -77,10 +77,11 @@ if [[ -f "${CHAPMEE_ENV}" ]]; then
   SMTP_SECURE="$(grep -E '^SMTP_SECURE=' "${CHAPMEE_ENV}" | cut -d= -f2- || echo false)"
 fi
 
-# SePay sandbox placeholders — replace with real sandbox merchant when available.
-SEPAY_MERCHANT_ID="sandbox-merchant"
-SEPAY_SECRET_KEY="sandbox-secret-key-minimum-length"
-SEPAY_IPN_SECRET=""
+# SePay VietQR placeholders — replace with real bank account from SePay dashboard.
+SEPAY_BANK_CODE="MBBank"
+SEPAY_BANK_ACCOUNT_NUMBER="0123456789"
+SEPAY_BANK_ACCOUNT_NAME="KHEPREE"
+SEPAY_WEBHOOK_SECRET="sandbox-webhook-secret-minimum-length"
 
 umask 077
 cat > "${TARGET}" <<EOF
@@ -131,10 +132,11 @@ SMTP_PASS=${SMTP_PASS}
 SMTP_SECURE=${SMTP_SECURE}
 
 PAYMENT_PROVIDER=sepay
-SEPAY_ENV=sandbox
-SEPAY_MERCHANT_ID=${SEPAY_MERCHANT_ID}
-SEPAY_SECRET_KEY=${SEPAY_SECRET_KEY}
-SEPAY_IPN_SECRET=${SEPAY_IPN_SECRET}
+SEPAY_ENV=production
+SEPAY_BANK_CODE=${SEPAY_BANK_CODE}
+SEPAY_BANK_ACCOUNT_NUMBER=${SEPAY_BANK_ACCOUNT_NUMBER}
+SEPAY_BANK_ACCOUNT_NAME=${SEPAY_BANK_ACCOUNT_NAME}
+SEPAY_WEBHOOK_SECRET=${SEPAY_WEBHOOK_SECRET}
 
 OUTBOX_WORKER_SECRET=${OUTBOX_SECRET}
 OUTBOX_POLL_INTERVAL_MS=5000
