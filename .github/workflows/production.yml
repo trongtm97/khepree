@@ -214,6 +214,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.docker-build.outputs.image_tag }}
+
+      - name: Deploy to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
