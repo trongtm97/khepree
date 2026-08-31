@@ -22,6 +22,7 @@ import {
   referrals,
   wallets,
 } from "../schema/partner";
+import { desktopClients } from "../schema/desktop";
 
 const DEV_SAMPLE_SLUG = "development-sample";
 
@@ -450,6 +451,20 @@ async function seed() {
     .onConflictDoNothing({ target: referrals.code });
 
   console.log(`[seed] Development sample product ready: ${product.slug} (${product.publicId})`);
+
+  const DEV_DESKTOP_CLIENT_ID = "dev-desktop-sample";
+  await db
+    .insert(desktopClients)
+    .values({
+      clientId: DEV_DESKTOP_CLIENT_ID,
+      productId: product.id,
+      displayName: "Development Desktop Sample",
+      allowedRedirectUris: ["khepree-dev://auth/callback", "http://127.0.0.1:0/auth/callback"],
+      status: "active",
+    })
+    .onConflictDoNothing({ target: desktopClients.clientId });
+  console.log(`[seed] Desktop client registered: ${DEV_DESKTOP_CLIENT_ID}`);
+
   console.log(
     `[seed] Partner ${partner.slug} is ACTIVE (referral+reseller). Attach a partner_memberships row after creating an account.`,
   );

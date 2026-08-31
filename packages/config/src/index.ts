@@ -10,3 +10,4 @@ export * from "./alert";
 export * from "./sepay-status";
 export * from "./error-reporter";
 export * from "./products";
+export * from "./desktop-auth";

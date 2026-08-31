@@ -5,7 +5,7 @@ import { getDb } from "../client";
 const db = getDb();
 const pg = Boolean(db && process.env.INTEGRATION === "1");
 
-/** Critical tables introduced in Phase 14–16 that must exist after migrate-from-zero. */
+/** Critical tables introduced in Phase 14–16 and K01 that must exist after migrate-from-zero. */
 const CRITICAL_TABLES = [
   "outbox_events",
   "software_releases",
@@ -13,6 +13,9 @@ const CRITICAL_TABLES = [
   "url_redirects",
   "content_categories",
   "content_category_translations",
+  "desktop_clients",
+  "desktop_auth_codes",
+  "desktop_sessions",
 ] as const;
 
 describe.skipIf(!pg)("migrations from empty database", () => {

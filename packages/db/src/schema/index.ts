@@ -4,6 +4,7 @@ export * from "./content";
 export * from "./release";
 export * from "./commerce";
 export * from "./entitlement";
+export * from "./desktop";
 export * from "./partner";
 export * from "./system";
 export * from "./outbox";
@@ -14,6 +15,7 @@ import * as content from "./content";
 import * as release from "./release";
 import * as commerce from "./commerce";
 import * as entitlement from "./entitlement";
+import * as desktop from "./desktop";
 import * as partner from "./partner";
 import * as system from "./system";
 import * as outbox from "./outbox";
@@ -25,6 +27,7 @@ export const schema = {
   ...release,
   ...commerce,
   ...entitlement,
+  ...desktop,
   ...partner,
   ...system,
   ...outbox,

@@ -1,0 +1,98 @@
+export interface DesktopClientRecord {
+  id: string;
+  clientId: string;
+  productId: string;
+  displayName: string;
+  allowedRedirectUris: string[];
+  status: "active" | "inactive";
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DesktopAuthCodeRecord {
+  id: string;
+  codeHash: string;
+  userId: string;
+  desktopClientId: string;
+  codeChallenge: string;
+  codeChallengeMethod: string;
+  redirectUri: string;
+  expiresAt: Date;
+  consumedAt: Date | null;
+  createdAt: Date;
+}
+
+export interface DesktopSessionRecord {
+  id: string;
+  publicId: string;
+  userId: string;
+  desktopClientId: string;
+  productId: string;
+  deviceId: string | null;
+  devicePublicKey: string | null;
+  accessTokenHash: string;
+  accessExpiresAt: Date;
+  refreshTokenHash: string;
+  refreshExpiresAt: Date;
+  rotationVersion: number;
+  lastSeenAt: Date;
+  revokedAt: Date | null;
+  revokeReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateAuthCodeInput {
+  userId: string;
+  desktopClientId: string;
+  codeChallenge: string;
+  codeChallengeMethod?: string;
+  redirectUri: string;
+  expiresAt: Date;
+}
+
+export interface CreateAuthCodeResult {
+  record: DesktopAuthCodeRecord;
+  code: string;
+}
+
+export interface ConsumeAuthCodeInput {
+  code: string;
+  codeVerifier: string;
+  redirectUri: string;
+}
+
+export interface CreateSessionInput {
+  publicId: string;
+  userId: string;
+  desktopClientId: string;
+  productId: string;
+  deviceId?: string | null;
+  devicePublicKey?: string | null;
+  accessToken: string;
+  accessExpiresAt: Date;
+  refreshToken: string;
+  refreshExpiresAt: Date;
+}
+
+export interface CreateSessionResult {
+  record: DesktopSessionRecord;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface DesktopAuthRepository {
+  findClientByClientId(clientId: string): Promise<DesktopClientRecord | null>;
+  insertClient(input: {
+    clientId: string;
+    productId: string;
+    displayName: string;
+    allowedRedirectUris: string[];
+    status?: "active" | "inactive";
+  }): Promise<DesktopClientRecord>;
+  createAuthCode(input: CreateAuthCodeInput, code: string): Promise<DesktopAuthCodeRecord>;
+  findAuthCodeByHash(codeHash: string): Promise<DesktopAuthCodeRecord | null>;
+  markAuthCodeConsumed(id: string, consumedAt: Date): Promise<void>;
+  insertSession(input: CreateSessionInput): Promise<DesktopSessionRecord>;
+  findSessionByRefreshTokenHash(refreshTokenHash: string): Promise<DesktopSessionRecord | null>;
+}
