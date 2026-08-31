@@ -19,7 +19,7 @@ packages/
   catalog      products, plans, features, CMS, media, market policy
   commerce     orders, payments, refunds ledger, mock + SePay, same-tx outbox
   config       env, domains, logger, validation
-  db           Drizzle schema + migrations 0000–0013
+  db           Drizzle schema + migrations 0000–0017
   email        DevPreview + Resend HTTP adapter + VI/EN templates
   entitlement   feature grants (source of truth for access)
   licensing    keys, devices, Ed25519 leases (only when licensingMode requires)
@@ -53,7 +53,7 @@ Must be created **outside** the repo (never committed):
 - R2 (or S3-compatible) account, keys, `R2_BUCKET_PUBLIC`, `R2_BUCKET_PRIVATE`, `R2_PUBLIC_BASE_URL`
 - `EMAIL_PROVIDER=resend`, `EMAIL_FROM`, `EMAIL_PROVIDER_API_KEY` **and** a passing live send test
 - SePay production credentials after B1 sandbox proof
-- Optional `REDIS_URL` for multi-instance rate limits (**required in production** — `validateRuntimeEnv` fails closed without it)
+- Optional `REDIS_URL` for multi-instance rate limits and **desktop refresh nonce replay protection** (**required in production** — `validateRuntimeEnv` fails closed without it)
 - OAuth client secrets if Google sign-in is enabled
 
 ## 4. Required external configuration
@@ -68,7 +68,7 @@ Must be created **outside** the repo (never committed):
 
 ## 5. Database migrations status
 
-Applied set in repo: `0000` … `0013_phase16_url_redirects`. Production is **not** migrated until an operator runs `pnpm db:migrate` against the production URL. Do not `pnpm db:seed` in production.
+Applied set in repo: `0000` … `0017_phase_k05_device_management`. Production is **not** migrated until an operator runs `pnpm db:migrate` against the production URL. Do not `pnpm db:seed` in production.
 
 ## 6. Security status
 
@@ -76,9 +76,13 @@ Addressed through Phase 21.0: same-tx outbox with stale-lock recovery and dedica
 
 Still open for launch: B1–B6 and P1–P10 in `docs/TODOS.md`. Email adapter is not proven against Resend. CSP allows unsafe-inline. SePay recurring and automated refunds are **not** implemented.
 
+**Desktop (K08):** Auth, activation, refresh, checkout, and account hub flows are implemented and covered by 12 integration scenarios in `packages/platform/src/desktop-security-gate.test.ts`. Redis nonce store is wired for production refresh replay protection. No raw token logging found in audit. HTTP Playwright E2E for `api.khepree.com` desktop routes is not in CI smoke stack.
+
 ## 7. Test status
 
 `pnpm test` is the unit gate (no database). CI `integration` job applies migrations from empty Postgres and re-runs tests so Postgres `skipIf` cases execute, including critical-table inventory after migrate-from-zero. Playwright: local PR workflow (`.github/workflows/e2e.yml`) starts full stack before tests; staging dispatch requires all four `*_BASE_URL` env vars. SePay Sandbox live IPN is **not** proven. B1 remains open.
+
+**K08 desktop gate:** `@khepree/platform` `desktop-security-gate.test.ts` (12 scenarios) + `@khepree/security` `rate-limit-desktop.test.ts` + existing `@khepree/desktop-auth` refresh tests. Total platform package: 19 tests passing locally.
 
 ## 8. Build status
 

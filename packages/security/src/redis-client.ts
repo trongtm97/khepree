@@ -30,6 +30,17 @@ export async function createRedisCommands(url: string): Promise<RedisCommands> {
   };
 }
 
+export interface RedisSetCommands {
+  set(key: string, value: string, options: { NX: true; EX: number }): Promise<string | null>;
+}
+
+export async function createRedisSetCommands(url: string): Promise<RedisSetCommands> {
+  const redis = await redisClient(url);
+  return {
+    set: (key, value, options) => redis.set(key, value, options),
+  };
+}
+
 /** Test-only. */
 export async function closeRedisClientForTests(): Promise<void> {
   if (client?.isOpen) await client.quit();

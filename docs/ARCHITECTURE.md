@@ -24,6 +24,7 @@
 | `@khepree/security` | RBAC permission matrix |
 | `@khepree/entitlement` | Feature-based authorization — source of truth for access |
 | `@khepree/licensing` | License keys, device activation, Ed25519 leases |
+| `@khepree/desktop-auth` | Desktop OAuth (PKCE), sessions, device-bound refresh proof, nonce store interface |
 | `@khepree/reseller` | Partner org, referral attribution, wallet ledger, reseller issue/renew |
 | `@khepree/sdk` | Client-neutral types and error codes (no secrets) |
 | `@khepree/commerce` | Orders, payments, subscriptions, provider adapters, same-tx outbox enqueue |
@@ -104,6 +105,16 @@ Webhook ingress: `POST /api/v1/webhooks/payments/[provider]` (SePay: `.../sepay`
 - At most one **active** activation per `(licenseId, deviceId)` (partial unique index). Device limits are enforced under a license row lock.
 - Ed25519 leases (`signLease` / `verifyLease`) cover a TTL plus a configurable grace window. Offline revocation is eventual: a lease stays cryptographically valid until `exp` (+ grace). Live APIs re-check entitlement.
 - Account UI: `/licenses`, `/devices` (owner deactivate + cooldown). APIs: `POST /api/v1/licenses/{activate,refresh,deactivate}`, `GET /api/v1/licenses/me`, `GET /api/v1/devices`, `GET /api/v1/me/entitlements`.
+
+## Desktop ecosystem (Phases K01–K08)
+
+See `docs/DESKTOP-ECOSYSTEM.md` for flows, threat model, and K08 scenario matrix.
+
+- **Packages:** `@khepree/desktop-auth`, desktop routes on `apps/api`, authorize/checkout UI on `apps/account`.
+- **Auth ≠ entitlement ≠ license:** desktop sessions authenticate; entitlements grant features; leases are signed offline-capable projections.
+- **Migrations:** `0016_phase_k01_desktop_ecosystem`, `0017_phase_k05_device_management`.
+- **API surface:** `/api/v1/desktop/auth/*`, `/api/v1/desktop/activate`, `/api/v1/desktop/heartbeat`, `/api/v1/desktop/me`, `/api/v1/desktop/checkout/*`.
+- **Production gate (K08):** Redis-backed nonce store for refresh replay protection when `REDIS_URL` is set; integration tests prove 12 security scenarios. **Not production-ready** until B1 and other blockers in `docs/TODOS.md` are closed.
 
 ## Partner + reseller (Phase 09)
 

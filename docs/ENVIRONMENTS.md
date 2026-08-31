@@ -36,8 +36,15 @@ Checked at Node boot (skipped during `next build`):
 - `EMAIL_FROM` and `EMAIL_PROVIDER_API_KEY`
 - `PAYMENT_PROVIDER=sepay` with `SEPAY_ENV`, `SEPAY_MERCHANT_ID`, `SEPAY_SECRET_KEY`
 - Optional: `SEPAY_IPN_SECRET` (defaults to `SEPAY_SECRET_KEY`), `TRUSTED_PROXY=none|cloudflare`
+- **`REDIS_URL`** — required in production (`validateRuntimeEnv` fails without it). Used for rate limits and desktop refresh nonce replay store.
 
 Template: `.env.example`. Production checklist: `docs/PRODUCTION-INTEGRATIONS.md`. Real values live only in the environment’s secret store.
+
+## Desktop clients
+
+- Development: refresh nonce store falls back to in-memory (single instance only).
+- Production / multi-instance: **`REDIS_URL` is mandatory** — without it the platform cannot enforce one-time nonces on device-bound refresh requests.
+- Register desktop apps via `desktop_clients` (seed: `dev-desktop-sample`). See `docs/DESKTOP-INTEGRATION.md`.
 
 ## Preview vs production hosts
 

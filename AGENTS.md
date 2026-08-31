@@ -59,10 +59,12 @@ pnpm outbox:run       # Outbox worker poll loop (production)
 - **Phase 21.5:** production integrations checklist — `docs/PRODUCTION-INTEGRATIONS.md`, `scripts/integrations/verify-production-config.sh` — complete; **not** a production-ready claim; B1 still open
 - **Phase 21.6:** observability — structured JSON logging, request correlation, outbox health metrics, `ErrorReporter`, `docs/OBSERVABILITY.md` — complete; **not** a production-ready claim; B1 still open
 - **Phase 21.7:** VPS CI/CD — `.github/workflows/production.yml`, GHCR SHA-tagged images, SSH deploy + rollback, `docs/VPS-CICD.md` — complete; **not** a production-ready claim; B1 still open
+- **Phase K01–K07:** desktop ecosystem — schema, OAuth/PKCE, activation, refresh/heartbeat, device management, checkout/me API, account product hub — complete in source; **not** a production-ready claim; B1 still open
+- **Phase K08:** end-to-end security & production gate — audit, Redis nonce wiring, 12 scenario integration tests, docs — complete in source; **not** a production-ready claim; B1 still open
 
-Packages already implemented: `@khepree/auth`, `@khepree/catalog`, `@khepree/commerce`, `@khepree/storage`, `@khepree/db`, `@khepree/ui`, `@khepree/config`, `@khepree/security`, `@khepree/entitlement`, `@khepree/licensing`, `@khepree/reseller`, `@khepree/sdk`, `@khepree/events`, `@khepree/platform`.
+Packages already implemented: `@khepree/auth`, `@khepree/catalog`, `@khepree/commerce`, `@khepree/storage`, `@khepree/db`, `@khepree/ui`, `@khepree/config`, `@khepree/security`, `@khepree/entitlement`, `@khepree/licensing`, `@khepree/desktop-auth`, `@khepree/reseller`, `@khepree/sdk`, `@khepree/events`, `@khepree/platform`.
 
-Ops docs: `docs/DEPLOYMENT.md`, `docs/ENVIRONMENTS.md`, `docs/PRODUCTION-STATUS.md`, `docs/VPS-SECURITY.md`, `docs/DATA-SAFETY.md`, `docs/PRODUCTION-INTEGRATIONS.md`, `docs/OBSERVABILITY.md`, `docs/VPS-CICD.md`.
+Ops docs: `docs/DEPLOYMENT.md`, `docs/ENVIRONMENTS.md`, `docs/PRODUCTION-STATUS.md`, `docs/DESKTOP-ECOSYSTEM.md`, `docs/DESKTOP-INTEGRATION.md`, `docs/DEVICE-RECOVERY.md`, `docs/DESKTOP-SUPPORT.md`, `docs/VPS-SECURITY.md`, `docs/DATA-SAFETY.md`, `docs/PRODUCTION-INTEGRATIONS.md`, `docs/OBSERVABILITY.md`, `docs/VPS-CICD.md`.
 
 Later phases: TBD.
 

@@ -15,6 +15,7 @@ import {
   createPartnerService,
   type CreatePartnerServiceOverrides,
 } from "@khepree/reseller";
+import { getDesktopNonceStore } from "./desktop-nonce-store";
 
 export type CreateKhepreePlatformOverrides = {
   entitlement?: CreateEntitlementServiceOverrides;
@@ -41,6 +42,7 @@ export function createKhepreePlatform(
   const desktopAuth = createDesktopAuthService({
     ...overrides.desktopAuth,
     entitlement: overrides.desktopAuth?.entitlement ?? entitlement,
+    nonceStore: overrides.desktopAuth?.nonceStore ?? getDesktopNonceStore(),
   });
   const licensing = createLicensingService({
     ...overrides.licensing,

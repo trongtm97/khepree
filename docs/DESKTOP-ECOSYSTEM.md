@@ -316,9 +316,57 @@ Desktop clients should call refresh or heartbeat on cold start for live entitlem
 - Desktop return link: allowlisted custom-scheme URI from registered `desktop_clients.allowed_redirect_uris` (never client-supplied arbitrary URLs); shown on product hub and billing after desktop checkout (`source=desktop&clientId=`)
 - i18n: account `messages.ts` vi/en for products and dashboard; catalog copy via translation tables
 
+## Phase K08 deliverables (security & production gate)
+
+**No new features.** Audit, harden, test, and document the desktop flow end-to-end.
+
+### E2E scenario matrix (integration tests)
+
+| # | Scenario | Test location |
+|---|----------|---------------|
+| 1 | Fresh user, login, no entitlement → activation denied `ENTITLEMENT_MISSING` | `packages/platform/src/desktop-security-gate.test.ts` |
+| 2 | Purchase → verified webhook → entitlement → device activates | same |
+| 3 | Close/open → refresh session, no re-login, lease issued | same |
+| 4 | Device limit → activation denied, `used`/`max` returned | same |
+| 5 | Remove device → sessions revoked → slot freed → new activation | same + `@khepree/licensing` remove-device tests |
+| 6 | Removed machine heartbeat → `DEVICE_REMOVED` / session revoked | same |
+| 7 | Admin block device → same installation cannot reactivate | same |
+| 8 | Entitlement suspended → refresh denied; heartbeat access unavailable | same |
+| 9 | Refresh without device private key → invalid signature → denied | same |
+| 10 | Replay signed refresh (same nonce) → replay rejected | same |
+| 11 | Plan upgrade via webhook → refresh returns new feature snapshot | same |
+| 12 | Refund → entitlement suspended → desktop loses access | same + `desktop-checkout-flow.test.ts` |
+
+HTTP-level Playwright E2E for desktop API routes is **not** wired (`apps/e2e` smoke stack does not include `api` :3004). Gate proof is package-level integration tests above.
+
+### Security audit (K08)
+
+| Finding | Status |
+|---------|--------|
+| Raw token / Authorization header logging | None found in desktop paths; `@khepree/config` logger redacts |
+| Plaintext refresh tokens in DB | Only SHA-256 hashes (`desktop_sessions.refresh_token_hash`) |
+| Private keys in repo | None; license signing via env |
+| Unsafe redirect | Account/desktop return URIs allowlisted per `desktop_clients` |
+| Client-controlled userId / productId escalation | Server derives principal from session; product bound to registered client |
+| Direct entitlement DB writes from apps | Admin/UI via domain services only |
+| Plan-string authorization | Feature snapshot checks (`devices.max`, etc.) |
+| Payment redirect granting access | Access only via verified webhook → outbox |
+| Missing rate limits | `DESKTOP_*` policies in `@khepree/security` |
+| Missing audit | Desktop authorize, exchange, activate, refresh reuse, device remove |
+| Non-idempotent webhook | `(provider, eventId)` unique + idempotent handlers |
+| Race on device limits | License row lock at activation |
+| Nonce replay (production) | **Fixed K08:** Redis nonce store wired via `getDesktopNonceStore()` in platform |
+
+### Production readiness (honest)
+
+Desktop auth, activation, refresh, checkout, and account hub are **implemented in source** and covered by the scenario matrix above. **Khepree is not production-ready** while B1 SePay sandbox IPN proof and other blockers in `docs/TODOS.md` remain open.
+
 ## Related docs
 
 - `docs/ARCHITECTURE.md` — package boundaries
+- `docs/DESKTOP-INTEGRATION.md` — desktop client integration
+- `docs/DEVICE-RECOVERY.md` — user device recovery
+- `docs/DESKTOP-SUPPORT.md` — internal support reference
 - `docs/LICENSE-SIGNING.md` — Ed25519 lease keys
 - `docs/SPEC-phase-08-entitlement-licensing.md` — devices and leases
 - `CONSTRAINTS.md` — non-negotiable rules

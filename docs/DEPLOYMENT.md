@@ -58,8 +58,11 @@ Set per environment (see `docs/ENVIRONMENTS.md`):
 - R2 / S3 credentials and bucket names (`docs/R2.md`)
 - `LICENSE_SIGNING_PRIVATE_KEY`, `LICENSE_SIGNING_PUBLIC_KEY` (`docs/LICENSE-SIGNING.md`)
 - Email and payment provider secrets when those integrations are live (`PAYMENT_PROVIDER`, `SEPAY_*`, never `NEXT_PUBLIC_`)
+- `REDIS_URL` — **required in production** for rate limits and desktop refresh nonce replay protection (see `docs/DESKTOP-ECOSYSTEM.md` K08)
+
+Desktop clients call `api.khepree.com` for token exchange, activation, refresh, heartbeat, checkout, and `/me`. Account hosts authorize UI (`/desktop/authorize`) and checkout handoff (`/desktop/checkout/{orderPublicId}`). Register each app in `desktop_clients` with allowlisted redirect URIs before go-live.
 - `TRUSTED_PROXY=none` (default) or `cloudflare` when the app sits behind Cloudflare. Client IP for rate limits comes from `CF-Connecting-IP` only in that mode. Do not trust `X-Forwarded-For`.
-- Rate limits are in-memory per process. More than one production instance is a launch restriction until Redis (P1).
+- `REDIS_URL` — required in production for rate limits and desktop refresh nonce store (see `docs/ENVIRONMENTS.md`).
 
 Maintenance: `MAINTENANCE_MODE=1` returns 503 from the web/account/admin/partner proxy.
 

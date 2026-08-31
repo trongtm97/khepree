@@ -488,6 +488,7 @@ export interface CreateDesktopAuthServiceOverrides {
   store?: DesktopAuthRepository;
   entitlement?: EntitlementService;
   audit?: AuditService;
+  nonceStore?: NonceStore;
   now?: () => Date;
   authCodeTtlSeconds?: number;
   accessTokenTtlSeconds?: number;
@@ -508,6 +509,7 @@ export function createDesktopAuthService(
     store,
     entitlement,
     audit,
+    nonceStore: overrides.nonceStore,
     now: overrides.now,
     authCodeTtlSeconds: overrides.authCodeTtlSeconds,
     accessTokenTtlSeconds: overrides.accessTokenTtlSeconds,

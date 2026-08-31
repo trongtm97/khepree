@@ -11,6 +11,12 @@ export type {
   DesktopRefreshInput,
   DesktopRefreshResult,
 } from "./session-types";
+export {
+  heartbeatDesktopSession,
+  logoutDesktopSession,
+  refreshDesktopSession,
+} from "./session-flow";
+export type { SessionFlowDeps } from "./session-flow";
 export { generateSecureToken, hashSecret, secretsEqual } from "./hash";
 export { createPkceChallenge, verifyPkceS256 } from "./pkce";
 export {
