@@ -87,6 +87,7 @@ export const RATE_LIMITS = {
   SENSITIVE_MUTATION: { name: "mutation", windowMs: 60_000, max: 40 },
   DESKTOP_AUTHORIZE: { name: "desktop.authorize", windowMs: 60_000, max: 20 },
   DESKTOP_EXCHANGE: { name: "desktop.exchange", windowMs: 60_000, max: 30 },
+  DESKTOP_ACTIVATE: { name: "desktop.activate", windowMs: 60_000, max: 30 },
 } as const satisfies Record<string, RateLimitPolicy>;
 
 export function clientIp(request: Request): string {

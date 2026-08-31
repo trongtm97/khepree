@@ -70,6 +70,14 @@ export interface ActivateInput {
   deviceName?: string;
 }
 
+export interface ActivateByPrincipalInput {
+  principal: { type: "USER" | "ORGANIZATION"; id: string };
+  productId: string;
+  installationId: string;
+  platform?: string;
+  deviceName?: string;
+}
+
 export interface RefreshInput {
   licenseKey: string;
   installationId: string;

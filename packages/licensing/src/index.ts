@@ -19,6 +19,7 @@ export { createLicensingPlatform } from "./platform";
 export { createLicensingOrderHandlers } from "./order-handlers";
 export type { ActivationResult, CreateLicensingServiceOverrides } from "./service";
 export type {
+  ActivateByPrincipalInput,
   ActivateInput,
   ActivationRecord,
   DeviceRecord,

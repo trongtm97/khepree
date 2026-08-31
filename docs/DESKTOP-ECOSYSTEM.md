@@ -258,6 +258,16 @@ apps → @khepree/platform → @khepree/desktop-auth → @khepree/db
 - Audit events: `DESKTOP_AUTHORIZED`, `DESKTOP_SESSION_CREATED`, `DESKTOP_AUTH_FAILED`
 - Login succeeds without entitlement; response includes `entitlementAccess`
 
+## Phase K03 deliverables
+
+- Account-based activation: `POST /api/v1/desktop/activate` (Bearer desktop access token)
+- `LicensingService.activateByPrincipal` — no license key on wire; provisions internal license record when required
+- Session binding: `desktop_sessions.device_id` updated after activation
+- Ed25519 signed lease via existing `@khepree/licensing` signer
+- Rate limit: `DESKTOP_ACTIVATE`
+- Audit: `DESKTOP_DEVICE_ACTIVATED`
+- Legacy `/api/v1/licenses/activate` unchanged
+
 ## Related docs
 
 - `docs/ARCHITECTURE.md` — package boundaries

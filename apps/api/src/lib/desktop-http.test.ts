@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { desktopAuthStatus, readDesktopExchangeBody } from "./desktop-http";
+import { desktopAuthStatus, readDesktopActivateBody, readDesktopExchangeBody } from "./desktop-http";
 
 describe("desktop-http", () => {
   it("maps auth failures to 401", () => {
     expect(desktopAuthStatus("AUTH_CODE_INVALID")).toBe(401);
     expect(desktopAuthStatus("PKCE_INVALID")).toBe(401);
+    expect(desktopAuthStatus("SESSION_EXPIRED")).toBe(401);
+  });
+
+  it("maps entitlement failures to 403", () => {
+    expect(desktopAuthStatus("ENTITLEMENT_MISSING")).toBe(403);
+    expect(desktopAuthStatus("ENTITLEMENT_SUSPENDED")).toBe(403);
   });
 
   it("reads exchange body fields", () => {
@@ -20,6 +26,20 @@ describe("desktop-http", () => {
     ).toMatchObject({
       clientId: "dev",
       installationId: "install",
+    });
+  });
+
+  it("reads activate body fields", () => {
+    expect(
+      readDesktopActivateBody({
+        clientId: "dev-client",
+        installationId: "install-1",
+        platform: "windows",
+      }),
+    ).toMatchObject({
+      clientId: "dev-client",
+      installationId: "install-1",
+      platform: "windows",
     });
   });
 });

@@ -139,3 +139,164 @@ describe("activation", () => {
     expect(store.activations[0]?.status).toBe("deactivated");
   });
 });
+
+describe("activateByPrincipal", () => {
+  it("activates without a license key and returns a signed lease", async () => {
+    const { licensing } = await seeded();
+    const result = await licensing.activateByPrincipal({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      installationId: INSTALL_A,
+      platform: "windows",
+    });
+    expect(result.lease.payload.productSlug).toBe("sample");
+    expect(result.lease.signature.length).toBeGreaterThan(20);
+  });
+
+  it("returns ENTITLEMENT_MISSING when user has no entitlement", async () => {
+    const { licensing } = await seeded();
+    await expect(
+      licensing.activateByPrincipal({
+        principal: PRINCIPAL,
+        productId: "other-product",
+        installationId: INSTALL_A,
+      }),
+    ).rejects.toMatchObject({ code: "ENTITLEMENT_MISSING" });
+  });
+
+  it("rejects suspended entitlement", async () => {
+    const { licensing, entitlement, granted } = await seeded();
+    await entitlement.suspendEntitlement({
+      entitlementId: granted.entitlement.id,
+      reason: "billing",
+    });
+    await expect(
+      licensing.activateByPrincipal({
+        principal: PRINCIPAL,
+        productId: "prod-1",
+        installationId: INSTALL_A,
+      }),
+    ).rejects.toMatchObject({ code: "ENTITLEMENT_SUSPENDED" });
+  });
+
+  it("rejects expired entitlement", async () => {
+    const entitlementStore = new MemoryEntitlementRepository(() => NOW);
+    const entitlement = createEntitlementService({
+      store: entitlementStore,
+      catalog: new MemoryCatalogReader(
+        new Map([
+          [
+            "plan-1",
+            {
+              productId: "prod-1",
+              productSlug: "sample",
+              planId: "plan-1",
+              planSlug: "sample-pro",
+              licensingMode: "LICENSE_KEY_DEVICE",
+              accessTermDays: 1,
+              features: [
+                { key: "devices.max", value: { valueType: "integer" as const, integerValue: 2 } },
+              ],
+            },
+          ],
+        ]),
+      ),
+      audit: recordingAudit(),
+      now: () => NOW,
+    });
+    await entitlement.grantEntitlement({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      planId: "plan-1",
+      source: "subscription",
+    });
+    const licensing = createLicensingService({
+      store: new MemoryLicensingRepository(() => NOW),
+      entitlement,
+      audit: recordingAudit(),
+      keys: generateEphemeralSigningKeys(),
+      now: () => new Date("2026-09-30T12:00:00.000Z"),
+    });
+    await expect(
+      licensing.activateByPrincipal({
+        principal: PRINCIPAL,
+        productId: "prod-1",
+        installationId: INSTALL_A,
+      }),
+    ).rejects.toMatchObject({ code: "ENTITLEMENT_EXPIRED" });
+  });
+
+  it("reactivates a previously removed device idempotently", async () => {
+    const { licensing, store } = await seeded();
+    const first = await licensing.activateByPrincipal({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      installationId: INSTALL_A,
+    });
+    await licensing.deactivate({
+      principal: PRINCIPAL,
+      devicePublicId: first.device.publicId,
+    });
+    expect(store.devices[0]?.status).toBe("deactivated");
+    const second = await licensing.activateByPrincipal({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      installationId: INSTALL_A,
+    });
+    expect(second.device.id).toBe(first.device.id);
+    expect(store.devices[0]?.status).toBe("active");
+    expect(store.activations.filter((row) => row.status === "active")).toHaveLength(1);
+  });
+
+  it("enforces devices.max from features, not plan slug", async () => {
+    const { licensing } = await seeded();
+    const attempts = await Promise.allSettled([
+      licensing.activateByPrincipal({
+        principal: PRINCIPAL,
+        productId: "prod-1",
+        installationId: INSTALL_A,
+      }),
+      licensing.activateByPrincipal({
+        principal: PRINCIPAL,
+        productId: "prod-1",
+        installationId: INSTALL_B,
+      }),
+    ]);
+    expect(attempts.filter((row) => row.status === "fulfilled")).toHaveLength(1);
+    const rejected = attempts.find((row) => row.status === "rejected") as PromiseRejectedResult;
+    expect(isLicensingError(rejected.reason) && rejected.reason.code).toBe("DEVICE_LIMIT_REACHED");
+  });
+
+  it("reuses the same installation without consuming another slot", async () => {
+    const { licensing, store } = await seeded();
+    await licensing.activateByPrincipal({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      installationId: INSTALL_A,
+    });
+    await licensing.activateByPrincipal({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      installationId: INSTALL_A,
+    });
+    expect(store.devices).toHaveLength(1);
+    expect(store.activations.filter((row) => row.status === "active")).toHaveLength(1);
+  });
+
+  it("rejects blocked devices", async () => {
+    const { licensing } = await seeded();
+    const first = await licensing.activateByPrincipal({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      installationId: INSTALL_A,
+    });
+    await licensing.blockDevice(first.device.publicId);
+    await expect(
+      licensing.activateByPrincipal({
+        principal: PRINCIPAL,
+        productId: "prod-1",
+        installationId: INSTALL_A,
+      }),
+    ).rejects.toMatchObject({ code: "DEVICE_BLOCKED" });
+  });
+});

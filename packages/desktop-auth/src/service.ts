@@ -21,6 +21,7 @@ import type {
   CreateSessionResult,
   DesktopAuthRepository,
   DesktopClientRecord,
+  DesktopSessionRecord,
 } from "./types";
 
 export interface IssueAuthCodeInput {
@@ -346,6 +347,68 @@ export class DesktopAuthService {
       resourceType: "desktop_client",
       resourceId: input.client.clientId,
       metadata: { productSlug },
+      ipAddress: input.ipAddress ?? null,
+    });
+  }
+
+  async resolveAccessSession(accessToken: string): Promise<{
+    session: DesktopSessionRecord;
+    client: DesktopClientRecord;
+  }> {
+    const token = accessToken.trim();
+    if (!token) {
+      throw new DesktopAuthError("AUTH_REQUIRED", "Access token is required");
+    }
+    const session = await this.options.store.findSessionByAccessTokenHash(hashSecret(token));
+    if (!session) {
+      throw new DesktopAuthError("AUTH_REQUIRED", "Access token is invalid");
+    }
+    if (session.revokedAt) {
+      throw new DesktopAuthError("SESSION_REVOKED", "Desktop session has been revoked");
+    }
+    if (session.accessExpiresAt.getTime() <= this.now().getTime()) {
+      throw new DesktopAuthError("SESSION_EXPIRED", "Access token has expired");
+    }
+    const client = await this.options.store.findClientById(session.desktopClientId);
+    if (!client) {
+      throw new DesktopAuthError("AUTH_REQUIRED", "Desktop client is not registered");
+    }
+    this.assertClientActive(client);
+    return { session, client };
+  }
+
+  assertSessionClient(session: DesktopSessionRecord, client: DesktopClientRecord, clientId: string): void {
+    if (client.clientId !== clientId || session.desktopClientId !== client.id) {
+      throw new DesktopAuthError("AUTH_REQUIRED", "clientId does not match session");
+    }
+    if (session.productId !== client.productId) {
+      throw new DesktopAuthError("AUTH_REQUIRED", "clientId does not match session");
+    }
+  }
+
+  async bindSessionDevice(
+    sessionId: string,
+    input: { deviceId: string; devicePublicKey?: string | null },
+  ): Promise<DesktopSessionRecord> {
+    return this.options.store.bindSessionDevice(sessionId, input);
+  }
+
+  async recordDeviceActivated(input: {
+    userId: string;
+    client: DesktopClientRecord;
+    devicePublicId: string;
+    appVersion?: string | null;
+    ipAddress?: string | null;
+  }): Promise<void> {
+    await this.options.audit?.record({
+      actorUserId: input.userId,
+      action: "DESKTOP_DEVICE_ACTIVATED",
+      resourceType: "device",
+      resourceId: input.devicePublicId,
+      metadata: {
+        clientId: input.client.clientId,
+        appVersion: input.appVersion ?? null,
+      },
       ipAddress: input.ipAddress ?? null,
     });
   }

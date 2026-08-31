@@ -87,6 +87,15 @@ export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
     return row ? mapClient(row) : null;
   }
 
+  async findClientById(id: string): Promise<DesktopClientRecord | null> {
+    const [row] = await this.db
+      .select()
+      .from(desktopClients)
+      .where(eq(desktopClients.id, id))
+      .limit(1);
+    return row ? mapClient(row) : null;
+  }
+
   async insertClient(input: {
     clientId: string;
     productId: string;
@@ -170,6 +179,33 @@ export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
       .where(eq(desktopSessions.refreshTokenHash, refreshTokenHash))
       .limit(1);
     return row ? mapSession(row) : null;
+  }
+
+  async findSessionByAccessTokenHash(accessTokenHash: string): Promise<DesktopSessionRecord | null> {
+    const [row] = await this.db
+      .select()
+      .from(desktopSessions)
+      .where(eq(desktopSessions.accessTokenHash, accessTokenHash))
+      .limit(1);
+    return row ? mapSession(row) : null;
+  }
+
+  async bindSessionDevice(
+    sessionId: string,
+    input: { deviceId: string; devicePublicKey?: string | null },
+  ): Promise<DesktopSessionRecord> {
+    const [row] = await this.db
+      .update(desktopSessions)
+      .set({
+        deviceId: input.deviceId,
+        ...(input.devicePublicKey !== undefined ? { devicePublicKey: input.devicePublicKey } : {}),
+        lastSeenAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(desktopSessions.id, sessionId))
+      .returning();
+    if (!row) throw new Error("desktop session update failed");
+    return mapSession(row);
   }
 
   async findProductSlug(productId: string): Promise<string | null> {

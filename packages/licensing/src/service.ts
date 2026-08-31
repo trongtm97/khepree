@@ -28,6 +28,7 @@ import {
 import type { LicensingRepository } from "./store";
 import {
   LEASE_SCHEMA_VERSION,
+  type ActivateByPrincipalInput,
   type ActivateInput,
   type ActivationRecord,
   type DeactivateInput,
@@ -76,6 +77,18 @@ export class LicensingService {
 
   async activate(input: ActivateInput): Promise<ActivationResult> {
     const access = await this.requireAccess(input.licenseKey);
+    return this.activateWithAccess(access, input);
+  }
+
+  async activateByPrincipal(input: ActivateByPrincipalInput): Promise<ActivationResult> {
+    const access = await this.requireAccessForPrincipal(input.principal, input.productId);
+    return this.activateWithAccess(access, input);
+  }
+
+  private async activateWithAccess(
+    access: Awaited<ReturnType<LicensingService["requireAccess"]>>,
+    input: Pick<ActivateInput, "installationId" | "platform" | "deviceName">,
+  ): Promise<ActivationResult> {
     const installationHash = hashInstallationId(input.installationId);
     const device = await this.getOrCreateDevice(access.principal, installationHash, input);
     if (device.status === "blocked") {
@@ -285,6 +298,51 @@ export class LicensingService {
     return lease;
   }
 
+  private async requireAccessForPrincipal(principal: PrincipalRef, productId: string) {
+    const rows = await this.options.entitlement.resolveEntitlementsForPrincipal(principal);
+    const match = rows.find((row) => row.entitlement.productId === productId);
+    if (!match) {
+      throw new LicensingError("ENTITLEMENT_MISSING", "No entitlement for this product");
+    }
+
+    const { entitlement } = match;
+    if (entitlement.status === "suspended") {
+      throw new LicensingError("ENTITLEMENT_SUSPENDED", "Entitlement is suspended");
+    }
+    if (entitlement.status === "revoked") {
+      throw new LicensingError("LICENSE_REVOKED", "License has been revoked");
+    }
+    if (entitlement.status === "expired") {
+      throw new LicensingError("ENTITLEMENT_EXPIRED", "Entitlement has expired");
+    }
+    if (!isEntitlementActive({ ...entitlement, now: this.now() })) {
+      if (entitlement.expiresAt && entitlement.expiresAt <= this.now()) {
+        throw new LicensingError("ENTITLEMENT_EXPIRED", "Entitlement has expired");
+      }
+      throw new LicensingError("ENTITLEMENT_MISSING", "No active entitlement");
+    }
+
+    const allowed = await this.options.entitlement.canUseProduct(principal, productId);
+    if (!allowed) {
+      throw new LicensingError("ENTITLEMENT_MISSING", "Product is not entitled");
+    }
+
+    const provisioned = await this.options.entitlement.provisionLicenseIfRequired(entitlement.id);
+    const license = provisioned.license;
+    if (!license) {
+      throw new LicensingError("NOT_CONFIGURED", "License record is required");
+    }
+    if (license.status === "revoked") {
+      throw new LicensingError("LICENSE_REVOKED", "License has been revoked");
+    }
+
+    return {
+      license,
+      entitlement,
+      principal,
+    };
+  }
+
   private async requireAccess(licenseKey: string) {
     const license = await this.options.entitlement.getLicenseByKeyHash(hashLicenseKey(licenseKey));
     if (!license) throw new LicensingError("INVALID_LICENSE", "License key is invalid");
@@ -360,7 +418,7 @@ export class LicensingService {
   private async getOrCreateDevice(
     principal: PrincipalRef,
     installationHash: string,
-    input: ActivateInput,
+    input: Pick<ActivateInput, "platform" | "deviceName">,
   ): Promise<DeviceRecord> {
     const existing = await this.options.store.getDeviceByInstallation(
       principal.type,

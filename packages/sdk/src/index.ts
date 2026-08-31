@@ -157,6 +157,25 @@ export interface DesktopAuthExchangeResponse {
   features?: EntitlementFeature[];
 }
 
+export interface DesktopActivateRequest {
+  clientId: string;
+  installationId: string;
+  devicePublicKey?: string;
+  platform?: string;
+  deviceName?: string;
+  appVersion?: string;
+}
+
+export interface DesktopActivateResponse {
+  lease: SignedLease;
+  publicKey: string;
+  keyId: string;
+  expiresAt: string;
+  devicePublicId: string;
+  features: EntitlementFeature[];
+  entitlement: DesktopEntitlementSummary;
+}
+
 export interface DesktopRefreshRequest {
   sessionPublicId: string;
   refreshToken: string;

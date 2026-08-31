@@ -31,6 +31,9 @@ function createMockStore(initial: {
 
   const store: DesktopAuthRepository = {
     findClientByClientId: vi.fn(async () => initial.client ?? null),
+    findClientById: vi.fn(async (id: string) =>
+      initial.client && initial.client.id === id ? initial.client : null,
+    ),
     insertClient: vi.fn(),
     createAuthCode: vi.fn(),
     findAuthCodeByHash: vi.fn(async () => authCode),
@@ -59,6 +62,26 @@ function createMockStore(initial: {
       updatedAt: new Date(),
     })),
     findSessionByRefreshTokenHash: vi.fn(),
+    findSessionByAccessTokenHash: vi.fn(),
+    bindSessionDevice: vi.fn(async (_sessionId, input) => ({
+      id: "session-uuid",
+      publicId: "dss_test",
+      userId: "user-1",
+      desktopClientId: "client-uuid",
+      productId: "product-uuid",
+      deviceId: input.deviceId,
+      devicePublicKey: input.devicePublicKey ?? null,
+      accessTokenHash: "hash",
+      accessExpiresAt: new Date(Date.now() + 60_000),
+      refreshTokenHash: "refresh-hash",
+      refreshExpiresAt: new Date(Date.now() + 86_400_000),
+      rotationVersion: 0,
+      lastSeenAt: new Date(),
+      revokedAt: null,
+      revokeReason: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
     findProductSlug: vi.fn(async () => "development-sample"),
     findUserById: vi.fn(async (userId) => ({
       id: userId,

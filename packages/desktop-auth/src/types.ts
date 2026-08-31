@@ -83,6 +83,7 @@ export interface CreateSessionResult {
 
 export interface DesktopAuthRepository {
   findClientByClientId(clientId: string): Promise<DesktopClientRecord | null>;
+  findClientById(id: string): Promise<DesktopClientRecord | null>;
   insertClient(input: {
     clientId: string;
     productId: string;
@@ -94,7 +95,12 @@ export interface DesktopAuthRepository {
   findAuthCodeByHash(codeHash: string): Promise<DesktopAuthCodeRecord | null>;
   markAuthCodeConsumed(id: string, consumedAt: Date): Promise<boolean>;
   insertSession(input: CreateSessionInput): Promise<DesktopSessionRecord>;
+  findSessionByAccessTokenHash(accessTokenHash: string): Promise<DesktopSessionRecord | null>;
   findSessionByRefreshTokenHash(refreshTokenHash: string): Promise<DesktopSessionRecord | null>;
+  bindSessionDevice(
+    sessionId: string,
+    input: { deviceId: string; devicePublicKey?: string | null },
+  ): Promise<DesktopSessionRecord>;
   findProductSlug(productId: string): Promise<string | null>;
   findUserById(userId: string): Promise<{ id: string; email: string; name: string } | null>;
   ensureDevice(input: {
