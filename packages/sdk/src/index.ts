@@ -179,7 +179,7 @@ export interface DesktopActivateResponse {
 export interface DesktopRefreshRequest {
   sessionPublicId: string;
   refreshToken: string;
-  deviceProof?: {
+  deviceProof: {
     timestamp: number;
     nonce: string;
     signature: string;
@@ -187,6 +187,27 @@ export interface DesktopRefreshRequest {
     path: string;
     bodySha256: string;
   };
+}
+
+export type DesktopMachineState =
+  | "ACTIVE"
+  | "ENTITLEMENT_MISSING"
+  | "ENTITLEMENT_SUSPENDED"
+  | "ENTITLEMENT_EXPIRED"
+  | "DEVICE_REMOVED"
+  | "DEVICE_BLOCKED"
+  | "SESSION_REVOKED";
+
+export interface DesktopHeartbeatRequest {
+  sessionPublicId: string;
+  accessToken?: string;
+  deviceProof: DesktopRefreshRequest["deviceProof"];
+}
+
+export interface DesktopHeartbeatResponse {
+  sessionPublicId: string;
+  state: DesktopMachineState;
+  lastSeenAt: string;
 }
 
 export interface DesktopRefreshResponse {

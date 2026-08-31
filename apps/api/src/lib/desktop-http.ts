@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { isDesktopAuthError } from "@khepree/desktop-auth";
 import { isLicensingError } from "@khepree/licensing";
 import { jsonError } from "./api-response";
@@ -10,6 +11,10 @@ export function desktopAuthStatus(code: string): number {
     case "AUTH_REQUIRED":
     case "SESSION_EXPIRED":
     case "SESSION_REVOKED":
+    case "REFRESH_TOKEN_INVALID":
+    case "REFRESH_TOKEN_REUSED":
+    case "DEVICE_PROOF_INVALID":
+    case "DEVICE_REPLAY_DETECTED":
       return 401;
     case "REDIRECT_URI_INVALID":
       return 400;
@@ -51,6 +56,38 @@ function mapLicensingToDesktopCode(code: string): string {
 
 export function desktopAuthErrorResponse(error: unknown, requestId: string): Response {
   return desktopActivateErrorResponse(error, requestId);
+}
+
+export function sha256Hex(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+export function readDesktopDeviceProof(body: Record<string, unknown>) {
+  const proof = (body.deviceProof ?? {}) as Record<string, unknown>;
+  return {
+    timestamp: typeof proof.timestamp === "number" ? proof.timestamp : Number(proof.timestamp ?? 0),
+    nonce: typeof proof.nonce === "string" ? proof.nonce : "",
+    signature: typeof proof.signature === "string" ? proof.signature : "",
+    method: typeof proof.method === "string" ? proof.method : "",
+    path: typeof proof.path === "string" ? proof.path : "",
+    bodySha256: typeof proof.bodySha256 === "string" ? proof.bodySha256 : "",
+  };
+}
+
+export function readDesktopRefreshBody(body: Record<string, unknown>) {
+  return {
+    sessionPublicId: typeof body.sessionPublicId === "string" ? body.sessionPublicId : "",
+    refreshToken: typeof body.refreshToken === "string" ? body.refreshToken : "",
+    deviceProof: readDesktopDeviceProof(body),
+  };
+}
+
+export function readDesktopHeartbeatBody(body: Record<string, unknown>) {
+  return {
+    sessionPublicId: typeof body.sessionPublicId === "string" ? body.sessionPublicId : "",
+    accessToken: typeof body.accessToken === "string" ? body.accessToken : "",
+    deviceProof: readDesktopDeviceProof(body),
+  };
 }
 
 export function readDesktopAccessToken(request: Request): string | null {

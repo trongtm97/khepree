@@ -1,6 +1,7 @@
 import {
   DESKTOP_ACCESS_TOKEN_TTL_SECONDS,
   DESKTOP_AUTH_CODE_TTL_SECONDS,
+  DESKTOP_DEVICE_PROOF_TOLERANCE_SECONDS,
   DESKTOP_PKCE_METHOD,
   DESKTOP_REFRESH_TOKEN_TTL_SECONDS,
 } from "@khepree/config";
@@ -14,6 +15,19 @@ import { DesktopAuthError } from "./errors";
 import type { DesktopExchangeInput, DesktopExchangeResult, DesktopEntitlementAccess } from "./exchange-types";
 import { generateSecureToken, hashSecret } from "./hash";
 import { verifyPkceS256 } from "./pkce";
+import { MemoryNonceStore, type NonceStore } from "./nonce-store";
+import {
+  heartbeatDesktopSession,
+  logoutDesktopSession,
+  refreshDesktopSession,
+} from "./session-flow";
+import type {
+  DesktopHeartbeatInput,
+  DesktopHeartbeatResult,
+  DesktopLogoutInput,
+  DesktopRefreshInput,
+  DesktopRefreshResult,
+} from "./session-types";
 import { createDrizzleDesktopAuthRepository } from "./drizzle-store";
 import type {
   ConsumeAuthCodeInput,
@@ -40,10 +54,12 @@ export interface DesktopAuthServiceOptions {
   store: DesktopAuthRepository;
   entitlement?: EntitlementService;
   audit?: AuditService;
+  nonceStore?: NonceStore;
   now?: () => Date;
   authCodeTtlSeconds?: number;
   accessTokenTtlSeconds?: number;
   refreshTokenTtlSeconds?: number;
+  deviceProofToleranceSeconds?: number;
 }
 
 const MIN_DEVICE_PUBLIC_KEY_LENGTH = 32;
@@ -54,12 +70,30 @@ export class DesktopAuthService {
   private readonly authCodeTtlSeconds: number;
   private readonly accessTokenTtlSeconds: number;
   private readonly refreshTokenTtlSeconds: number;
+  private readonly nonceStore: NonceStore;
+  private readonly deviceProofToleranceSeconds: number;
 
   constructor(private readonly options: DesktopAuthServiceOptions) {
     this.now = options.now ?? (() => new Date());
     this.authCodeTtlSeconds = options.authCodeTtlSeconds ?? DESKTOP_AUTH_CODE_TTL_SECONDS;
     this.accessTokenTtlSeconds = options.accessTokenTtlSeconds ?? DESKTOP_ACCESS_TOKEN_TTL_SECONDS;
     this.refreshTokenTtlSeconds = options.refreshTokenTtlSeconds ?? DESKTOP_REFRESH_TOKEN_TTL_SECONDS;
+    this.nonceStore = options.nonceStore ?? new MemoryNonceStore();
+    this.deviceProofToleranceSeconds =
+      options.deviceProofToleranceSeconds ?? DESKTOP_DEVICE_PROOF_TOLERANCE_SECONDS;
+  }
+
+  private sessionFlowDeps() {
+    return {
+      store: this.options.store,
+      entitlement: this.options.entitlement,
+      nonceStore: this.nonceStore,
+      now: this.now,
+      accessTokenTtlSeconds: this.accessTokenTtlSeconds,
+      refreshTokenTtlSeconds: this.refreshTokenTtlSeconds,
+      deviceProofToleranceSeconds: this.deviceProofToleranceSeconds,
+      audit: this.options.audit,
+    };
   }
 
   assertRedirectUriAllowed(client: DesktopClientRecord, redirectUri: string): void {
@@ -411,6 +445,25 @@ export class DesktopAuthService {
       },
       ipAddress: input.ipAddress ?? null,
     });
+  }
+
+  async refreshSession(
+    input: DesktopRefreshInput,
+    auditMeta?: { ipAddress?: string | null },
+  ): Promise<DesktopRefreshResult> {
+    return refreshDesktopSession(this.sessionFlowDeps(), input, auditMeta);
+  }
+
+  async heartbeat(input: DesktopHeartbeatInput): Promise<DesktopHeartbeatResult> {
+    return heartbeatDesktopSession(this.sessionFlowDeps(), input);
+  }
+
+  async logout(input: DesktopLogoutInput, auditMeta?: { ipAddress?: string | null }): Promise<void> {
+    return logoutDesktopSession(this.sessionFlowDeps(), input, auditMeta);
+  }
+
+  async findSessionByPublicId(publicId: string): Promise<DesktopSessionRecord | null> {
+    return this.options.store.findSessionByPublicId(publicId);
   }
 }
 

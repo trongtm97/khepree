@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import {
   createPublicId,
   desktopAuthCodes,
@@ -188,6 +188,83 @@ export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
       .where(eq(desktopSessions.accessTokenHash, accessTokenHash))
       .limit(1);
     return row ? mapSession(row) : null;
+  }
+
+  async findSessionByPublicId(publicId: string): Promise<DesktopSessionRecord | null> {
+    const [row] = await this.db
+      .select()
+      .from(desktopSessions)
+      .where(eq(desktopSessions.publicId, publicId))
+      .limit(1);
+    return row ? mapSession(row) : null;
+  }
+
+  async findDeviceById(
+    deviceId: string,
+  ): Promise<{ id: string; publicId: string; status: "active" | "deactivated" | "blocked" } | null> {
+    const [row] = await this.db.select().from(devices).where(eq(devices.id, deviceId)).limit(1);
+    if (!row) return null;
+    return { id: row.id, publicId: row.publicId, status: row.status };
+  }
+
+  async rotateSessionCredentials(input: {
+    sessionId: string;
+    expectedRefreshHash: string;
+    accessToken: string;
+    accessExpiresAt: Date;
+    refreshToken: string;
+    refreshExpiresAt: Date;
+    lastSeenAt: Date;
+  }): Promise<"rotated" | "not_found" | "reused"> {
+    const rows = await this.db
+      .update(desktopSessions)
+      .set({
+        accessTokenHash: hashSecret(input.accessToken),
+        accessExpiresAt: input.accessExpiresAt,
+        refreshTokenHash: hashSecret(input.refreshToken),
+        refreshExpiresAt: input.refreshExpiresAt,
+        rotationVersion: sql`${desktopSessions.rotationVersion} + 1`,
+        lastSeenAt: input.lastSeenAt,
+        updatedAt: input.lastSeenAt,
+      })
+      .where(
+        and(
+          eq(desktopSessions.id, input.sessionId),
+          eq(desktopSessions.refreshTokenHash, input.expectedRefreshHash),
+          isNull(desktopSessions.revokedAt),
+        ),
+      )
+      .returning({ id: desktopSessions.id });
+    if (rows.length > 0) return "rotated";
+
+    const [session] = await this.db
+      .select({ refreshTokenHash: desktopSessions.refreshTokenHash, revokedAt: desktopSessions.revokedAt })
+      .from(desktopSessions)
+      .where(eq(desktopSessions.id, input.sessionId))
+      .limit(1);
+    if (!session || session.revokedAt) return "not_found";
+    if (session.refreshTokenHash !== input.expectedRefreshHash) return "reused";
+    return "not_found";
+  }
+
+  async revokeSession(sessionId: string, at: Date, reason: string): Promise<boolean> {
+    const rows = await this.db
+      .update(desktopSessions)
+      .set({
+        revokedAt: at,
+        revokeReason: reason,
+        updatedAt: at,
+      })
+      .where(and(eq(desktopSessions.id, sessionId), isNull(desktopSessions.revokedAt)))
+      .returning({ id: desktopSessions.id });
+    return rows.length > 0;
+  }
+
+  async touchSessionLastSeen(sessionId: string, at: Date): Promise<void> {
+    await this.db
+      .update(desktopSessions)
+      .set({ lastSeenAt: at, updatedAt: at })
+      .where(eq(desktopSessions.id, sessionId));
   }
 
   async bindSessionDevice(

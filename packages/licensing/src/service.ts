@@ -152,14 +152,38 @@ export class LicensingService {
       installationHash,
     );
     if (!device) throw new LicensingError("INVALID_LICENSE", "Device is not registered");
+    return this.refreshWithDevice(access, device);
+  }
+
+  async refreshByDevice(input: {
+    principal: PrincipalRef;
+    productId: string;
+    deviceId: string;
+  }): Promise<ActivationResult> {
+    const access = await this.requireAccessForPrincipal(input.principal, input.productId);
+    const device = await this.options.store.getDeviceById(input.deviceId);
+    if (!device) throw new LicensingError("NOT_FOUND", "Device not found");
+    if (device.principalType !== input.principal.type || device.principalId !== input.principal.id) {
+      throw new LicensingError("INVALID_LICENSE", "Device does not belong to this account");
+    }
+    return this.refreshWithDevice(access, device);
+  }
+
+  private async refreshWithDevice(
+    access: Awaited<ReturnType<LicensingService["requireAccess"]>>,
+    device: DeviceRecord,
+  ): Promise<ActivationResult> {
     if (device.status === "blocked") {
       throw new LicensingError("DEVICE_BLOCKED", "This device is blocked");
+    }
+    if (device.status === "deactivated") {
+      throw new LicensingError("DEVICE_REMOVED", "Device has been removed");
     }
 
     return this.options.store.withLicenseLock(access.license.id, async (repo) => {
       const activation = await repo.getActiveActivation(access.license.id, device.id);
       if (!activation) {
-        throw new LicensingError("NO_ACTIVE_ENTITLEMENT", "Device is not activated");
+        throw new LicensingError("DEVICE_REMOVED", "Device is not activated");
       }
       await repo.updateDevice(device.id, { lastSeenAt: this.now() });
       const lease = await this.issueLease(repo, access, device);

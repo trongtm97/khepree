@@ -1,4 +1,16 @@
 export { DesktopAuthError, isDesktopAuthError } from "./errors";
+export { buildDeviceProofMessage, verifyDeviceProofSignature } from "./device-proof";
+export type { DeviceProofInput } from "./device-proof";
+export { MemoryNonceStore, RedisNonceStore } from "./nonce-store";
+export type { NonceStore, NonceRedisCommands } from "./nonce-store";
+export type {
+  DesktopHeartbeatInput,
+  DesktopHeartbeatResult,
+  DesktopLogoutInput,
+  DesktopMachineState,
+  DesktopRefreshInput,
+  DesktopRefreshResult,
+} from "./session-types";
 export { generateSecureToken, hashSecret, secretsEqual } from "./hash";
 export { createPkceChallenge, verifyPkceS256 } from "./pkce";
 export {

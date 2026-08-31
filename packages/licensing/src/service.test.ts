@@ -292,11 +292,31 @@ describe("activateByPrincipal", () => {
     });
     await licensing.blockDevice(first.device.publicId);
     await expect(
-      licensing.activateByPrincipal({
+      licensing.refreshByDevice({
         principal: PRINCIPAL,
         productId: "prod-1",
-        installationId: INSTALL_A,
+        deviceId: first.device.id,
       }),
     ).rejects.toMatchObject({ code: "DEVICE_BLOCKED" });
+  });
+
+  it("rejects refresh for removed devices", async () => {
+    const { licensing } = await seeded();
+    const first = await licensing.activateByPrincipal({
+      principal: PRINCIPAL,
+      productId: "prod-1",
+      installationId: INSTALL_A,
+    });
+    await licensing.deactivate({
+      principal: PRINCIPAL,
+      devicePublicId: first.device.publicId,
+    });
+    await expect(
+      licensing.refreshByDevice({
+        principal: PRINCIPAL,
+        productId: "prod-1",
+        deviceId: first.device.id,
+      }),
+    ).rejects.toMatchObject({ code: "DEVICE_REMOVED" });
   });
 });

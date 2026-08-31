@@ -97,6 +97,19 @@ export interface DesktopAuthRepository {
   insertSession(input: CreateSessionInput): Promise<DesktopSessionRecord>;
   findSessionByAccessTokenHash(accessTokenHash: string): Promise<DesktopSessionRecord | null>;
   findSessionByRefreshTokenHash(refreshTokenHash: string): Promise<DesktopSessionRecord | null>;
+  findSessionByPublicId(publicId: string): Promise<DesktopSessionRecord | null>;
+  findDeviceById(deviceId: string): Promise<{ id: string; publicId: string; status: "active" | "deactivated" | "blocked" } | null>;
+  rotateSessionCredentials(input: {
+    sessionId: string;
+    expectedRefreshHash: string;
+    accessToken: string;
+    accessExpiresAt: Date;
+    refreshToken: string;
+    refreshExpiresAt: Date;
+    lastSeenAt: Date;
+  }): Promise<"rotated" | "not_found" | "reused">;
+  revokeSession(sessionId: string, at: Date, reason: string): Promise<boolean>;
+  touchSessionLastSeen(sessionId: string, at: Date): Promise<void>;
   bindSessionDevice(
     sessionId: string,
     input: { deviceId: string; devicePublicKey?: string | null },

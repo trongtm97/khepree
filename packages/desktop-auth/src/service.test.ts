@@ -63,6 +63,11 @@ function createMockStore(initial: {
     })),
     findSessionByRefreshTokenHash: vi.fn(),
     findSessionByAccessTokenHash: vi.fn(),
+    findSessionByPublicId: vi.fn(),
+    findDeviceById: vi.fn(),
+    rotateSessionCredentials: vi.fn(),
+    revokeSession: vi.fn(),
+    touchSessionLastSeen: vi.fn(),
     bindSessionDevice: vi.fn(async (_sessionId, input) => ({
       id: "session-uuid",
       publicId: "dss_test",

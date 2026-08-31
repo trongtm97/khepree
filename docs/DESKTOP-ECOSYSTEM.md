@@ -268,6 +268,29 @@ apps → @khepree/platform → @khepree/desktop-auth → @khepree/db
 - Audit: `DESKTOP_DEVICE_ACTIVATED`
 - Legacy `/api/v1/licenses/activate` unchanged
 
+## Phase K04 deliverables
+
+- Device-bound refresh: `POST /api/v1/desktop/auth/refresh` (refresh credential + session public id + Ed25519 device proof)
+- Heartbeat: `POST /api/v1/desktop/heartbeat` (access token + device proof → machine state)
+- Logout: `POST /api/v1/desktop/auth/logout` (revokes session only; device slot retained)
+- Refresh rotation with CAS on `refresh_token_hash`; reuse revokes the session and emits `DESKTOP_REFRESH_TOKEN_REUSED`
+- Nonce replay protection via injectable `NonceStore` (memory in dev/tests; Redis in production when wired)
+- Rate limits: `DESKTOP_REFRESH`, `DESKTOP_HEARTBEAT`, `DESKTOP_LOGOUT`
+
+### Refresh token reuse policy (K04)
+
+When a refresh credential is presented after rotation, the server:
+
+1. Rejects the request with `REFRESH_TOKEN_REUSED`
+2. Revokes **that desktop session** (`revoke_reason = refresh_token_reused`)
+3. Records audit `DESKTOP_REFRESH_TOKEN_REUSED`
+
+We do **not** revoke sibling sessions or free the device slot — each `desktop_sessions` row is an independent credential chain (`rotation_version` is audit metadata only). Stolen refresh tokens cannot be silently replayed after a legitimate rotation; the legitimate client keeps the new credential.
+
+### Cold start & offline revocation
+
+Desktop clients should call refresh or heartbeat on cold start for live entitlement/device/session checks. Signed leases may still grant temporary runtime grace per `@khepree/licensing` offline policy — **leases are not instant offline revocation**. Revocation takes effect on the next successful live API call or when the lease expires (including grace).
+
 ## Related docs
 
 - `docs/ARCHITECTURE.md` — package boundaries
