@@ -16,6 +16,7 @@
     "@khepree/commerce": "workspace:*",
     "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
+    "@khepree/desktop-auth": "workspace:*",
     "@khepree/entitlement": "workspace:*",
     "@khepree/events": "workspace:*",
     "@khepree/licensing": "workspace:*",

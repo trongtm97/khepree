@@ -1,6 +1,10 @@
 import { createCommerceService, type CreateCommerceServiceOverrides } from "@khepree/commerce";
 import { DEFAULT_LOCALE, getEnv } from "@khepree/config";
 import {
+  createDesktopAuthService,
+  type CreateDesktopAuthServiceOverrides,
+} from "@khepree/desktop-auth";
+import {
   createEntitlementOrderHandlers,
   createEntitlementService,
   type CreateEntitlementServiceOverrides,
@@ -15,6 +19,7 @@ import {
 export type CreateKhepreePlatformOverrides = {
   entitlement?: CreateEntitlementServiceOverrides;
   licensing?: CreateLicensingServiceOverrides;
+  desktopAuth?: CreateDesktopAuthServiceOverrides;
   commerce?: CreateCommerceServiceOverrides;
   partner?: Omit<CreatePartnerServiceOverrides, "entitlement">;
 };
@@ -34,6 +39,10 @@ export function createKhepreePlatform(
   const entitlement =
     overrides.licensing?.entitlement ?? createEntitlementService(overrides.entitlement);
   const licensing = createLicensingService({ ...overrides.licensing, entitlement });
+  const desktopAuth = createDesktopAuthService({
+    ...overrides.desktopAuth,
+    entitlement: overrides.desktopAuth?.entitlement ?? entitlement,
+  });
   const env = getEnv();
   const partner = createPartnerService({
     ...overrides.partner,
@@ -51,5 +60,5 @@ export function createKhepreePlatform(
       ...createPartnerOrderHandlers(partner),
     ],
   });
-  return { commerce, entitlement, licensing, partner };
+  return { commerce, entitlement, licensing, partner, desktopAuth };
 }

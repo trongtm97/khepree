@@ -50,6 +50,9 @@ importers:
       '@khepree/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@khepree/desktop-auth':
+        specifier: workspace:*
+        version: link:../../packages/desktop-auth
       '@khepree/entitlement':
         specifier: workspace:*
         version: link:../../packages/entitlement
@@ -274,6 +277,9 @@ importers:
       '@khepree/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@khepree/desktop-auth':
+        specifier: workspace:*
+        version: link:../../packages/desktop-auth
       '@khepree/entitlement':
         specifier: workspace:*
         version: link:../../packages/entitlement
@@ -693,6 +699,12 @@ importers:
       '@khepree/db':
         specifier: workspace:*
         version: link:../db
+      '@khepree/entitlement':
+        specifier: workspace:*
+        version: link:../entitlement
+      '@khepree/licensing':
+        specifier: workspace:*
+        version: link:../licensing
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.7(kysely@0.29.5)(postgres@3.4.9)
@@ -848,6 +860,9 @@ importers:
       '@khepree/db':
         specifier: workspace:*
         version: link:../db
+      '@khepree/desktop-auth':
+        specifier: workspace:*
+        version: link:../desktop-auth
       '@khepree/entitlement':
         specifier: workspace:*
         version: link:../entitlement

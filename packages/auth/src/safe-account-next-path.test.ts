@@ -19,6 +19,12 @@ describe("safeAccountNextPath", () => {
     expect(safeAccountNextPath("/admin/secret")).toBe("/dashboard");
   });
 
+  it("allows desktop authorize return paths", () => {
+    expect(safeAccountNextPath("/desktop/authorize?client_id=dev")).toBe(
+      "/desktop/authorize?client_id=dev",
+    );
+  });
+
   it("falls back when empty", () => {
     expect(safeAccountNextPath(null)).toBe("/dashboard");
     expect(safeAccountNextPath(undefined, "/profile")).toBe("/profile");

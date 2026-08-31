@@ -1,10 +1,16 @@
 import { and, eq, isNull } from "drizzle-orm";
 import {
+  createPublicId,
   desktopAuthCodes,
   desktopClients,
   desktopSessions,
+  devices,
+  products,
+  user,
+  withTransaction,
   type Database,
 } from "@khepree/db";
+import { hashInstallationId } from "@khepree/licensing";
 import { hashSecret } from "./hash";
 import type {
   CreateAuthCodeInput,
@@ -68,6 +74,10 @@ function mapSession(row: typeof desktopSessions.$inferSelect): DesktopSessionRec
 export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
   constructor(private readonly db: Database) {}
 
+  withTransaction<T>(fn: (repo: DesktopAuthRepository) => Promise<T>): Promise<T> {
+    return withTransaction(this.db, async (tx) => fn(new DrizzleDesktopAuthRepository(tx)));
+  }
+
   async findClientByClientId(clientId: string): Promise<DesktopClientRecord | null> {
     const [row] = await this.db
       .select()
@@ -124,11 +134,13 @@ export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
     return row ? mapAuthCode(row) : null;
   }
 
-  async markAuthCodeConsumed(id: string, consumedAt: Date): Promise<void> {
-    await this.db
+  async markAuthCodeConsumed(id: string, consumedAt: Date): Promise<boolean> {
+    const rows = await this.db
       .update(desktopAuthCodes)
       .set({ consumedAt })
-      .where(and(eq(desktopAuthCodes.id, id), isNull(desktopAuthCodes.consumedAt)));
+      .where(and(eq(desktopAuthCodes.id, id), isNull(desktopAuthCodes.consumedAt)))
+      .returning({ id: desktopAuthCodes.id });
+    return rows.length > 0;
   }
 
   async insertSession(input: CreateSessionInput): Promise<DesktopSessionRecord> {
@@ -158,6 +170,73 @@ export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
       .where(eq(desktopSessions.refreshTokenHash, refreshTokenHash))
       .limit(1);
     return row ? mapSession(row) : null;
+  }
+
+  async findProductSlug(productId: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ slug: products.slug })
+      .from(products)
+      .where(eq(products.id, productId))
+      .limit(1);
+    return row?.slug ?? null;
+  }
+
+  async findUserById(userId: string): Promise<{ id: string; email: string; name: string } | null> {
+    const [row] = await this.db
+      .select({ id: user.id, email: user.email, name: user.name })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async ensureDevice(input: {
+    userId: string;
+    installationId: string;
+    platform?: string;
+    deviceName?: string;
+  }): Promise<{ id: string; publicId: string; status: "active" | "deactivated" | "blocked" }> {
+    const installationHash = hashInstallationId(input.installationId);
+    const [existing] = await this.db
+      .select()
+      .from(devices)
+      .where(
+        and(
+          eq(devices.principalType, "USER"),
+          eq(devices.principalId, input.userId),
+          eq(devices.installationHash, installationHash),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      const [updated] = await this.db
+        .update(devices)
+        .set({
+          lastSeenAt: new Date(),
+          ...(input.platform !== undefined ? { platform: input.platform } : {}),
+          ...(input.deviceName !== undefined ? { name: input.deviceName } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(devices.id, existing.id))
+        .returning();
+      const row = updated ?? existing;
+      return { id: row.id, publicId: row.publicId, status: row.status };
+    }
+
+    const [row] = await this.db
+      .insert(devices)
+      .values({
+        publicId: createPublicId("dev"),
+        principalType: "USER",
+        principalId: input.userId,
+        installationHash,
+        platform: input.platform ?? null,
+        name: input.deviceName ?? null,
+      })
+      .returning();
+    if (!row) throw new Error("device insert failed");
+    return { id: row.id, publicId: row.publicId, status: row.status };
   }
 }
 

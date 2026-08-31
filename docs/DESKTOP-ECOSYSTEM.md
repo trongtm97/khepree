@@ -250,6 +250,14 @@ apps → @khepree/platform → @khepree/desktop-auth → @khepree/db
 - SDK types + machine error codes
 - Dev seed client: `dev-desktop-sample` → development-sample product
 
+## Phase K02 deliverables
+
+- Account authorize UI: `GET /desktop/authorize` on `account.khepree.com`
+- Token exchange API: `POST /api/v1/desktop/auth/exchange` on `api.khepree.com`
+- Rate limits: `DESKTOP_AUTHORIZE`, `DESKTOP_EXCHANGE`
+- Audit events: `DESKTOP_AUTHORIZED`, `DESKTOP_SESSION_CREATED`, `DESKTOP_AUTH_FAILED`
+- Login succeeds without entitlement; response includes `entitlementAccess`
+
 ## Related docs
 
 - `docs/ARCHITECTURE.md` — package boundaries

@@ -12,6 +12,8 @@
   "dependencies": {
     "@khepree/config": "workspace:*",
     "@khepree/db": "workspace:*",
+    "@khepree/entitlement": "workspace:*",
+    "@khepree/licensing": "workspace:*",
     "drizzle-orm": "^0.44.5"
   },
   "devDependencies": {

@@ -92,7 +92,16 @@ export interface DesktopAuthRepository {
   }): Promise<DesktopClientRecord>;
   createAuthCode(input: CreateAuthCodeInput, code: string): Promise<DesktopAuthCodeRecord>;
   findAuthCodeByHash(codeHash: string): Promise<DesktopAuthCodeRecord | null>;
-  markAuthCodeConsumed(id: string, consumedAt: Date): Promise<void>;
+  markAuthCodeConsumed(id: string, consumedAt: Date): Promise<boolean>;
   insertSession(input: CreateSessionInput): Promise<DesktopSessionRecord>;
   findSessionByRefreshTokenHash(refreshTokenHash: string): Promise<DesktopSessionRecord | null>;
+  findProductSlug(productId: string): Promise<string | null>;
+  findUserById(userId: string): Promise<{ id: string; email: string; name: string } | null>;
+  ensureDevice(input: {
+    userId: string;
+    installationId: string;
+    platform?: string;
+    deviceName?: string;
+  }): Promise<{ id: string; publicId: string; status: "active" | "deactivated" | "blocked" }>;
+  withTransaction<T>(fn: (repo: DesktopAuthRepository) => Promise<T>): Promise<T>;
 }

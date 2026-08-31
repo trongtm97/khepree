@@ -90,6 +90,7 @@ export const config = {
     "/accept-legal",
     "/verify-email",
     "/forgot-password",
+    "/desktop/:path*",
     "/healthz",
   ],
 };

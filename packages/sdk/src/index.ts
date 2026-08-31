@@ -145,6 +145,14 @@ export interface DesktopAuthExchangeResponse {
   accessExpiresAt: string;
   refreshExpiresAt: string;
   devicePublicId?: string;
+  user?: {
+    publicId: string;
+    email: string;
+    name: string;
+  };
+  client?: DesktopClient;
+  entitlement?: DesktopEntitlementSummary | null;
+  entitlementAccess?: "active" | "missing" | "expired" | "suspended";
   lease?: SignedLease;
   features?: EntitlementFeature[];
 }

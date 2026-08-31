@@ -9,6 +9,7 @@ const PROTECTED_PREFIXES = [
   "/billing",
   "/downloads",
   "/checkout",
+  "/desktop",
 ] as const;
 
 const DEFAULT_RETURN_PATH = "/dashboard";
