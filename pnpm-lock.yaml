@@ -292,6 +292,9 @@ importers:
       '@khepree/reseller':
         specifier: workspace:*
         version: link:../../packages/reseller
+      '@khepree/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@khepree/security':
         specifier: workspace:*
         version: link:../../packages/security

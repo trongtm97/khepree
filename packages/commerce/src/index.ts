@@ -27,8 +27,16 @@ export {
 } from "./sepay";
 export { createCommerceService, CommerceService, addBillingInterval, createPaymentProvider } from "./service";
 export type { CreateCommerceServiceOverrides } from "./service";
+export {
+  DESKTOP_CHECKOUT_STATUSES,
+  hasHonestProviderSubscription,
+  honestAccessTermLabel,
+  resolveDesktopCheckoutStatus,
+  type DesktopCheckoutStatus,
+} from "./desktop-checkout";
 export { createCommerceLifecycleHandlers } from "./outbox";
 export type { CommerceRepository } from "./store";
+export { MemoryCommerceRepository } from "./store";
 export type {
   BillingAccount,
   CatalogReader,

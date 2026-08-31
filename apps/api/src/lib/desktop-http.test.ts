@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { desktopAuthStatus, readDesktopActivateBody, readDesktopExchangeBody } from "./desktop-http";
+import { desktopAuthStatus, readDesktopCheckoutBody, readDesktopExchangeBody } from "./desktop-http";
 
 describe("desktop-http", () => {
   it("maps auth failures to 401", () => {
@@ -29,17 +29,19 @@ describe("desktop-http", () => {
     });
   });
 
-  it("reads activate body fields", () => {
+  it("reads checkout body fields", () => {
     expect(
-      readDesktopActivateBody({
+      readDesktopCheckoutBody({
         clientId: "dev-client",
-        installationId: "install-1",
-        platform: "windows",
+        planPublicId: "plan_pro",
+        pricePublicId: "price_vnd",
+        locale: "vi",
       }),
     ).toMatchObject({
       clientId: "dev-client",
-      installationId: "install-1",
-      platform: "windows",
+      planPublicId: "plan_pro",
+      pricePublicId: "price_vnd",
+      locale: "vi",
     });
   });
 });

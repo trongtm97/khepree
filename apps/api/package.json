@@ -22,6 +22,7 @@
     "@khepree/platform": "workspace:*",
     "@khepree/reseller": "workspace:*",
     "@khepree/security": "workspace:*",
+    "@khepree/sdk": "workspace:*",
     "@khepree/storage": "workspace:*",
     "@khepree/types": "workspace:*",
     "next": "^16.0.0",

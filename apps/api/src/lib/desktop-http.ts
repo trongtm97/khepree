@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isCommerceError } from "@khepree/commerce";
 import { isDesktopAuthError } from "@khepree/desktop-auth";
 import { isLicensingError } from "@khepree/licensing";
 import { jsonError } from "./api-response";
@@ -30,6 +31,8 @@ export function desktopAuthStatus(code: string): number {
     case "DEVICE_LIMIT_REACHED":
     case "DEVICE_TRANSFER_COOLDOWN":
     case "DEVICE_TRANSFER_LIMIT_REACHED":
+    case "CHECKOUT_NOT_AVAILABLE":
+    case "NOT_PURCHASABLE":
       return 409;
     case "RATE_LIMITED":
       return 429;
@@ -51,6 +54,10 @@ export function desktopActivateErrorResponse(error: unknown, requestId: string):
       requestId,
       error.details,
     );
+  }
+  if (isCommerceError(error)) {
+    const code = error.code === "NOT_PURCHASABLE" ? "CHECKOUT_NOT_AVAILABLE" : error.code;
+    return jsonError(code, error.message, desktopAuthStatus(code), requestId);
   }
   return jsonError("INTERNAL", "Request failed", 500, requestId);
 }
@@ -111,6 +118,15 @@ export function readDesktopActivateBody(body: Record<string, unknown>) {
     platform: typeof body.platform === "string" ? body.platform : undefined,
     deviceName: typeof body.deviceName === "string" ? body.deviceName : undefined,
     appVersion: typeof body.appVersion === "string" ? body.appVersion : undefined,
+  };
+}
+
+export function readDesktopCheckoutBody(body: Record<string, unknown>) {
+  return {
+    clientId: typeof body.clientId === "string" ? body.clientId : "",
+    planPublicId: typeof body.planPublicId === "string" ? body.planPublicId : "",
+    pricePublicId: typeof body.pricePublicId === "string" ? body.pricePublicId : "",
+    locale: typeof body.locale === "string" ? body.locale : undefined,
   };
 }
 

@@ -1,5 +1,26 @@
 export const SDK_VERSION = "0.1.0";
 
+export {
+  DESKTOP_CHECKOUT_STATUSES,
+  type DesktopAllowedActions,
+  type DesktopCheckoutCreateRequest,
+  type DesktopCheckoutCreateResponse,
+  type DesktopCheckoutStatus,
+  type DesktopCheckoutStatusResponse,
+  type DesktopDeviceUsage,
+  type DesktopMeProduct,
+  type DesktopMeUrls,
+  type DesktopPlanSummary,
+} from "./desktop-checkout";
+
+import type {
+  DesktopAllowedActions,
+  DesktopDeviceUsage,
+  DesktopMeProduct,
+  DesktopMeUrls,
+  DesktopPlanSummary,
+} from "./desktop-checkout";
+
 export const LICENSE_ERROR_CODES = [
   "NO_ACTIVE_ENTITLEMENT",
   "LICENSE_REVOKED",
@@ -240,6 +261,7 @@ export interface DesktopBillingSummary {
   hasActiveSubscription: boolean;
   checkoutAvailable: boolean;
   pendingPayment: boolean;
+  accessTermLabel?: string | null;
 }
 
 export interface DesktopMeResponse {
@@ -250,9 +272,15 @@ export interface DesktopMeResponse {
     name: string;
   };
   client: DesktopClient;
+  product: DesktopMeProduct;
   entitlement: DesktopEntitlementSummary | null;
+  plan: DesktopPlanSummary | null;
   device: DesktopDeviceSummary | null;
+  deviceUsage: DesktopDeviceUsage | null;
   billing: DesktopBillingSummary;
+  allowedActions: DesktopAllowedActions;
+  urls: DesktopMeUrls;
+  pendingCheckoutPublicId?: string | null;
 }
 
 export interface ApiErrorBody {

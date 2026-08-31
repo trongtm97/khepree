@@ -386,6 +386,10 @@ export class LicensingService {
     return updated;
   }
 
+  async getDeviceById(deviceId: string): Promise<DeviceRecord | null> {
+    return this.options.store.getDeviceById(deviceId);
+  }
+
   async listDevices(principal: PrincipalRef): Promise<DeviceRecord[]> {
     return this.options.store.listDevicesForPrincipal(principal.type, principal.id);
   }

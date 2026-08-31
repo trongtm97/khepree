@@ -203,6 +203,10 @@ export class CommerceService {
     };
   }
 
+  async getPurchasableOffer(planPublicId: string, pricePublicId: string, locale: string) {
+    return this.options.catalog.getPurchasableOffer(planPublicId, pricePublicId, locale);
+  }
+
   async rebuildCheckoutAction(input: {
     orderPublicId: string;
     owner: CustomerOwner;

@@ -431,6 +431,14 @@ export class DesktopAuthService {
     return this.options.store.revokeSessionsForDevice(deviceId, this.now(), reason);
   }
 
+  async findUserById(userId: string) {
+    return this.options.store.findUserById(userId);
+  }
+
+  async findProductSlug(productId: string) {
+    return this.options.store.findProductSlug(productId);
+  }
+
   async recordDeviceActivated(input: {
     userId: string;
     client: DesktopClientRecord;

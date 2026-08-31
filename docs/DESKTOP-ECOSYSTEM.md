@@ -299,6 +299,15 @@ Desktop clients should call refresh or heartbeat on cold start for live entitlem
 - Device limit UX: `DEVICE_LIMIT_REACHED` includes `{ used, max, manageDevicesUrl }` (no secrets)
 - Admin `blockDevice` remains distinct from owner remove (`DEVICE_BLOCKED`, no `removed_at`)
 
+## Phase K06 deliverables
+
+- `GET /api/v1/desktop/me` — user, product, entitlement, plan metadata, features, device usage, billing state, allowed actions, URLs (no payment secrets)
+- `POST /api/v1/desktop/checkout` — desktop session auth, product/plan validation, Commerce checkout intent, returns Khepree-hosted `handoffUrl` only
+- `GET /api/v1/desktop/checkout/{publicId}/status` — poll `PENDING` | `PAID_PROCESSING_ACCESS` | `ACCESS_ACTIVE` | `FAILED` | `CANCELLED`
+- Account handoff: `account.khepree.com/desktop/checkout/{orderPublicId}` — session auth, product/client match, invokes `CheckoutAction` (`redirect`, `form_post`, or QR pay page)
+- Payment completion: provider webhook → order paid → outbox → entitlement consumer (success redirect does **not** grant access)
+- Subscription honesty: `hasActiveSubscription` only when provider returned a real `providerSubscriptionId`; access-term labels describe one-time/perpetual access honestly
+
 ## Related docs
 
 - `docs/ARCHITECTURE.md` — package boundaries
