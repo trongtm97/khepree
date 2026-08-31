@@ -30,7 +30,7 @@ export function countInternalLinks(content: string): number {
 }
 
 export function countWords(content: string): number {
-  const text = content.replace(/<[^>]+>/g, " ").replace(/[#>*_\[\]()`-]/g, " ").trim();
+  const text = content.replace(/<[^>]+>/g, " ").replace(/[#>*_[\]()`-]/g, " ").trim();
   if (!text) return 0;
   return text.split(/\s+/).filter(Boolean).length;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { contentToEditorHtml, serializeEditorHtml } from "@khepree/catalog";
+import { contentToEditorHtml, serializeEditorHtml } from "@khepree/catalog/content/body-html";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ContentImageDialog } from "@/components/content/ContentImageDialog";

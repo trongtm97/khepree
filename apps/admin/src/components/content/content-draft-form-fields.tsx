@@ -9,7 +9,7 @@ import {
   getContentSeoScore,
   warnSeoDescriptionLength,
   warnSeoTitleLength,
-} from "@khepree/catalog";
+} from "@khepree/catalog/content/seo-validation";
 import { Button, Input, Select, Textarea } from "@khepree/ui";
 import { useEffect, useMemo, useState } from "react";
 import { resolveMediaPublicUrlAction } from "@/app/(admin)/content/content-media-actions";
