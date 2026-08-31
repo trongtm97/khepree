@@ -113,6 +113,17 @@ describe("parseProductMarketingMetadata", () => {
   });
 });
 
+describe("product metadata normalization", () => {
+  it("tolerates null metadata when parsing operating systems", async () => {
+    const { parseOperatingSystems, normalizePlatformCapabilities } = await import("./metadata");
+    expect(parseOperatingSystems(null)).toEqual([]);
+    expect(parseOperatingSystems(undefined)).toEqual([]);
+    expect(normalizePlatformCapabilities(null)).toEqual([]);
+    expect(normalizePlatformCapabilities({ web: true })).toEqual([]);
+    expect(normalizePlatformCapabilities(["web", "desktop", "bad"])).toEqual(["web", "desktop"]);
+  });
+});
+
 describe("product public extras", () => {
   it("does not invent operating systems from a desktop platform flag", async () => {
     const { parseOperatingSystems } = await import("./metadata");

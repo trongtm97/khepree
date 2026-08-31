@@ -7,7 +7,6 @@ import {
 import type { ContentType } from "@khepree/catalog";
 import { hasPermission, type Permission } from "@khepree/security";
 import { revalidatePath, updateTag } from "next/cache";
-import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-form";
 import { requireAdmin } from "@/lib/admin-session";
 import { getContentService } from "@/lib/admin";
@@ -60,7 +59,7 @@ export async function createContentArticleAction(_s: ActionState, formData: Form
   } catch (error) {
     return fail(error);
   }
-  redirect(`/content/${entryId}`);
+  return { redirectTo: `/content/${entryId}` };
 }
 
 export async function saveContentDraftAction(_s: ActionState, formData: FormData): Promise<ActionState> {

@@ -1,4 +1,21 @@
+import { productPlatformSchema, type ProductPlatform } from "@khepree/db";
 import type { ProductMarketingMetadata, PublicProductMedia } from "./types";
+
+const PLATFORM_SET = new Set<string>(productPlatformSchema);
+
+export function normalizeProductMetadata(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+export function normalizePlatformCapabilities(value: unknown): ProductPlatform[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is ProductPlatform => typeof item === "string" && PLATFORM_SET.has(item),
+  );
+}
 
 export const KNOWN_OPERATING_SYSTEMS = [
   "Windows",
@@ -10,8 +27,8 @@ export const KNOWN_OPERATING_SYSTEMS = [
 ] as const;
 export type KnownOperatingSystem = (typeof KNOWN_OPERATING_SYSTEMS)[number];
 
-export function parseOperatingSystems(metadata: Record<string, unknown>): string[] {
-  const raw = metadata.operatingSystems;
+export function parseOperatingSystems(metadata: Record<string, unknown> | null | undefined): string[] {
+  const raw = normalizeProductMetadata(metadata).operatingSystems;
   if (!Array.isArray(raw)) return [];
   const allowed = new Set<string>(KNOWN_OPERATING_SYSTEMS);
   return [...new Set(raw.filter((item): item is string => typeof item === "string" && allowed.has(item)))];
@@ -32,9 +49,9 @@ export function toPublicMedia(
 }
 
 export function parseProductMarketingMetadata(
-  metadata: Record<string, unknown>,
+  metadata: Record<string, unknown> | null | undefined,
 ): ProductMarketingMetadata {
-  const raw = metadata.marketing;
+  const raw = normalizeProductMetadata(metadata).marketing;
   if (!raw || typeof raw !== "object") return {};
 
   const marketing = raw as Record<string, unknown>;

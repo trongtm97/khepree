@@ -1,10 +1,11 @@
 "use client";
 
 import { Alert, Button } from "@khepree/ui";
-import { useActionState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, type ReactNode } from "react";
 import { adminUi } from "@/lib/labels";
 
-export type ActionState = { error?: string; notice?: string };
+export type ActionState = { error?: string; notice?: string; redirectTo?: string };
 
 export function ActionForm({
   action,
@@ -17,11 +18,18 @@ export function ActionForm({
   submitLabel: string;
   danger?: boolean;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(action, {});
+  const safeState = state ?? {};
+
+  useEffect(() => {
+    if (safeState.redirectTo) router.replace(safeState.redirectTo);
+  }, [router, safeState.redirectTo]);
+
   return (
     <form action={formAction} className="space-y-3">
-      {state.error ? <Alert variant="error">{state.error}</Alert> : null}
-      {state.notice ? <Alert variant="success">{state.notice}</Alert> : null}
+      {safeState.error ? <Alert variant="error">{safeState.error}</Alert> : null}
+      {safeState.notice ? <Alert variant="success">{safeState.notice}</Alert> : null}
       {children}
       <Button
         type="submit"

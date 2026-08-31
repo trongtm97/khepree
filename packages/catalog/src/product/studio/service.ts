@@ -20,7 +20,7 @@ import {
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@khepree/config";
 import { parseMoneyMinor } from "@khepree/types";
 import { formatPriceAmount } from "../pricing";
-import { parseOperatingSystems } from "../metadata";
+import { normalizePlatformCapabilities, normalizeProductMetadata, parseOperatingSystems } from "../metadata";
 import { createProductPreviewToken } from "../preview-token";
 import { suggestProductSlug } from "../slug";
 import { CatalogError } from "../admin";
@@ -206,10 +206,10 @@ export class ProductStudioService {
       slug: product.slug,
       status: product.status,
       licensingMode: product.licensingMode,
-      platformCapabilities: product.platformCapabilities as ProductPlatform[],
+      platformCapabilities: normalizePlatformCapabilities(product.platformCapabilities),
       iconMediaId: product.iconMediaId,
       iconMediaPublicId,
-      metadata: product.metadata as Record<string, unknown>,
+      metadata: normalizeProductMetadata(product.metadata),
       updatedAt: product.updatedAt,
       translations: translations.map((t) => ({
         locale: t.locale,
@@ -335,7 +335,10 @@ export class ProductStudioService {
 
     const metadata =
       input.operatingSystems !== undefined
-        ? { ...existing.metadata, operatingSystems: parseOperatingSystems({ operatingSystems: input.operatingSystems }) }
+        ? {
+            ...normalizeProductMetadata(existing.metadata),
+            operatingSystems: parseOperatingSystems({ operatingSystems: input.operatingSystems }),
+          }
         : undefined;
 
     const [row] = await this.db

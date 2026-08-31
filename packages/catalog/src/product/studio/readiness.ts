@@ -1,4 +1,4 @@
-import type { ProductPlatform } from "@khepree/db";
+import { normalizePlatformCapabilities } from "../metadata";
 import { isPurchasableBillingType } from "../types";
 import type { ProductStudioSnapshot, ReadinessItem, ReadinessResult } from "./types";
 
@@ -67,7 +67,7 @@ export function computeProductReadiness(snapshot: ProductStudioSnapshot): Readin
     required: true,
   });
 
-  const needsRelease = (snapshot.platformCapabilities as ProductPlatform[]).includes("desktop");
+  const needsRelease = normalizePlatformCapabilities(snapshot.platformCapabilities).includes("desktop");
   items.push({
     id: "release",
     label: "Tệp phát hành (sản phẩm desktop)",

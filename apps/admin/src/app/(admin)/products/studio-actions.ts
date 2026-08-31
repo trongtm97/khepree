@@ -4,7 +4,6 @@ import { isCatalogError, suggestProductSlug } from "@khepree/catalog";
 import type { LicensingMode, ProductPlatform } from "@khepree/db";
 import { hasPermission, type Permission } from "@khepree/security";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-form";
 import { requireAdmin } from "@/lib/admin-session";
 import { getProductStudio, webPreviewBaseUrl } from "@/lib/product-studio";
@@ -51,7 +50,7 @@ export async function createStudioProductAction(_s: ActionState, formData: FormD
   } catch (error) {
     return fail(error);
   }
-  redirect(`/products/${productId}?tab=overview`);
+  return { redirectTo: `/products/${productId}?tab=overview` };
 }
 
 export async function saveOverviewAction(_s: ActionState, formData: FormData): Promise<ActionState> {
