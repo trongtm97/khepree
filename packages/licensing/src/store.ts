@@ -10,6 +10,19 @@ export interface InsertDeviceInput {
   name?: string | null;
 }
 
+export interface InsertRemovalEventInput {
+  principalType: DeviceRecord["principalType"];
+  principalId: string;
+  deviceId: string;
+  removedByUserId: string | null;
+  actorType: "owner" | "admin";
+  bypassTransferQuota: boolean;
+}
+
+export interface DeviceSessionRevoker {
+  revokeSessionsForDevice(deviceId: string, reason: string): Promise<number>;
+}
+
 export interface InsertActivationInput {
   licenseId: string;
   deviceId: string;
@@ -49,8 +62,17 @@ export interface LicensingRepository {
       platform: string | null;
       name: string | null;
       lastSeenAt: Date;
+      removedAt: Date | null;
+      removedByUserId: string | null;
     }>,
   ): Promise<DeviceRecord>;
+
+  insertRemovalEvent(input: InsertRemovalEventInput): Promise<void>;
+  countRemovalEventsSince(
+    principalType: DeviceRecord["principalType"],
+    principalId: string,
+    since: Date,
+  ): Promise<number>;
 
   getActiveActivation(licenseId: string, deviceId: string): Promise<ActivationRecord | null>;
   listActiveActivations(licenseId: string): Promise<ActivationRecord[]>;
@@ -76,6 +98,7 @@ export class MemoryLicensingRepository implements LicensingRepository {
   activations: ActivationRecord[] = [];
   leases: LeaseRow[] = [];
   events: Array<{ licenseId: string; eventType: string }> = [];
+  removalEvents: Array<InsertRemovalEventInput & { createdAt: Date }> = [];
   private readonly locks = new Map<string, Promise<unknown>>();
 
   constructor(private readonly now: () => Date = () => new Date()) {}
@@ -146,6 +169,8 @@ export class MemoryLicensingRepository implements LicensingRepository {
       status: "active",
       firstSeenAt: now,
       lastSeenAt: now,
+      removedAt: null,
+      removedByUserId: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -160,6 +185,8 @@ export class MemoryLicensingRepository implements LicensingRepository {
       platform: string | null;
       name: string | null;
       lastSeenAt: Date;
+      removedAt: Date | null;
+      removedByUserId: string | null;
     }>,
   ): Promise<DeviceRecord> {
     const row = this.devices.find((item) => item.id === id);
@@ -168,8 +195,29 @@ export class MemoryLicensingRepository implements LicensingRepository {
     if (patch.platform !== undefined) row.platform = patch.platform;
     if (patch.name !== undefined) row.name = patch.name;
     if (patch.lastSeenAt) row.lastSeenAt = new Date(patch.lastSeenAt);
+    if (patch.removedAt !== undefined) row.removedAt = patch.removedAt ? new Date(patch.removedAt) : null;
+    if (patch.removedByUserId !== undefined) row.removedByUserId = patch.removedByUserId;
     row.updatedAt = this.now();
     return row;
+  }
+
+  async insertRemovalEvent(input: InsertRemovalEventInput): Promise<void> {
+    this.removalEvents.push({ ...input, createdAt: this.now() });
+  }
+
+  async countRemovalEventsSince(
+    principalType: DeviceRecord["principalType"],
+    principalId: string,
+    since: Date,
+  ): Promise<number> {
+    return this.removalEvents.filter(
+      (row) =>
+        row.principalType === principalType &&
+        row.principalId === principalId &&
+        !row.bypassTransferQuota &&
+        row.actorType === "owner" &&
+        row.createdAt >= since,
+    ).length;
   }
 
   async getActiveActivation(licenseId: string, deviceId: string): Promise<ActivationRecord | null> {

@@ -427,6 +427,10 @@ export class DesktopAuthService {
     return this.options.store.bindSessionDevice(sessionId, input);
   }
 
+  async revokeSessionsForDevice(deviceId: string, reason: string): Promise<number> {
+    return this.options.store.revokeSessionsForDevice(deviceId, this.now(), reason);
+  }
+
   async recordDeviceActivated(input: {
     userId: string;
     client: DesktopClientRecord;

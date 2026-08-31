@@ -112,6 +112,10 @@ export interface CatalogReader {
 export const DEFAULT_DEVICE_LIMIT = 1;
 export const DEFAULT_LEASE_TTL_SECONDS = 86_400;
 export const DEFAULT_GRACE_PERIOD_SECONDS = 259_200;
+export const DEFAULT_DEVICE_TRANSFER_LIMIT = 5;
+export const DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS = 30;
 export const DEVICE_LIMIT_FEATURE = "devices.max";
+export const DEVICE_TRANSFER_LIMIT_FEATURE = "devices.transfers.max";
+export const DEVICE_TRANSFER_WINDOW_FEATURE = "devices.transfers.window_days";
 export const LEASE_TTL_FEATURE = "lease.ttl_seconds";
 export const LEASE_GRACE_FEATURE = "lease.grace_seconds";

@@ -38,10 +38,17 @@ export function createKhepreePlatform(
 ) {
   const entitlement =
     overrides.licensing?.entitlement ?? createEntitlementService(overrides.entitlement);
-  const licensing = createLicensingService({ ...overrides.licensing, entitlement });
   const desktopAuth = createDesktopAuthService({
     ...overrides.desktopAuth,
     entitlement: overrides.desktopAuth?.entitlement ?? entitlement,
+  });
+  const licensing = createLicensingService({
+    ...overrides.licensing,
+    entitlement,
+    sessionRevoker: overrides.licensing?.sessionRevoker ?? {
+      revokeSessionsForDevice: (deviceId, reason) =>
+        desktopAuth.revokeSessionsForDevice(deviceId, reason),
+    },
   });
   const env = getEnv();
   const partner = createPartnerService({

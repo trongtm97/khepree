@@ -14,6 +14,7 @@ export {
   LicensingService,
   createLicensingService,
   DEFAULT_DEACTIVATE_COOLDOWN_SECONDS,
+  buildManageDevicesUrl,
 } from "./service";
 export { createLicensingPlatform } from "./platform";
 export { createLicensingOrderHandlers } from "./order-handlers";
@@ -24,6 +25,9 @@ export type {
   ActivationRecord,
   DeviceRecord,
   LicenseLeasePayload,
+  ManagedDevicesView,
+  RemoveDeviceInput,
   SignedLease,
 } from "./types";
+export type { DeviceSessionRevoker } from "./store";
 export { LEASE_SCHEMA_VERSION } from "./types";

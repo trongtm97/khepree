@@ -13,6 +13,14 @@ export {
   type AuthenticatedSession,
   type SessionRow,
 } from "./session";
+export {
+  assertRecentAuth,
+  hasRecentAuth,
+  touchSessionForStepUp,
+  recentAuthRedirectTarget,
+  AuthError,
+  isAuthError,
+} from "./recent-auth";
 export { recordAuthAudit, type AuthAuditAction } from "./audit";
 export { getAuthBaseUrl } from "./email";
 export { safeAccountNextPath, safeAccountNextPath as safeReturnPath } from "./safe-account-next-path";

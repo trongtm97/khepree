@@ -1,7 +1,8 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import {
   activations,
   createPublicId,
+  deviceRemovalEvents,
   devices,
   licenseEvents,
   licenseLeases,
@@ -14,6 +15,7 @@ import type {
   InsertActivationInput,
   InsertDeviceInput,
   InsertLeaseInput,
+  InsertRemovalEventInput,
   LicensingRepository,
 } from "./store";
 
@@ -29,6 +31,8 @@ function mapDevice(row: typeof devices.$inferSelect): DeviceRecord {
     status: row.status,
     firstSeenAt: row.firstSeenAt,
     lastSeenAt: row.lastSeenAt,
+    removedAt: row.removedAt,
+    removedByUserId: row.removedByUserId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -138,6 +142,8 @@ export class DrizzleLicensingRepository implements LicensingRepository {
       platform: string | null;
       name: string | null;
       lastSeenAt: Date;
+      removedAt: Date | null;
+      removedByUserId: string | null;
     }>,
   ): Promise<DeviceRecord> {
     const [row] = await this.db
@@ -147,6 +153,8 @@ export class DrizzleLicensingRepository implements LicensingRepository {
         ...(patch.platform !== undefined ? { platform: patch.platform } : {}),
         ...(patch.name !== undefined ? { name: patch.name } : {}),
         ...(patch.lastSeenAt ? { lastSeenAt: patch.lastSeenAt } : {}),
+        ...(patch.removedAt !== undefined ? { removedAt: patch.removedAt } : {}),
+        ...(patch.removedByUserId !== undefined ? { removedByUserId: patch.removedByUserId } : {}),
         updatedAt: new Date(),
       })
       .where(eq(devices.id, id))
@@ -228,6 +236,37 @@ export class DrizzleLicensingRepository implements LicensingRepository {
       .orderBy(desc(activations.deactivatedAt))
       .limit(1);
     return row?.deactivatedAt ?? null;
+  }
+
+  async insertRemovalEvent(input: InsertRemovalEventInput): Promise<void> {
+    await this.db.insert(deviceRemovalEvents).values({
+      principalType: input.principalType,
+      principalId: input.principalId,
+      deviceId: input.deviceId,
+      removedByUserId: input.removedByUserId,
+      actorType: input.actorType,
+      bypassTransferQuota: input.bypassTransferQuota,
+    });
+  }
+
+  async countRemovalEventsSince(
+    principalType: DeviceRecord["principalType"],
+    principalId: string,
+    since: Date,
+  ): Promise<number> {
+    const [row] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(deviceRemovalEvents)
+      .where(
+        and(
+          eq(deviceRemovalEvents.principalType, principalType),
+          eq(deviceRemovalEvents.principalId, principalId),
+          eq(deviceRemovalEvents.actorType, "owner"),
+          eq(deviceRemovalEvents.bypassTransferQuota, false),
+          gte(deviceRemovalEvents.createdAt, since),
+        ),
+      );
+    return row?.count ?? 0;
   }
 
   async insertLease(input: InsertLeaseInput): Promise<LeaseRow> {

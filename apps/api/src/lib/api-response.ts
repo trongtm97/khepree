@@ -6,9 +6,10 @@ export function jsonError(
   message: string,
   status: number,
   requestId?: string,
+  details?: Record<string, unknown>,
 ): Response {
   const body: ApiErrorBody = {
-    error: { code, message, requestId },
+    error: { code, message, requestId, ...(details ? { details } : {}) },
   };
   return Response.json(body, { status });
 }

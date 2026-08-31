@@ -1,9 +1,13 @@
 import type { PlanFeatureValue } from "@khepree/db";
 import {
   DEFAULT_DEVICE_LIMIT,
+  DEFAULT_DEVICE_TRANSFER_LIMIT,
+  DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS,
   DEFAULT_GRACE_PERIOD_SECONDS,
   DEFAULT_LEASE_TTL_SECONDS,
   DEVICE_LIMIT_FEATURE,
+  DEVICE_TRANSFER_LIMIT_FEATURE,
+  DEVICE_TRANSFER_WINDOW_FEATURE,
   LEASE_GRACE_FEATURE,
   LEASE_TTL_FEATURE,
   type FeatureSnapshot,
@@ -37,6 +41,18 @@ export function resolveDeviceLimit(snapshot: FeatureSnapshot): number {
   const limit = integerFeature(snapshot, DEVICE_LIMIT_FEATURE);
   if (limit === null || limit < 1) return DEFAULT_DEVICE_LIMIT;
   return limit;
+}
+
+export function resolveDeviceTransferLimit(snapshot: FeatureSnapshot): number {
+  const limit = integerFeature(snapshot, DEVICE_TRANSFER_LIMIT_FEATURE);
+  if (limit === null || limit < 0) return DEFAULT_DEVICE_TRANSFER_LIMIT;
+  return limit;
+}
+
+export function resolveDeviceTransferWindowDays(snapshot: FeatureSnapshot): number {
+  const days = integerFeature(snapshot, DEVICE_TRANSFER_WINDOW_FEATURE);
+  if (days === null || days < 1) return DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS;
+  return days;
 }
 
 export function resolveOfflinePolicy(snapshot: FeatureSnapshot): OfflinePolicy {

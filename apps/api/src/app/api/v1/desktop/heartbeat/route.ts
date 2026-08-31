@@ -1,5 +1,5 @@
 import { isDesktopAuthError } from "@khepree/desktop-auth";
-import { clientIp, enforceRateLimit, RATE_LIMITS } from "@khepree/security";
+import { enforceRateLimit, RATE_LIMITS } from "@khepree/security";
 import { getRequestId, jsonError, jsonOk } from "@/lib/api-response";
 import {
   desktopActivateErrorResponse,

@@ -109,6 +109,7 @@ export interface DesktopAuthRepository {
     lastSeenAt: Date;
   }): Promise<"rotated" | "not_found" | "reused">;
   revokeSession(sessionId: string, at: Date, reason: string): Promise<boolean>;
+  revokeSessionsForDevice(deviceId: string, at: Date, reason: string): Promise<number>;
   touchSessionLastSeen(sessionId: string, at: Date): Promise<void>;
   bindSessionDevice(
     sessionId: string,

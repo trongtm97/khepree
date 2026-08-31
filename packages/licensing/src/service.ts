@@ -1,4 +1,4 @@
-import { getEnv, isLicenseSigningConfigured } from "@khepree/config";
+import { accountPublicUrl, getEnv, isLicenseSigningConfigured } from "@khepree/config";
 import {
   createDrizzleAuditService,
   getDb,
@@ -11,8 +11,11 @@ import {
   createEntitlementService,
   hashLicenseKey,
   resolveDeviceLimit,
+  resolveDeviceTransferLimit,
+  resolveDeviceTransferWindowDays,
   resolveOfflinePolicy,
   type EntitlementService,
+  type FeatureSnapshot,
   type PrincipalRef,
 } from "@khepree/entitlement";
 import { canonicalizeLeasePayload } from "./canonicalize";
@@ -25,7 +28,7 @@ import {
   signingKeysFromEnv,
   type SigningKeyPair,
 } from "./lease";
-import type { LicensingRepository } from "./store";
+import type { LicensingRepository, DeviceSessionRevoker } from "./store";
 import {
   LEASE_SCHEMA_VERSION,
   type ActivateByPrincipalInput,
@@ -34,11 +37,19 @@ import {
   type DeactivateInput,
   type DeviceRecord,
   type LicenseLeasePayload,
+  type ManagedDevicesView,
   type RefreshInput,
+  type RemoveDeviceInput,
   type SignedLease,
 } from "./types";
 
 export const DEFAULT_DEACTIVATE_COOLDOWN_SECONDS = 3_600;
+
+export function buildManageDevicesUrl(currentDevicePublicId?: string): string {
+  const base = `${accountPublicUrl()}/devices`;
+  if (!currentDevicePublicId) return base;
+  return `${base}?currentDevice=${encodeURIComponent(currentDevicePublicId)}`;
+}
 
 export interface ActivationResult {
   lease: SignedLease;
@@ -56,6 +67,7 @@ export interface LicensingServiceOptions {
   keys: SigningKeyPair;
   now?: () => Date;
   deactivateCooldownSeconds?: number;
+  sessionRevoker?: DeviceSessionRevoker;
 }
 
 export class LicensingService {
@@ -106,7 +118,11 @@ export class LicensingService {
         const active = await repo.listActiveActivations(access.license.id);
         const limit = resolveDeviceLimit(access.entitlement.featureSnapshot);
         if (active.length >= limit) {
-          throw new LicensingError("DEVICE_LIMIT_REACHED", "Device limit reached for this license");
+          throw new LicensingError("DEVICE_LIMIT_REACHED", "Device limit reached for this license", {
+            used: active.length,
+            max: limit,
+            manageDevicesUrl: buildManageDevicesUrl(device.publicId),
+          });
         }
         activation = await repo.insertActivation({
           licenseId: access.license.id,
@@ -236,6 +252,118 @@ export class LicensingService {
 
     const updated = await this.options.store.updateDevice(device.id, { status: "deactivated" });
     return updated;
+  }
+
+  async removeDevice(input: RemoveDeviceInput): Promise<DeviceRecord> {
+    const device = await this.options.store.getDeviceByPublicId(input.devicePublicId);
+    if (!device) throw new LicensingError("NOT_FOUND", "Device not found");
+    if (
+      device.principalType !== input.principal.type ||
+      device.principalId !== input.principal.id
+    ) {
+      throw new LicensingError("INVALID_LICENSE", "Device does not belong to this account");
+    }
+    if (device.status === "blocked") {
+      throw new LicensingError("DEVICE_BLOCKED", "This device is blocked by support");
+    }
+    if (device.status === "deactivated" && device.removedAt) {
+      return device;
+    }
+
+    await this.assertTransferCooldown(input.principal);
+
+    if (!input.bypassTransferQuota) {
+      await this.assertTransferQuota(input.principal);
+    }
+
+    const licenses = await this.licensesForPrincipal(input.principal);
+    const now = this.now();
+    let sessionsRevoked = 0;
+
+    for (const license of licenses) {
+      const activations = await this.options.store.listActivationsForDevice(device.id);
+      for (const activation of activations) {
+        if (activation.licenseId === license.id && activation.status === "active") {
+          await this.options.store.deactivateActivation(activation.id, now);
+          await this.options.store.insertLicenseEvent(license.id, "device_removed", {
+            devicePublicId: device.publicId,
+            actorUserId: input.actorUserId,
+          });
+        }
+      }
+    }
+
+    if (this.options.sessionRevoker) {
+      sessionsRevoked = await this.options.sessionRevoker.revokeSessionsForDevice(
+        device.id,
+        "device_removed",
+      );
+    }
+
+    const updated = await this.options.store.updateDevice(device.id, {
+      status: "deactivated",
+      removedAt: now,
+      removedByUserId: input.actorUserId,
+    });
+
+    await this.options.store.insertRemovalEvent({
+      principalType: input.principal.type,
+      principalId: input.principal.id,
+      deviceId: device.id,
+      removedByUserId: input.actorUserId,
+      actorType: input.actorType ?? "owner",
+      bypassTransferQuota: Boolean(input.bypassTransferQuota),
+    });
+
+    await this.options.audit.record({
+      actorUserId: input.actorUserId,
+      action: "device.removed",
+      resourceType: "device",
+      resourceId: device.publicId,
+      metadata: {
+        sessionsRevoked,
+        bypassTransferQuota: Boolean(input.bypassTransferQuota),
+      },
+    });
+
+    return updated;
+  }
+
+  async listManagedDevices(
+    principal: PrincipalRef,
+    options?: { currentDevicePublicId?: string },
+  ): Promise<ManagedDevicesView> {
+    const rows = await this.listLicenses(principal);
+    const currentDevicePublicId = options?.currentDevicePublicId;
+    const products = rows.map((row) => {
+      const slotsMax = resolveDeviceLimit(row.entitlement.featureSnapshot);
+      const activeCount = row.devices.filter((device) => device.status === "active").length;
+      return {
+        productId: row.entitlement.productId,
+        productSlug: row.productSlug,
+        planSlug: row.planSlug,
+        slotsUsed: activeCount,
+        slotsMax,
+        devices: row.devices.map((device) => {
+          const deviceActivations = row.activations.filter((item) => item.deviceId === device.id);
+          const firstActivatedAt = deviceActivations.reduce<Date | null>((earliest, item) => {
+            if (!earliest || item.activatedAt < earliest) return item.activatedAt;
+            return earliest;
+          }, null);
+          return {
+            devicePublicId: device.publicId,
+            platform: device.platform,
+            name: device.name,
+            status: device.status,
+            firstActivatedAt: firstActivatedAt ?? device.firstSeenAt,
+            lastActiveAt: device.lastSeenAt,
+            isCurrent: currentDevicePublicId === device.publicId,
+            removedAt: device.removedAt,
+          };
+        }),
+      };
+    });
+    return { products };
   }
 
   async blockDevice(devicePublicId: string, actorUserId?: string | null): Promise<DeviceRecord> {
@@ -424,6 +552,59 @@ export class LicensingService {
     throw new LicensingError("INVALID_LICENSE", "Device identity is required");
   }
 
+  private async assertTransferCooldown(principal: PrincipalRef): Promise<void> {
+    if (this.cooldownSeconds <= 0) return;
+    const last = await this.options.store.lastDeactivationAt(principal.type, principal.id);
+    if (!last) return;
+    const elapsed = (this.now().getTime() - last.getTime()) / 1000;
+    if (elapsed < this.cooldownSeconds) {
+      throw new LicensingError("DEVICE_TRANSFER_COOLDOWN", "Device removal is cooling down");
+    }
+  }
+
+  private async assertTransferQuota(principal: PrincipalRef): Promise<void> {
+    const policy = await this.resolveTransferPolicy(principal);
+    if (policy.maxTransfers <= 0) {
+      throw new LicensingError(
+        "DEVICE_TRANSFER_LIMIT_REACHED",
+        "Self-service device transfer limit reached",
+        { used: policy.used, max: policy.maxTransfers, windowDays: policy.windowDays },
+      );
+    }
+    if (policy.used >= policy.maxTransfers) {
+      throw new LicensingError(
+        "DEVICE_TRANSFER_LIMIT_REACHED",
+        "Self-service device transfer limit reached",
+        { used: policy.used, max: policy.maxTransfers, windowDays: policy.windowDays },
+      );
+    }
+  }
+
+  private async resolveTransferPolicy(principal: PrincipalRef) {
+    const rows = await this.options.entitlement.resolveEntitlementsForPrincipal(principal);
+    const emptySnapshot: FeatureSnapshot = { version: 1, entries: [] };
+    let maxTransfers: number | undefined;
+    let windowDays: number | undefined;
+    for (const row of rows) {
+      if (!isEntitlementActive({ ...row.entitlement, now: this.now() })) continue;
+      const limit = resolveDeviceTransferLimit(row.entitlement.featureSnapshot);
+      maxTransfers = maxTransfers === undefined ? limit : Math.max(maxTransfers, limit);
+      const window = resolveDeviceTransferWindowDays(row.entitlement.featureSnapshot);
+      windowDays = windowDays === undefined ? window : Math.max(windowDays, window);
+    }
+    const since = new Date(this.now().getTime() - (windowDays ?? resolveDeviceTransferWindowDays(emptySnapshot)) * 24 * 60 * 60 * 1000);
+    const used = await this.options.store.countRemovalEventsSince(
+      principal.type,
+      principal.id,
+      since,
+    );
+    return {
+      maxTransfers: maxTransfers ?? resolveDeviceTransferLimit(emptySnapshot),
+      windowDays: windowDays ?? resolveDeviceTransferWindowDays(emptySnapshot),
+      used,
+    };
+  }
+
   private async assertCooldown(principal: PrincipalRef): Promise<void> {
     if (this.cooldownSeconds <= 0) return;
     const last = await this.options.store.lastDeactivationAt(principal.type, principal.id);
@@ -468,6 +649,7 @@ export interface CreateLicensingServiceOverrides {
   keys?: SigningKeyPair;
   now?: () => Date;
   deactivateCooldownSeconds?: number;
+  sessionRevoker?: DeviceSessionRevoker;
 }
 
 export function createLicensingService(
@@ -496,6 +678,7 @@ export function createLicensingService(
     keys,
     now: overrides.now,
     deactivateCooldownSeconds: overrides.deactivateCooldownSeconds,
+    sessionRevoker: overrides.sessionRevoker,
   });
 }
 

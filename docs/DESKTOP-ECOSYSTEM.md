@@ -291,6 +291,14 @@ We do **not** revoke sibling sessions or free the device slot — each `desktop_
 
 Desktop clients should call refresh or heartbeat on cold start for live entitlement/device/session checks. Signed leases may still grant temporary runtime grace per `@khepree/licensing` offline policy — **leases are not instant offline revocation**. Revocation takes effect on the next successful live API call or when the lease expires (including grace).
 
+## Phase K05 deliverables
+
+- Account device management UI: `account.khepree.com/devices` grouped by product with slots used/max, first activated, last active, current-device marker (via `?currentDevice=` — no hardware fingerprint shown)
+- Self-service remove: `LicensingService.removeDevice` — ownership check, cooldown, transfer quota from features (`devices.transfers.max`, `devices.transfers.window_days`), activation revoke, desktop session + refresh revoke, soft remove (`removed_at`, `removed_by_user_id`), audit + `device_removal_events`
+- Step-up auth: server-enforced `assertRecentAuth()` (session `updated_at` within 15 minutes); account remove redirects to sign-in when stale
+- Device limit UX: `DEVICE_LIMIT_REACHED` includes `{ used, max, manageDevicesUrl }` (no secrets)
+- Admin `blockDevice` remains distinct from owner remove (`DEVICE_BLOCKED`, no `removed_at`)
+
 ## Related docs
 
 - `docs/ARCHITECTURE.md` — package boundaries

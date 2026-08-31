@@ -35,6 +35,8 @@ export interface DeviceRecord {
   status: "active" | "deactivated" | "blocked";
   firstSeenAt: Date;
   lastSeenAt: Date;
+  removedAt: Date | null;
+  removedByUserId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -89,4 +91,36 @@ export interface DeactivateInput {
   devicePublicId?: string;
   principal?: { type: "USER" | "ORGANIZATION"; id: string };
   actorUserId?: string | null;
+}
+
+export interface RemoveDeviceInput {
+  principal: { type: "USER" | "ORGANIZATION"; id: string };
+  devicePublicId: string;
+  actorUserId: string;
+  bypassTransferQuota?: boolean;
+  actorType?: "owner" | "admin";
+}
+
+export interface ManagedDeviceEntry {
+  devicePublicId: string;
+  platform: string | null;
+  name: string | null;
+  status: DeviceRecord["status"];
+  firstActivatedAt: Date;
+  lastActiveAt: Date;
+  isCurrent: boolean;
+  removedAt: Date | null;
+}
+
+export interface ManagedProductDevices {
+  productId: string;
+  productSlug: string | null;
+  planSlug: string | null;
+  slotsUsed: number;
+  slotsMax: number;
+  devices: ManagedDeviceEntry[];
+}
+
+export interface ManagedDevicesView {
+  products: ManagedProductDevices[];
 }

@@ -126,6 +126,7 @@ describe("desktop refresh + heartbeat", () => {
         row = { ...row, revokedAt: at, revokeReason: reason };
         return true;
       }),
+      revokeSessionsForDevice: vi.fn(async () => 0),
       touchSessionLastSeen: vi.fn(async (_sessionId, at) => {
         row = { ...row, lastSeenAt: at };
       }),

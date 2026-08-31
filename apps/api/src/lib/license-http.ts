@@ -23,7 +23,13 @@ export function licenseStatus(code: string): number {
 
 export function licenseErrorResponse(error: unknown, requestId: string): Response {
   if (isLicensingError(error)) {
-    return jsonError(error.code, error.message, licenseStatus(error.code), requestId);
+    return jsonError(
+      error.code,
+      error.message,
+      licenseStatus(error.code),
+      requestId,
+      error.details,
+    );
   }
   return jsonError("INTERNAL", "Request failed", 500, requestId);
 }

@@ -4,6 +4,8 @@ export { EntitlementError, isEntitlementError } from "./errors";
 export {
   compactFeatures,
   resolveDeviceLimit,
+  resolveDeviceTransferLimit,
+  resolveDeviceTransferWindowDays,
   resolveFeatures,
   resolveOfflinePolicy,
 } from "./features";
@@ -32,7 +34,11 @@ export type {
 } from "./types";
 export {
   DEFAULT_DEVICE_LIMIT,
+  DEFAULT_DEVICE_TRANSFER_LIMIT,
+  DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS,
   DEFAULT_GRACE_PERIOD_SECONDS,
   DEFAULT_LEASE_TTL_SECONDS,
   DEVICE_LIMIT_FEATURE,
+  DEVICE_TRANSFER_LIMIT_FEATURE,
+  DEVICE_TRANSFER_WINDOW_FEATURE,
 } from "./types";

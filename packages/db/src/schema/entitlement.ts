@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -110,6 +111,8 @@ export const devices = pgTable(
     status: deviceStatusEnum("status").notNull().default("active"),
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+    removedByUserId: text("removed_by_user_id"),
     ...timestamps,
   },
   (table) => [
@@ -174,6 +177,29 @@ export const licenseLeases = pgTable(
     index("license_leases_license_id_idx").on(table.licenseId),
     index("license_leases_device_id_idx").on(table.deviceId),
     index("license_leases_jti_idx").on(table.jti),
+  ],
+);
+
+export const deviceRemovalEvents = pgTable(
+  "device_removal_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    principalType: principalTypeEnum("principal_type").notNull(),
+    principalId: text("principal_id").notNull(),
+    deviceId: uuid("device_id")
+      .notNull()
+      .references(() => devices.id, { onDelete: "restrict" }),
+    removedByUserId: text("removed_by_user_id"),
+    actorType: text("actor_type").notNull().default("owner"),
+    bypassTransferQuota: boolean("bypass_transfer_quota").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("device_removal_events_principal_created_idx").on(
+      table.principalType,
+      table.principalId,
+      table.createdAt,
+    ),
   ],
 );
 

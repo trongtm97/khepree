@@ -1,4 +1,5 @@
 import { verifyDeviceProofSignature } from "./device-proof";
+import { DesktopAuthError } from "./errors";
 import { generateSecureToken, hashSecret } from "./hash";
 import type { NonceStore } from "./nonce-store";
 import type {

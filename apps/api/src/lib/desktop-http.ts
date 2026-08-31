@@ -44,7 +44,13 @@ export function desktopActivateErrorResponse(error: unknown, requestId: string):
   }
   if (isLicensingError(error)) {
     const code = mapLicensingToDesktopCode(error.code);
-    return jsonError(code, error.message, desktopAuthStatus(code), requestId);
+    return jsonError(
+      code,
+      error.message,
+      desktopAuthStatus(code),
+      requestId,
+      error.details,
+    );
   }
   return jsonError("INTERNAL", "Request failed", 500, requestId);
 }

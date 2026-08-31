@@ -260,6 +260,19 @@ export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
     return rows.length > 0;
   }
 
+  async revokeSessionsForDevice(deviceId: string, at: Date, reason: string): Promise<number> {
+    const rows = await this.db
+      .update(desktopSessions)
+      .set({
+        revokedAt: at,
+        revokeReason: reason,
+        updatedAt: at,
+      })
+      .where(and(eq(desktopSessions.deviceId, deviceId), isNull(desktopSessions.revokedAt)))
+      .returning({ id: desktopSessions.id });
+    return rows.length;
+  }
+
   async touchSessionLastSeen(sessionId: string, at: Date): Promise<void> {
     await this.db
       .update(desktopSessions)
