@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Database } from "@khepree/db";
 import { MockObjectStorage } from "@khepree/storage";
 import { bodyObjectKeyFor, createContentService, sha256Hex } from "./service";
 
@@ -36,7 +37,7 @@ describe("createContentService getBody", () => {
       bucket: "private",
     });
 
-    const service = createContentService(undefined, storage);
+    const service = createContentService({} as Database, storage);
     await expect(service.getBody({ bodyObjectKey: key })).resolves.toBe("Draft body");
   });
 });
