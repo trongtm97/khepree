@@ -265,6 +265,16 @@ export class ProductService {
     return this.getProductDetailBySlug(slug, options, { activeOnly: true });
   }
 
+  async resolveProductIdBySlug(slug: string): Promise<string | null> {
+    if (!this.db) return null;
+    const [row] = await this.db
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.slug, slug))
+      .limit(1);
+    return row?.id ?? null;
+  }
+
   async getProductPreviewBySlug(
     slug: string,
     options: ProductLocaleOptions & { previewToken: string; previewSecret: string },

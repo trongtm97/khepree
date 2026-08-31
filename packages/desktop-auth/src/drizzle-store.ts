@@ -96,6 +96,15 @@ export class DrizzleDesktopAuthRepository implements DesktopAuthRepository {
     return row ? mapClient(row) : null;
   }
 
+  async findActiveClientByProductId(productId: string): Promise<DesktopClientRecord | null> {
+    const [row] = await this.db
+      .select()
+      .from(desktopClients)
+      .where(and(eq(desktopClients.productId, productId), eq(desktopClients.status, "active")))
+      .limit(1);
+    return row ? mapClient(row) : null;
+  }
+
   async insertClient(input: {
     clientId: string;
     productId: string;

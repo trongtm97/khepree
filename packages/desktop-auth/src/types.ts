@@ -84,6 +84,7 @@ export interface CreateSessionResult {
 export interface DesktopAuthRepository {
   findClientByClientId(clientId: string): Promise<DesktopClientRecord | null>;
   findClientById(id: string): Promise<DesktopClientRecord | null>;
+  findActiveClientByProductId(productId: string): Promise<DesktopClientRecord | null>;
   insertClient(input: {
     clientId: string;
     productId: string;

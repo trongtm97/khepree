@@ -34,6 +34,11 @@ function createMockStore(initial: {
     findClientById: vi.fn(async (id: string) =>
       initial.client && initial.client.id === id ? initial.client : null,
     ),
+    findActiveClientByProductId: vi.fn(async (productId: string) =>
+      initial.client && initial.client.productId === productId && initial.client.status === "active"
+        ? initial.client
+        : null,
+    ),
     insertClient: vi.fn(),
     createAuthCode: vi.fn(),
     findAuthCodeByHash: vi.fn(async () => authCode),

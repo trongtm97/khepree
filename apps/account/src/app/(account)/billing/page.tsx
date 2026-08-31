@@ -4,7 +4,9 @@ import { Alert, Card, CardTitle, EmptyState } from "@khepree/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfirmingPaymentPoll } from "@/components/confirming-payment-poll";
+import { DesktopReturnLink } from "@/components/desktop-return-link";
 import { getCommerce } from "@/lib/commerce";
+import { resolveDesktopReturnLink } from "@/lib/desktop-return";
 import { accountLocaleFromCookies } from "@/lib/locale";
 import { accountMessages } from "@/lib/messages";
 
@@ -14,23 +16,31 @@ export const metadata: Metadata = { title: "Thanh toán" };
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string }>;
+  searchParams: Promise<{ checkout?: string; source?: string; clientId?: string }>;
 }) {
   const session = await requireSession();
   const params = await searchParams;
   const locale = await accountLocaleFromCookies(session.locale);
   const copy = accountMessages(locale).billing;
+  const messages = accountMessages(locale);
   const billing = await getCommerce().getBillingAccount({
     type: "user",
     userId: session.user.id,
   });
   const latestPaid = billing.orders.some((order) => order.status === "paid");
+  const desktopReturn =
+    params.source === "desktop" ? await resolveDesktopReturnLink(params.clientId) : null;
 
   return (
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-bold tracking-tight">{copy.title}</h1>
         <p className="mt-1 text-sm text-khepree-slate/70">{copy.intro}</p>
+        {desktopReturn ? (
+          <div className="mt-3">
+            <DesktopReturnLink {...desktopReturn} copy={messages} />
+          </div>
+        ) : null}
       </header>
 
       {params.checkout === "processing" && !latestPaid ? (

@@ -48,6 +48,7 @@ describe("DesktopAuthService access session", () => {
     const store: DesktopAuthRepository = {
       findClientByClientId: vi.fn(),
       findClientById: vi.fn(async () => desktopClient),
+      findActiveClientByProductId: vi.fn(async () => null),
       insertClient: vi.fn(),
       createAuthCode: vi.fn(),
       findAuthCodeByHash: vi.fn(),
@@ -80,6 +81,7 @@ describe("DesktopAuthService access session", () => {
     const store: DesktopAuthRepository = {
       findClientByClientId: vi.fn(),
       findClientById: vi.fn(),
+      findActiveClientByProductId: vi.fn(async () => null),
       insertClient: vi.fn(),
       createAuthCode: vi.fn(),
       findAuthCodeByHash: vi.fn(),

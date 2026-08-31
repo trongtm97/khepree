@@ -36,9 +36,9 @@ export default async function DesktopCheckoutHandoffPage({
   const rebuilt = await commerce.rebuildCheckoutAction({
     orderPublicId,
     owner: { type: "user", userId: session.user.id },
-    successUrl: `${accountUrl}/billing?checkout=processing&source=desktop`,
-    cancelUrl: `${accountUrl}/billing?checkout=cancelled&source=desktop`,
-    errorUrl: `${accountUrl}/billing?checkout=failed&source=desktop`,
+    successUrl: `${accountUrl}/billing?checkout=processing&source=desktop${query.clientId ? `&clientId=${encodeURIComponent(query.clientId)}` : ""}`,
+    cancelUrl: `${accountUrl}/billing?checkout=cancelled&source=desktop${query.clientId ? `&clientId=${encodeURIComponent(query.clientId)}` : ""}`,
+    errorUrl: `${accountUrl}/billing?checkout=failed&source=desktop${query.clientId ? `&clientId=${encodeURIComponent(query.clientId)}` : ""}`,
   });
   if (!rebuilt) notFound();
 

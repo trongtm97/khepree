@@ -18,6 +18,7 @@ export {
   buildDesktopCallbackUrl,
   parseDesktopAuthorizeSearchParams,
 } from "./authorize-params";
+export { isAllowlistedCustomSchemeUri, pickDesktopAppReturnUri } from "./return-uri";
 export type { DesktopAuthorizeParams } from "./authorize-params";
 export {
   createDrizzleDesktopAuthRepository,

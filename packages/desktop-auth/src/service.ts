@@ -116,6 +116,10 @@ export class DesktopAuthService {
     return client;
   }
 
+  async findActiveClientForProduct(productId: string): Promise<DesktopClientRecord | null> {
+    return this.options.store.findActiveClientByProductId(productId);
+  }
+
   async issueAuthCode(input: IssueAuthCodeInput): Promise<CreateAuthCodeResult> {
     this.assertClientActive(input.client);
     this.assertRedirectUriAllowed(input.client, input.redirectUri);

@@ -98,6 +98,7 @@ describe("desktop refresh + heartbeat", () => {
         createdAt: NOW,
         updatedAt: NOW,
       })),
+      findActiveClientByProductId: vi.fn(async () => null),
       insertClient: vi.fn(),
       createAuthCode: vi.fn(),
       findAuthCodeByHash: vi.fn(),

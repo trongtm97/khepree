@@ -308,6 +308,14 @@ Desktop clients should call refresh or heartbeat on cold start for live entitlem
 - Payment completion: provider webhook → order paid → outbox → entitlement consumer (success redirect does **not** grant access)
 - Subscription honesty: `hasActiveSubscription` only when provider returned a real `providerSubscriptionId`; access-term labels describe one-time/perpetual access honestly
 
+## Phase K07 deliverables
+
+- Account product hub IA: `/products` → `/products/{slug}` with plan, access, devices, billing actions, and downloads (when entitled releases exist)
+- Product detail data from domain services (`catalog`, `entitlement`, `licensing`, `commerce`, `desktop-auth`) — no NovelTrans-specific branching
+- Capability-driven CTAs: purchase, upgrade, manage devices, manage billing, download — hidden when not applicable
+- Desktop return link: allowlisted custom-scheme URI from registered `desktop_clients.allowed_redirect_uris` (never client-supplied arbitrary URLs); shown on product hub and billing after desktop checkout (`source=desktop&clientId=`)
+- i18n: account `messages.ts` vi/en for products and dashboard; catalog copy via translation tables
+
 ## Related docs
 
 - `docs/ARCHITECTURE.md` — package boundaries
