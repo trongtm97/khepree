@@ -90,9 +90,7 @@ export function ProductDetailSections({
     : null;
   const heroMedia: PublicProductMedia | null = product.cover ?? product.gallery[0] ?? product.icon;
   const heroOutcome = product.shortDescription ?? product.description;
-  const fullDescriptionHtml = product.description
-    ? renderContentBody(product.description, { productBlocks: false })
-    : null;
+  const fullDescriptionHtml = product.description ? renderContentBody(product.description) : null;
   const showLegacyMarketingSections = !fullDescriptionHtml;
   const hasPlans = product.plans.length > 0;
   const iconUrl = product.icon?.url ?? null;

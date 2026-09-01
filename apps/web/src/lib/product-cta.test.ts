@@ -17,6 +17,7 @@ const baseProduct = {
   locale: "vi",
   availableLocales: ["vi"],
   icon: null,
+  cover: null,
   gallery: [],
   startingPrice: null,
   updatedAt: new Date(),

@@ -21,6 +21,7 @@ describe("toNavProducts", () => {
           locale: "vi",
           availableLocales: ["vi"],
           icon: { url: "https://cdn.example/icon.png", altText: "Icon" },
+          cover: null,
           gallery: [],
           startingPrice: null,
           updatedAt: new Date(),
