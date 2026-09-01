@@ -14,8 +14,12 @@ import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/
 
 export const revalidate = 3600;
 
-function productImage(product: { icon: { url: string } | null; gallery: Array<{ url: string }> }) {
-  return product.gallery?.[0]?.url ?? product.icon?.url ?? undefined;
+function productImage(product: {
+  cover: { url: string } | null;
+  icon: { url: string } | null;
+  gallery: Array<{ url: string }>;
+}) {
+  return product.cover?.url ?? product.gallery?.[0]?.url ?? product.icon?.url ?? undefined;
 }
 
 function hreflangFromProduct(availableLocales: string[]): SupportedLocale[] {

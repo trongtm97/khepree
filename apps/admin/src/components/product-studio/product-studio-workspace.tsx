@@ -37,7 +37,7 @@ function readLocale(snapshot: ProductStudioSnapshot, locale: Locale): LocaleFiel
   return {
     name: tr?.name ?? "",
     shortDescription: tr?.shortDescription ?? "",
-    fullDescription: mergedDescriptionForLocale(snapshot.translations, locale),
+    fullDescription: mergedDescriptionForLocale(snapshot.translations, locale, snapshot.metadata),
     seoTitle: tr?.seoTitle ?? "",
     seoDescription: tr?.seoDescription ?? "",
   };

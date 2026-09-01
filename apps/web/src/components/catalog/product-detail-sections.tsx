@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { PublicProductDetail, PublicProductMedia } from "@khepree/catalog";
+import { renderContentBody } from "@khepree/catalog/content/body-html";
 import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION } from "@khepree/config";
 import {
   Badge,
@@ -87,8 +88,12 @@ export function ProductDetailSections({
   const starting = price
     ? formatPublicStartingPrice(price.amountMinor, price.currency, price.interval, locale)
     : null;
-  const heroMedia: PublicProductMedia | null = product.gallery[0] ?? product.icon;
+  const heroMedia: PublicProductMedia | null = product.cover ?? product.gallery[0] ?? product.icon;
   const heroOutcome = product.shortDescription ?? product.description;
+  const fullDescriptionHtml = product.description
+    ? renderContentBody(product.description, { productBlocks: false })
+    : null;
+  const showLegacyMarketingSections = !fullDescriptionHtml;
   const hasPlans = product.plans.length > 0;
   const iconUrl = product.icon?.url ?? null;
 
@@ -148,9 +153,15 @@ export function ProductDetailSections({
             </div>
             <ProductHeroVisual media={heroMedia} productName={product.name} priority />
           </div>
+          {fullDescriptionHtml ? (
+            <div
+              className="prose prose-slate mt-12 max-w-none dark:prose-invert"
+              dangerouslySetInnerHTML={{ __html: fullDescriptionHtml }}
+            />
+          ) : null}
         </section>
 
-        {solutionCards.length > 0 ? (
+        {showLegacyMarketingSections && solutionCards.length > 0 ? (
           <Section id="solutions" title={messages.catalog.sections.solutions} intro={messages.catalog.solutionsIntro}>
             <div className="grid gap-4 md:grid-cols-2">
               {solutionCards.map((item, index) => (
@@ -174,7 +185,7 @@ export function ProductDetailSections({
           </Section>
         ) : null}
 
-        {marketing.highlights?.length ? (
+        {showLegacyMarketingSections && marketing.highlights?.length ? (
           <Section id="features" title={messages.catalog.sections.features} intro={messages.catalog.featuresIntro}>
             <div className="grid auto-rows-fr gap-4 md:grid-cols-6">
               {marketing.highlights.map((item, index) => {
@@ -209,7 +220,7 @@ export function ProductDetailSections({
           </Section>
         ) : null}
 
-        {marketing.howItWorks?.length ? (
+        {showLegacyMarketingSections && marketing.howItWorks?.length ? (
           <Section id="howItWorks" title={messages.catalog.sections.howItWorks}>
             <ol className="grid gap-4 md:grid-cols-3">
               {marketing.howItWorks.map((step, index) => (
@@ -279,7 +290,7 @@ export function ProductDetailSections({
           </Section>
         ) : null}
 
-        {marketing.faq?.length ? (
+        {showLegacyMarketingSections && marketing.faq?.length ? (
           <Section id="faq" title={messages.catalog.sections.faq}>
             <dl className="divide-y divide-border rounded-[var(--radius-card)] border border-border">
               {marketing.faq.map((item) => (

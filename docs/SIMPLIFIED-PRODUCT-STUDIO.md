@@ -1,7 +1,127 @@
 # Simplified Product Studio
 
-> Audit + design spec — Phase catalog simplification  
+> Audit + design + migration QA — Phase catalog simplification  
 > Last updated: 2026-09-01
+
+## Before → After
+
+**Before (legacy admin workflow)**
+
+```
+Product → Plans → Prices → Features → Releases → SEO
+         (separate tabs / pages, 10 Studio tabs, 30+ visible inputs)
+```
+
+**After (unified Product Studio)**
+
+```
+Product Studio
+├─ Thông tin (Information)
+├─ Hình ảnh (Media)
+├─ Gói & bản quyền (Plans & Licensing)
+└─ Phát hành (Release — desktop only)
+```
+
+Actions: **Save Draft** · **Preview** · **Publish** — one screen, locale switcher `[ Tiếng Việt | English ]`.
+
+Advanced tools remain available for expert administration (slug, SEO overrides, plan slug, extra feature keys via legacy `/plans`, `/features`, `/prices` routes).
+
+### Field count (normal workflow)
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Studio tabs | 10 | 0 (single scroll page, 4 sections) |
+| Visible product inputs (excl. plans) | ~20+ | ~8 core + locale switch |
+| Marketing-only inputs | ~15 | 0 (merged into Full Description) |
+| Separate SEO form | 2/locale | 0 (auto-derived; Advanced override) |
+| Plan + price screens | 2 tabs | Inline plan cards |
+| Navigation to create price/feature | Required | Not in normal workflow |
+
+### Field status legend
+
+| Status | Meaning |
+|--------|---------|
+| **ACTIVE** | Shown in normal Studio UI; read/write |
+| **DERIVED** | Auto-computed on save or read; optional Advanced override |
+| **ADVANCED** | Collapsed / legacy admin only |
+| **DEPRECATED** | UI removed; DB column retained; legacy read fallback |
+| **MIGRATED** | Composed into another field (idempotent) |
+
+### Removed from normal UI (not dropped from DB)
+
+- `metadata.marketing.*` write path from Studio (solutions, highlights, benefits, howItWorks, faq, cta, relatedContent)
+- Separate Content / Marketing / SEO / Features tabs
+- Manual slug on product create
+- Duplicate VI/EN form pages
+
+### Auto-generated (DERIVED)
+
+| Field | Rule |
+|-------|------|
+| Slug | `suggestProductSlug(nameVi)` |
+| SEO title | `{name} \| Khepree` |
+| Meta description | `short_description` |
+| Canonical | `/vi/products/{slug}` |
+| OG image | cover → icon |
+| Publisher | Khepree (public hardcoded) |
+| Product ID / timestamps | System |
+| Draft status | Until Publish |
+
+Implementation: `deriveSeoFields()`, `resolvePublicSeoFields()`, `resolvePublicFullDescription()`.
+
+### Moved to Advanced
+
+- Product slug override, SEO title/description override
+- Plan slug, billing type override, extra `plan_features` keys
+- `licensing_mode` (auto from product type; override in Advanced)
+- `metadata.operatingSystems`
+- Legacy routes: `/plans`, `/features`, `/prices`
+
+### Migrations (read-time, idempotent)
+
+| Source | Target | Module |
+|--------|--------|--------|
+| `description` + `content` | `description` (merged read) | `mergeFullDescription()` |
+| `metadata.marketing` blocks | Full description markdown | `composeMarketingToMarkdown()` |
+| Empty description + marketing | Composed description | `resolvePublicFullDescription()` |
+| One-shot DB migrate (optional) | `migrateLegacyDescriptionCopy()` | Idempotent; skips when description exists |
+
+**No database columns dropped.** Public pages use legacy marketing sections only when no full description is available.
+
+### Backward compatibility (QA verified)
+
+| Area | Status |
+|------|--------|
+| Existing product data | Preserved — marketing JSON untouched |
+| Public product pages | Full description primary; legacy marketing fallback; cover → gallery → icon for OG |
+| Checkout / commerce | Same `plans` + `prices` tables — no "studio price" |
+| Entitlement | `plan_features` keys unchanged |
+| Licensing device limit | `devices.max` via `plan_features` only |
+| Account required | `account.required` via `plan_features` |
+| Releases | `software_releases` + private media — Studio orchestrates only |
+| Translations | VI primary; EN optional; `resolveLocalizedRow` fallback |
+| SEO | Auto fallbacks; explicit overrides respected |
+| Security | Rich text sanitization unchanged; hidden fields server-validated |
+
+### Novel AI fixture (concept test)
+
+| Plan | Price | Term | Account | Devices |
+|------|-------|------|---------|---------|
+| Free | 0 VND | 24h (trial, 1 day) | anonymous | 1 |
+| Monthly | 99,000 VND | 30 days | required | 1 |
+| Yearly | 900,000 VND | 365 days | required | 1 |
+
+Verified via `studio-novel-ai.test.ts` + `studio-compatibility.test.ts` (term mapping, feature keys).
+
+### Tests
+
+- `packages/catalog/src/product/compose-legacy-description.test.ts`
+- `packages/catalog/src/product/public-display.test.ts`
+- `packages/catalog/src/product/studio-compatibility.test.ts`
+- `packages/catalog/src/product/studio-novel-ai.test.ts`
+- `apps/e2e/tests/critical-flows.spec.ts` — admin product studio auth gate
+
+---
 
 ## Goal
 
@@ -239,35 +359,20 @@ Implementation: `deriveSeoFields()` in `packages/catalog/src/product/studio-fiel
 
 ## Migration strategy (backward compatible)
 
-### Phase A — This commit (policy + docs)
+### Phase A — Policy + docs ✅
 
-- Add `studio-field-policy.ts` with canonical keys, SEO derivation, description template
-- Document field matrix and target UX (this file)
-- **No database migration**
+### Phase B — Studio UI refactor ✅
 
-### Phase B — Studio UI refactor (next)
+### Phase C — Public site alignment ✅
 
-1. Replace 10 tabs with single-page 4-group layout
-2. Locale switcher instead of duplicate forms
-3. Inline plan cards with preset term mapping
-4. Hide marketing tab; stop writing `metadata.marketing` from Studio
-5. Auto-slug on create (remove from create form)
-6. Advanced collapsible: slug, SEO, licensing, feature keys
-7. Media upload pickers (icon, cover, gallery)
-8. "Chèn mẫu mô tả" button on rich editor
+1. `apps/web` product page: full description in overview; legacy sections hidden when description present
+2. Fallback read `metadata.marketing` via `resolvePublicFullDescription()` for existing products
+3. OG tags: cover → gallery → icon; SEO via `resolvePublicSeoFields()`
+4. Category filter on `/products` — **deferred** (metadata ready)
 
-### Phase C — Public site alignment
+### Phase D — Data migration (optional, on-demand)
 
-1. `apps/web` product page: render full description as primary content
-2. Fallback read `metadata.marketing` for existing products
-3. OG tags use `deriveSeoFields()` + cover/icon media URLs
-4. Category filter on `/products` using `metadata.productCategory`
-
-### Phase D — Data migration (optional)
-
-- Script: merge `description` + `content` → `description` where both exist
-- Script: map common marketing blocks → markdown sections (best-effort)
-- Deprecation notice on legacy admin routes
+- `migrateLegacyDescriptionCopy()` for one-shot scripts; read-time compose covers public display without DB writes
 
 ---
 

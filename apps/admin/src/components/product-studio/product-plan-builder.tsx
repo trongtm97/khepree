@@ -4,9 +4,9 @@ import type { StudioPlan } from "@khepree/catalog/product/studio/types";
 import {
   ACCESS_TERM_PRESETS,
   detectAccessTermKind,
-  mergeFullDescription,
   type AccessTermKind,
 } from "@khepree/catalog/product/studio-field-policy";
+import { resolvePublicFullDescription, readMarketingMetadata } from "@khepree/catalog/product/compose-legacy-description";
 import { Input, Select } from "@khepree/ui";
 import { useMemo, useState } from "react";
 
@@ -83,7 +83,7 @@ export function ProductPlanBuilder({ plans, recommendedPlanPublicId }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4 overflow-x-hidden">
       <input type="hidden" name="planCount" value={drafts.length} />
       {drafts.map((plan, index) => {
         if (plan.remove) {
@@ -201,7 +201,15 @@ export function ProductPlanBuilder({ plans, recommendedPlanPublicId }: Props) {
 export function mergedDescriptionForLocale(
   translations: Array<{ locale: string; description: string | null; content: string | null }>,
   locale: string,
+  metadata?: Record<string, unknown>,
 ): string {
   const tr = translations.find((t) => t.locale === locale);
-  return mergeFullDescription(tr?.description ?? null, tr?.content ?? null);
+  const marketing = readMarketingMetadata(metadata);
+  return (
+    resolvePublicFullDescription({
+      description: tr?.description ?? null,
+      content: tr?.content ?? null,
+      marketing,
+    }) ?? ""
+  );
 }

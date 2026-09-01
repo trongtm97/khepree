@@ -82,6 +82,7 @@ export interface PublicProductSummary {
   locale: string;
   availableLocales: string[];
   icon: PublicProductMedia | null;
+  cover: PublicProductMedia | null;
   gallery: PublicProductMedia[];
   startingPrice: PublicStartingPrice | null;
   updatedAt: Date;

@@ -24,6 +24,9 @@ import {
   parseProductMarketingMetadata,
   toPublicMedia,
 } from "./metadata";
+import { parseCoverMediaPublicId } from "./studio-field-policy";
+import { resolvePublicFullDescription } from "./compose-legacy-description";
+import { resolvePublicSeoFields } from "./public-display";
 import { resolvePricingDisplayMode, selectDisplayPrice } from "./pricing";
 import { isPriceAllowedForMarket, type MarketContext } from "./market";
 import { isPurchasableBillingType } from "./types";
@@ -49,24 +52,42 @@ function mapProductSummary(
   extras: {
     availableLocales: string[];
     icon: PublicProductMedia | null;
+    cover: PublicProductMedia | null;
     gallery: PublicProductMedia[];
     startingPrice: PublicStartingPrice | null;
   },
+  marketing?: ReturnType<typeof parseProductMarketingMetadata>,
 ): PublicProductSummary {
+  const fullDescription = resolvePublicFullDescription({
+    description: translation.description,
+    content: translation.content,
+    marketing,
+  });
+  const seo = resolvePublicSeoFields({
+    name: translation.name,
+    slug: product.slug,
+    shortDescription: translation.shortDescription,
+    seoTitle: translation.seoTitle,
+    seoDescription: translation.seoDescription,
+    metadata: (product.metadata ?? {}) as Record<string, unknown>,
+    hasIcon: Boolean(extras.icon),
+  });
   return {
     publicId: product.publicId,
     slug: product.slug,
     name: translation.name,
     shortDescription: translation.shortDescription,
-    description: translation.description,
+    description: fullDescription,
     platforms: product.platformCapabilities as ProductPlatform[],
     operatingSystems: parseOperatingSystems(product.metadata),
     status: product.status,
-    seoTitle: translation.seoTitle,
-    seoDescription: translation.seoDescription,
+    seoTitle: translation.seoTitle?.trim() || seo.seoTitle,
+    seoDescription:
+      translation.seoDescription?.trim() || seo.seoDescription || translation.shortDescription,
     locale: translation.locale,
     availableLocales: extras.availableLocales,
     icon: extras.icon,
+    cover: extras.cover,
     gallery: extras.gallery ?? [],
     startingPrice: extras.startingPrice,
     updatedAt: product.updatedAt,
@@ -191,9 +212,13 @@ export class ProductService {
   ) {
     const iconIds = rows.map((row) => row.iconMediaId).filter((id): id is string => Boolean(id));
     const galleryIds = rows.flatMap((row) => parseGalleryMediaPublicIds(row.metadata));
-    const [icons, gallery, starting] = await Promise.all([
+    const coverPublicIds = rows
+      .map((row) => parseCoverMediaPublicId(row.metadata as Record<string, unknown>))
+      .filter((id): id is string => Boolean(id));
+    const [icons, gallery, covers, starting] = await Promise.all([
       this.loadPublicMediaByIds(iconIds),
       this.loadPublicMediaByPublicIds(galleryIds),
+      this.loadPublicMediaByPublicIds(coverPublicIds),
       this.loadStartingPrices(
         rows.map((row) => row.id),
         options,
@@ -205,17 +230,20 @@ export class ProductService {
       {
         availableLocales: string[];
         icon: PublicProductMedia | null;
+        cover: PublicProductMedia | null;
         gallery: PublicProductMedia[];
         startingPrice: PublicStartingPrice | null;
       }
     >();
     for (const product of rows) {
       const galleryPublicIds = parseGalleryMediaPublicIds(product.metadata);
+      const coverPublicId = parseCoverMediaPublicId(product.metadata as Record<string, unknown>);
       extras.set(product.id, {
         availableLocales: availableLocalesOf(
           translations.filter((t) => t.productId === product.id),
         ),
         icon: product.iconMediaId ? (icons.get(product.iconMediaId) ?? null) : null,
+        cover: coverPublicId ? (covers.get(coverPublicId) ?? null) : null,
         gallery: galleryPublicIds
           .map((id) => gallery.get(id))
           .filter((item): item is PublicProductMedia => Boolean(item)),
@@ -253,7 +281,8 @@ export class ProductService {
         const productTranslationsForRow = translations.filter((t) => t.productId === product.id);
         const translation = requireLocaleRow(productTranslationsForRow, options.locale);
         if (!translation) return null;
-        return mapProductSummary(product, translation, extras.get(product.id)!);
+        const marketing = parseProductMarketingMetadata(product.metadata);
+        return mapProductSummary(product, translation, extras.get(product.id)!, marketing);
       })
       .filter((row): row is PublicProductSummary => row !== null);
   }
@@ -326,10 +355,12 @@ export class ProductService {
     const planBundle = productPlans.get(product.id) ?? [];
     const extras = await this.extrasForProducts([product], translations, options);
 
+    const marketing = parseProductMarketingMetadata(product.metadata);
+
     return {
-      ...mapProductSummary(product, translation, extras.get(product.id)!),
+      ...mapProductSummary(product, translation, extras.get(product.id)!, marketing),
       content: translation.content,
-      marketing: parseProductMarketingMetadata(product.metadata),
+      marketing,
       plans: planBundle,
     };
   }

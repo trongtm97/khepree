@@ -73,6 +73,12 @@ test.describe("admin restrictions", () => {
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/sign-in/);
   });
+
+  test("product studio requires authentication", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "admin");
+    await page.goto("/products");
+    await expect(page).toHaveURL(/sign-in/);
+  });
 });
 
 test.describe("partner", () => {

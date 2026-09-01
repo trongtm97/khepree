@@ -12,7 +12,10 @@
     "./media": "./src/media/service.ts",
     "./product": "./src/product/service.ts",
     "./product/studio-field-policy": "./src/product/studio-field-policy.ts",
-    "./product/studio/types": "./src/product/studio/types.ts"
+    "./product/studio/types": "./src/product/studio/types.ts",
+    "./product/metadata": "./src/product/metadata.ts",
+    "./product/compose-legacy-description": "./src/product/compose-legacy-description.ts",
+    "./product/public-display": "./src/product/public-display.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

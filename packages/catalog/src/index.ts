@@ -127,6 +127,13 @@ export {
   parseOperatingSystems,
   KNOWN_OPERATING_SYSTEMS,
 } from "./product/metadata";
+export {
+  composeMarketingToMarkdown,
+  migrateLegacyDescriptionCopy,
+  readMarketingMetadata,
+  resolvePublicFullDescription,
+} from "./product/compose-legacy-description";
+export { resolvePublicSeoFields } from "./product/public-display";
 export type {
   LicensingMode,
   PlanBillingType,
