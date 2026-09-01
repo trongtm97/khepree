@@ -150,6 +150,23 @@ export {
   createProductStudioService,
 } from "./product/studio/service";
 export { suggestProductSlug } from "./product/slug";
+export {
+  ACCESS_TERM_PRESETS,
+  PRODUCT_CATEGORIES,
+  PRODUCT_DESCRIPTION_TEMPLATE,
+  PRODUCT_TYPES,
+  STUDIO_FEATURE_KEYS,
+  deriveSeoFields,
+  mergeFullDescription,
+  parseCoverMediaPublicId,
+  parseProductCategory,
+  parseProductType,
+  parseRecommendedPlanPublicId,
+  type AccessTermKind,
+  type DerivedSeoFields,
+  type ProductCategory,
+  type ProductType,
+} from "./product/studio-field-policy";
 export { createProductPreviewToken, verifyProductPreviewToken } from "./product/preview-token";
 export type {
   ProductStudioSnapshot,
