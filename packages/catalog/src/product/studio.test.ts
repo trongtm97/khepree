@@ -164,4 +164,27 @@ describe("computeProductReadiness", () => {
     );
     expect(result.ready).toBe(true);
   });
+
+  it("does not require a release file for desktop software publish readiness", () => {
+    const result = computeProductReadiness(
+      baseSnapshot({
+        metadata: { productCategory: "ai-tools", productType: "desktop-software" },
+        iconMediaPublicId: "media_icon",
+        publishedReleaseCount: 0,
+        translations: [
+          {
+            locale: "vi",
+            name: "Desktop app",
+            shortDescription: "Mô tả ngắn",
+            description: "Mô tả đầy đủ",
+            content: null,
+            seoTitle: null,
+            seoDescription: null,
+          },
+        ],
+      }),
+    );
+    expect(result.items.some((item) => item.id === "release")).toBe(false);
+    expect(result.ready).toBe(true);
+  });
 });

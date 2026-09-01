@@ -453,6 +453,9 @@ importers:
       '@khepree/security':
         specifier: workspace:*
         version: link:../../packages/security
+      '@khepree/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@khepree/ui':
         specifier: workspace:*
         version: link:../../packages/ui

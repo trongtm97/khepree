@@ -13,6 +13,8 @@ export {
   type DesktopPlanSummary,
 } from "./desktop-checkout";
 
+export type { DesktopPurchasablePlan, DesktopPlansResponse } from "./desktop-plans";
+
 import type {
   DesktopAllowedActions,
   DesktopDeviceUsage,

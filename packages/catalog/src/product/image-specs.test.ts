@@ -3,6 +3,7 @@ import {
   productImageCropNoticeVi,
   productImageNeedsCropNotice,
   PRODUCT_IMAGE_SPECS,
+  computeCentreCoverCrop,
 } from "./image-specs";
 
 describe("product image specs", () => {
@@ -18,5 +19,19 @@ describe("product image specs", () => {
     expect(productImageNeedsCropNotice("cover", 1600, 1000)).toBe(true);
     expect(productImageNeedsCropNotice("cover", 1920, 1080)).toBe(false);
     expect(productImageCropNoticeVi("cover", 1600, 1000)).toContain("16:9");
+  });
+
+  it("computes centre cover crop for wide sources", () => {
+    const crop = computeCentreCoverCrop(1920, 1080, 1920, 1080);
+    expect(crop.sw).toBe(1920);
+    expect(crop.sh).toBe(1080);
+    expect(crop.sx).toBe(0);
+  });
+
+  it("computes centre cover crop for tall sources", () => {
+    const crop = computeCentreCoverCrop(1000, 1000, 512, 512);
+    expect(crop.sw).toBe(1000);
+    expect(crop.sh).toBe(1000);
+    expect(crop.sy).toBe(0);
   });
 });

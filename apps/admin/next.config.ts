@@ -7,6 +7,12 @@ const appDir = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   ...withStandalone(appDir),
+  serverExternalPackages: ["sharp"],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
   transpilePackages: [
     "@khepree/ui",
     "@khepree/auth",

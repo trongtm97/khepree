@@ -19,6 +19,7 @@ export {
   assertHttpsPublicBaseUrl,
   buildPublicObjectUrl,
   isAbsoluteHttpUrl,
+  resolvePublicBrowserBaseUrl,
 } from "./public-url";
 export { extensionForMime, validateUpload, UploadValidationError, UPLOAD_SIZE_LIMITS, sniffMagicMime, type UploadContentClass } from "./validation";
 export { MockObjectStorage } from "./mock-storage";

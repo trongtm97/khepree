@@ -140,6 +140,7 @@ export {
   productImageNeedsCropNotice,
   productImageSpec,
   productImageTargetAspect,
+  computeCentreCoverCrop,
   type ProductImageSlot,
   type ProductImageSpec,
 } from "./product/image-specs";

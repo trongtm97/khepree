@@ -2,6 +2,7 @@
 
 import { cn } from "../lib/cn";
 import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 export interface ModalProps {
   open: boolean;
@@ -22,14 +23,18 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  return (
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
     <dialog
       ref={dialogRef}
       aria-labelledby="khepree-modal-title"
       onClose={onClose}
       className={cn(
-        "w-full max-w-md rounded-[var(--radius-card)] border border-khepree-mist bg-khepree-white p-0 shadow-xl backdrop:bg-khepree-ink/40",
+        "fixed left-1/2 top-1/2 z-[200] m-0 max-h-[min(90dvh,100%)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2",
+        "rounded-[var(--radius-card)] border border-khepree-mist bg-khepree-white p-0 shadow-xl backdrop:bg-khepree-ink/40",
         "open:animate-in open:fade-in motion-reduce:open:animate-none",
+        "max-w-md",
         className,
       )}
     >
@@ -46,12 +51,15 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
           ✕
         </button>
       </div>
-      <div className="px-6 py-4 text-sm text-khepree-slate/90">{children}</div>
+      <div className="max-h-[calc(90dvh-8rem)] overflow-y-auto px-6 py-4 text-sm text-khepree-slate/90">
+        {children}
+      </div>
       {footer ? (
         <div className="flex justify-end gap-2 border-t border-khepree-mist px-6 py-4">
           {footer}
         </div>
       ) : null}
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }

@@ -16,6 +16,7 @@
     "./product/metadata": "./src/product/metadata.ts",
     "./product/compose-legacy-description": "./src/product/compose-legacy-description.ts",
     "./product/public-display": "./src/product/public-display.ts",
+    "./product/image-specs": "./src/product/image-specs.ts",
     "./product/technical-identity": "./src/product/technical-identity.ts"
   },
   "scripts": {

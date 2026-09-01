@@ -171,7 +171,7 @@ Object bytes live off-VPS. Postgres holds metadata only (`media_assets`, release
 | 5.2 | `download.khepree.com` serves signed URLs only (not directory listing) | ☐ |
 | 5.3 | Versioning enabled on private bucket (recommended) — `docs/R2.md` | ☐ |
 | 5.4 | CORS on private bucket: origins `https://admin.khepree.com`, `https://account.khepree.com` only (if browser upload) | ☐ |
-| 5.5 | CORS on public bucket: same tight origins if browser PUT is used | ☐ |
+| 5.5 | CORS on public bucket: same tight origins if browser PUT is used | ☑ |
 | 5.6 | Upload test from admin CMS / account — succeeds | ☐ |
 | 5.7 | Public image loads from `cdn.khepree.com` on marketing page | ☐ |
 

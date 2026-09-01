@@ -16,7 +16,12 @@ export function productRevalidationPaths(input: {
   locale: string;
 }): string[] {
   const base = `/${input.locale}`;
-  return [`${base}/products/${input.slug}`, `${base}/products`, `${base}/pricing`];
+  return [
+    `${base}`,
+    `${base}/products/${input.slug}`,
+    `${base}/products`,
+    `${base}/pricing`,
+  ];
 }
 
 export interface ProductRevalidationPlan {

@@ -59,10 +59,13 @@ export async function listEditorMediaImagesAction(): Promise<EditorMediaImage[]>
   for (const row of rows) {
     if (row.visibility !== "public" || !row.mimeType.startsWith("image/")) continue;
     const media = await service.getByPublicId(row.publicId);
-    if (!media?.publicUrl) continue;
+    if (!media) continue;
+    const signed = await service.createPublicPresignedPreviewUrl(media.publicId);
+    const url = signed ?? media.publicUrl;
+    if (!url) continue;
     images.push({
       publicId: media.publicId,
-      url: media.publicUrl,
+      url,
       altText: media.altText?.trim() || "",
     });
     if (images.length >= 24) break;
@@ -77,6 +80,14 @@ export async function resolveMediaPublicUrlAction(
   await requireAdmin("content.read");
   const trimmed = publicId.trim();
   if (!trimmed) return { url: null, altText: "" };
-  const media = await getMediaService().getByPublicId(trimmed);
-  return { url: media?.publicUrl ?? null, altText: media?.altText?.trim() || "" };
+  const service = getMediaService();
+  const media = await service.getByPublicId(trimmed);
+  if (!media) return { url: null, altText: "" };
+
+  const altText = media.altText?.trim() || "";
+  if (media.bucket === "public") {
+    const signed = await service.createPublicPresignedPreviewUrl(trimmed);
+    if (signed) return { url: signed, altText };
+  }
+  return { url: media.publicUrl ?? null, altText };
 }

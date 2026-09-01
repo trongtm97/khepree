@@ -232,6 +232,21 @@ export class MediaService {
     return row ? mapMedia(row, this.publicStorage) : null;
   }
 
+  /** Short-lived S3 GET for admin preview when CDN is not readable. */
+  async createPublicPresignedPreviewUrl(
+    publicId: string,
+    expiresInSeconds = 900,
+  ): Promise<string | null> {
+    const media = await this.getByPublicId(publicId);
+    if (!media || media.bucket !== "public") return null;
+    const presigned = await this.publicStorage.createPresignedDownload({
+      key: media.objectKey,
+      bucket: "public",
+      expiresInSeconds,
+    });
+    return presigned.url;
+  }
+
   async updateAltText(publicId: string, altText: string | null): Promise<MediaRecord> {
     const [row] = await this.db
       .update(mediaAssets)

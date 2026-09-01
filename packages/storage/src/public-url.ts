@@ -1,3 +1,26 @@
+import type { S3PublicAccessMode } from "./s3-access";
+
+function trimOrigin(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed.includes("CHANGE_ME")) return undefined;
+  return trimmed.replace(/\/$/, "");
+}
+
+/**
+ * Browser origin for public object keys.
+ * With `none` (bucket policy / no ACL), CDN cannot read private objects — serve via marketing app `/pub/*`.
+ */
+export function resolvePublicBrowserBaseUrl(
+  publicBaseUrl: string | undefined,
+  publicAccessMode: S3PublicAccessMode,
+): string | undefined {
+  if (publicAccessMode === "none") {
+    const appOrigin = trimOrigin(process.env.WEB_URL) ?? trimOrigin(process.env.KHEPREE_PUBLIC_MEDIA_ORIGIN);
+    if (appOrigin) return appOrigin;
+  }
+  return trimOrigin(publicBaseUrl);
+}
+
 /** Build browser-facing public media URL — CDN origin + canonical object key (not S3 API endpoint). */
 export function buildPublicObjectUrl(baseUrl: string, objectKey: string): string {
   const base = baseUrl.replace(/\/$/, "");

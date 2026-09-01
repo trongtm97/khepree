@@ -13,6 +13,7 @@ import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/components/action-form";
 import { requireAdmin } from "@/lib/admin-session";
 import { getProductStudio, webPreviewBaseUrl } from "@/lib/product-studio";
+import { revalidateMarketingProduct } from "@/lib/revalidate-marketing";
 
 async function actor(permission: Permission) {
   const session = await requireAdmin(permission);
@@ -423,8 +424,12 @@ export async function publishProductAction(_s: ActionState, formData: FormData):
   try {
     const session = await actor("catalog.write");
     const productId = String(formData.get("productId") ?? "");
+    const snapshot = await getProductStudio().getSnapshot(productId);
     await getProductStudio().publish(productId, session.user.id);
     revalidateStudio(productId);
+    if (snapshot?.slug) {
+      await revalidateMarketingProduct(snapshot.slug);
+    }
     return { notice: "Đã xuất bản sản phẩm" };
   } catch (error) {
     return fail(error);
@@ -439,8 +444,12 @@ export async function archiveStudioProductAction(_s: ActionState, formData: Form
     if (String(formData.get("confirm") ?? "") !== "CONFIRM") {
       return { error: "Nhập CONFIRM để lưu trữ" };
     }
+    const snapshot = await getProductStudio().getSnapshot(productId);
     await getProductStudio().archive({ productId, reason, actorUserId: session.user.id });
     revalidateStudio(productId);
+    if (snapshot?.slug) {
+      await revalidateMarketingProduct(snapshot.slug);
+    }
     return { notice: "Đã lưu trữ sản phẩm" };
   } catch (error) {
     return fail(error);

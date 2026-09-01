@@ -2,6 +2,7 @@ import { computeProductReadiness } from "@khepree/catalog";
 import { hasPermission } from "@khepree/security";
 import { notFound } from "next/navigation";
 import { ProductStudioWorkspace } from "@/components/product-studio/product-studio-workspace";
+import { ProductReadinessPanel } from "@/components/product-studio/product-readiness-panel";
 import { AdminStatusBadge, statusTone } from "@/components/admin";
 import { requireAdmin } from "@/lib/admin-session";
 import { getProductStudio, webPreviewBaseUrl } from "@/lib/product-studio";
@@ -43,6 +44,7 @@ export default async function ProductStudioPage({
           </div>
         </div>
       </div>
+      <ProductReadinessPanel readiness={readiness} />
       <ProductStudioWorkspace
         snapshot={snapshot}
         previewUrl={previewUrl}

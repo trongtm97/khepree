@@ -17,6 +17,7 @@
     "@khepree/platform": "workspace:*",
     "@khepree/reseller": "workspace:*",
     "@khepree/security": "workspace:*",
+    "@khepree/storage": "workspace:*",
     "@khepree/ui": "workspace:*",
     "geist": "^1.4.2",
     "next": "^16.0.0",

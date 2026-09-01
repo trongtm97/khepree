@@ -692,9 +692,14 @@ export class ProductStudioService {
     if (!snapshot) throw new CatalogError("NOT_FOUND", "Product not found");
     const readiness = computeProductReadiness(snapshot);
     if (!readiness.ready) {
+      const missing = readiness.items
+        .filter((item) => item.required && !item.ok)
+        .map((item) => item.label);
       throw new CatalogError(
         "INVALID_STATE",
-        `Chưa sẵn sàng xuất bản — còn ${readiness.blockingCount} mục bắt buộc`,
+        missing.length > 0
+          ? `Chưa sẵn sàng xuất bản — thiếu: ${missing.join("; ")}`
+          : `Chưa sẵn sàng xuất bản — còn ${readiness.blockingCount} mục bắt buộc`,
       );
     }
 

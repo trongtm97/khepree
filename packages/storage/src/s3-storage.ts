@@ -1,5 +1,5 @@
 import { resolveStorageCredentials } from "@khepree/config";
-import { buildPublicObjectUrl } from "./public-url";
+import { buildPublicObjectUrl, resolvePublicBrowserBaseUrl } from "./public-url";
 import {
   isPublicAclUnsupported,
   publicAclPutFields,
@@ -231,9 +231,10 @@ export class S3ObjectStorage implements ObjectStorage {
 
   publicUrl(key: string): string | null {
     if (this.bucketKind !== "public") return null;
-    if (!this.publicBaseUrl) return null;
+    const base = resolvePublicBrowserBaseUrl(this.publicBaseUrl, this.publicAccessMode);
+    if (!base) return null;
     assertSafeObjectKey(key);
-    return buildPublicObjectUrl(this.publicBaseUrl, key);
+    return buildPublicObjectUrl(base, key);
   }
 
   async verifyPublicReadAccess(key: string): Promise<void> {

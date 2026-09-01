@@ -71,3 +71,22 @@ export function productImageCropNoticeVi(
   const spec = PRODUCT_IMAGE_SPECS[slot];
   return `Ảnh ${width}×${height} khác tỉ lệ ${spec.aspectLabel}. Sẽ crop từ giữa thành ${spec.width}×${spec.height} px trước khi tải lên.`;
 }
+
+/** Centre cover crop source rect (shared with client canvas and tests). */
+export function computeCentreCoverCrop(
+  srcWidth: number,
+  srcHeight: number,
+  destWidth: number,
+  destHeight: number,
+): { sx: number; sy: number; sw: number; sh: number } {
+  const srcAspect = srcWidth / srcHeight;
+  const destAspect = destWidth / destHeight;
+  if (srcAspect > destAspect) {
+    const sh = srcHeight;
+    const sw = sh * destAspect;
+    return { sx: (srcWidth - sw) / 2, sy: 0, sw, sh };
+  }
+  const sw = srcWidth;
+  const sh = sw / destAspect;
+  return { sx: 0, sy: (srcHeight - sh) / 2, sw, sh };
+}

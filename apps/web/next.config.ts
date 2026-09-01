@@ -14,6 +14,7 @@ const nextConfig: NextConfig = withPublicMediaImages({
     "@khepree/catalog",
     "@khepree/reseller",
     "@khepree/security",
+    "@khepree/storage",
     "@khepree/db",
     "@khepree/entitlement",
     "@khepree/licensing",

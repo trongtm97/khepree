@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { assertHttpsPublicBaseUrl, buildPublicObjectUrl, isAbsoluteHttpUrl } from "./public-url";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  assertHttpsPublicBaseUrl,
+  buildPublicObjectUrl,
+  isAbsoluteHttpUrl,
+  resolvePublicBrowserBaseUrl,
+} from "./public-url";
 
 describe("buildPublicObjectUrl", () => {
   it("joins CDN base URL and canonical object key", () => {
@@ -35,5 +40,21 @@ describe("isAbsoluteHttpUrl", () => {
   it("detects absolute URLs unsuitable for object keys", () => {
     expect(isAbsoluteHttpUrl("https://vietnix.example/bucket/key")).toBe(true);
     expect(isAbsoluteHttpUrl("products/slug/file.webp")).toBe(false);
+  });
+});
+
+describe("resolvePublicBrowserBaseUrl", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("uses WEB_URL when public ACL mode is none", () => {
+    vi.stubEnv("WEB_URL", "https://khepree.com/");
+    expect(resolvePublicBrowserBaseUrl("https://cdn.khepree.com", "none")).toBe("https://khepree.com");
+  });
+
+  it("keeps CDN base when ACL mode is active", () => {
+    vi.stubEnv("WEB_URL", "https://khepree.com");
+    expect(resolvePublicBrowserBaseUrl("https://cdn.khepree.com", "acl")).toBe("https://cdn.khepree.com");
   });
 });

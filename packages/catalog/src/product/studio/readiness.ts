@@ -2,7 +2,6 @@ import {
   mergeFullDescription,
   parseProductCategory,
   parseProductType,
-  productTypeNeedsRelease,
 } from "../studio-field-policy";
 import { isPurchasableBillingType } from "../types";
 import type { ProductStudioSnapshot, ReadinessItem, ReadinessResult } from "./types";
@@ -100,14 +99,6 @@ export function computeProductReadiness(snapshot: ProductStudioSnapshot): Readin
     label: "SEO (tiêu đề + mô tả hoặc fallback)",
     ok: hasSeo(snapshot),
     required: true,
-  });
-
-  const needsRelease = productTypeNeedsRelease(productType);
-  items.push({
-    id: "release",
-    label: "Tệp phát hành (phần mềm desktop)",
-    ok: !needsRelease || snapshot.publishedReleaseCount > 0,
-    required: needsRelease,
   });
 
   const blockingCount = items.filter((item) => item.required && !item.ok).length;
