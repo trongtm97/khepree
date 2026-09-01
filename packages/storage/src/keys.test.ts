@@ -33,6 +33,20 @@ describe("createObjectKey", () => {
     expect(key).toMatch(/^prv\/releases\/aaaaaaaabbbbccccddddeeeeeeeeeeee\/[a-f0-9]{32}\.zip$/);
   });
 
+  it("embeds owner segment under canonical pathPrefix when ownerId is set", () => {
+    const ownerId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const key = createObjectKey({
+      pathPrefix: "media",
+      namespace: "media",
+      extension: "webp",
+      visibility: "public",
+      ownerId,
+    });
+    expect(key).toMatch(
+      /^pub\/media\/aaaaaaaabbbbccccddddeeeeeeeeeeee\/[a-f0-9]{32}\.webp$/,
+    );
+  });
+
   it("rejects unsafe namespace", () => {
     expect(() => createObjectKey({ namespace: "../evil", extension: "jpg", visibility: "public" })).toThrow();
   });

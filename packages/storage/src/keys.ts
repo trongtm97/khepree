@@ -70,7 +70,8 @@ export function createObjectKey(input: ObjectKeyInput): string {
 
   if (input.pathPrefix) {
     const canonical = normalizePathPrefix(input.pathPrefix);
-    const key = `${root}/${canonical}/${id}.${input.extension}`;
+    const ownerSegment = input.ownerId ? `${objectKeyOwnerSegment(input.ownerId)}/` : "";
+    const key = `${root}/${canonical}/${ownerSegment}${id}.${input.extension}`;
     assertSafeObjectKey(key);
     return key;
   }
