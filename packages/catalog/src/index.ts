@@ -134,6 +134,22 @@ export {
   resolvePublicFullDescription,
 } from "./product/compose-legacy-description";
 export { resolvePublicSeoFields } from "./product/public-display";
+export {
+  deriveDesktopCallbackUri,
+  deriveTechnicalIdentity,
+  parseAccessFeatureKey,
+  parseDesktopProtocol,
+  parseProductCode,
+  suggestAccessFeatureKey,
+  suggestDesktopClientId,
+  suggestDesktopProtocol,
+  suggestInternalPlanCode,
+  suggestProductCode,
+  validateCallbackUri,
+  validateDesktopClientId,
+  validateDesktopProtocol,
+  validateProductCode,
+} from "./product/technical-identity";
 export type {
   LicensingMode,
   PlanBillingType,

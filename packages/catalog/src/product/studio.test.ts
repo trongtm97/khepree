@@ -45,6 +45,13 @@ function baseSnapshot(overrides: Partial<ProductStudioSnapshot> = {}): ProductSt
     iconMediaId: null,
     iconMediaPublicId: null,
     metadata: {},
+    productCode: null,
+    accessFeatureKey: null,
+    desktopProtocol: null,
+    desktopClientId: null,
+    desktopCallbackUri: null,
+    identityLocked: false,
+    identityLockReason: null,
     updatedAt: new Date(),
     translations: [
       {
@@ -59,6 +66,27 @@ function baseSnapshot(overrides: Partial<ProductStudioSnapshot> = {}): ProductSt
     ],
     plans: [],
     publishedReleaseCount: 0,
+    ...overrides,
+  };
+}
+
+function planFixture(overrides: Partial<ProductStudioSnapshot["plans"][number]> = {}) {
+  return {
+    id: "pl1",
+    publicId: "plan_x",
+    slug: "pro",
+    internalCode: null,
+    billingType: "one_time" as const,
+    accessTermDays: 30,
+    status: "draft" as const,
+    nameVi: "Pro",
+    nameEn: "Pro",
+    prices: [],
+    features: [],
+    useDefaultDevicePolicy: true,
+    selfServiceDeviceRemoval: true,
+    deviceTransferMax: null,
+    deviceTransferWindowDays: null,
     ...overrides,
   };
 }
@@ -89,20 +117,7 @@ describe("computeProductReadiness", () => {
   it("blocks commercial publish without active priced plan", () => {
     const result = computeProductReadiness(
       baseSnapshot({
-        plans: [
-          {
-            id: "pl1",
-            publicId: "plan_x",
-            slug: "pro",
-            billingType: "one_time",
-            accessTermDays: 30,
-            status: "draft",
-            nameVi: "Pro",
-            nameEn: "Pro",
-            prices: [],
-            features: [],
-          },
-        ],
+        plans: [planFixture()],
       }),
     );
     expect(result.ready).toBe(false);
@@ -126,11 +141,7 @@ describe("computeProductReadiness", () => {
           },
         ],
         plans: [
-          {
-            id: "pl1",
-            publicId: "plan_x",
-            slug: "pro",
-            billingType: "one_time",
+          planFixture({
             accessTermDays: 365,
             status: "active",
             nameVi: "Pro 1 năm",
@@ -147,7 +158,7 @@ describe("computeProductReadiness", () => {
               },
             ],
             features: [],
-          },
+          }),
         ],
       }),
     );

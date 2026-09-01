@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { resolveAccessTerm } from "./studio-field-policy";
 import {
-  detectAccessTermKind,
-  PRODUCT_CATEGORY_LABELS,
-  PRODUCT_TYPE_LABELS,
-  resolveAccessTerm,
-} from "./studio-field-policy";
+  deriveTechnicalIdentity,
+  suggestAccessFeatureKey,
+  suggestDesktopClientId,
+  suggestDesktopProtocol,
+  suggestInternalPlanCode,
+  suggestProductCode,
+} from "./technical-identity";
 
 describe("Novel AI studio configuration (concept)", () => {
+  const name = "Khepree Novel AI";
+
   it("maps trial / monthly / yearly plans from generic UI presets", () => {
     const trial = resolveAccessTerm("trial", 1);
     expect(trial.billingType).toBe("free");
@@ -21,19 +26,21 @@ describe("Novel AI studio configuration (concept)", () => {
     expect(yearly.accessTermDays).toBe(365);
   });
 
-  it("round-trips plan term detection for Novel AI paid plans", () => {
-    const month = detectAccessTermKind("one_time", 30);
-    expect(month.kind).toBe("month");
-    expect(month.count).toBe(1);
+  it("auto-generates Novel AI technical identity", () => {
+    expect(suggestProductCode(name)).toBe("KHEPREE_NOVEL_AI");
+    expect(suggestAccessFeatureKey(name)).toBe("novel_ai.access");
+    expect(suggestDesktopClientId(name)).toBe("khepree.novel-ai.desktop");
+    expect(suggestDesktopProtocol(name)).toBe("khepreenovelai");
 
-    const year = detectAccessTermKind("one_time", 365);
-    expect(year.kind).toBe("year");
-    expect(year.count).toBe(1);
+    const productCode = "KHEPREE_NOVEL_AI";
+    expect(suggestInternalPlanCode(productCode, "trial")).toBe("NOVEL_AI_FREE_TRIAL");
+    expect(suggestInternalPlanCode(productCode, "month")).toBe("NOVEL_AI_MONTHLY");
+    expect(suggestInternalPlanCode(productCode, "year")).toBe("NOVEL_AI_YEARLY");
   });
 
-  it("supports AI + desktop taxonomy labels", () => {
-    expect(PRODUCT_CATEGORY_LABELS["ai-tools"]).toBe("AI Tools");
-    expect(PRODUCT_CATEGORY_LABELS.translation).toBe("Translation");
-    expect(PRODUCT_TYPE_LABELS["desktop-software"]).toBe("Desktop Software");
+  it("derives full desktop identity bundle", () => {
+    const derived = deriveTechnicalIdentity({ name, productType: "desktop-software" });
+    expect(derived.slug).toBe("khepree-novel-ai");
+    expect(derived.desktopCallbackUri).toBe("khepreenovelai://auth/callback");
   });
 });

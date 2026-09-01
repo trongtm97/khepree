@@ -20,6 +20,7 @@ import { ReleaseUploadForm } from "@/components/release/release-upload-form";
 import { ProductDescriptionEditor } from "@/components/product-studio/product-description-editor";
 import { ProductMediaField } from "@/components/product-studio/product-media-field";
 import { ProductPlanBuilder, mergedDescriptionForLocale } from "@/components/product-studio/product-plan-builder";
+import { ProductTechnicalIdentityPanel } from "@/components/product-studio/product-technical-identity-panel";
 import { StudioActionBar } from "@/components/product-studio/studio-action-bar";
 
 type Locale = "vi" | "en";
@@ -178,7 +179,6 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
           </button>
           {showAdvanced ? (
             <div className="space-y-3 rounded-lg border border-khepree-mist/80 bg-khepree-cloud/40 p-4">
-              <Input name="slug" label="URL slug" defaultValue={snapshot.slug} />
               <Select
                 name="licensingMode"
                 label="Chế độ bản quyền"
@@ -191,6 +191,11 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
                 <Input name="seoTitle_en_input" label="SEO Title (EN)" defaultValue={en.seoTitle} />
                 <Textarea name="seoDescription_en_input" label="Meta (EN)" defaultValue={en.seoDescription} />
               </div>
+              <ProductTechnicalIdentityPanel
+                snapshot={snapshot}
+                productName={vi.name}
+                productType={productType ?? ""}
+              />
             </div>
           ) : null}
         </section>

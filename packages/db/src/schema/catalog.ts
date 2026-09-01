@@ -70,6 +70,12 @@ export const products = pgTable(
     index("products_slug_idx").on(table.slug),
     index("products_status_idx").on(table.status),
     index("products_created_at_idx").on(table.createdAt),
+    uniqueIndex("products_metadata_product_code_unique")
+      .on(sql`(metadata->>'productCode')`)
+      .where(sql`metadata->>'productCode' is not null and metadata->>'productCode' <> ''`),
+    uniqueIndex("products_metadata_desktop_protocol_unique")
+      .on(sql`(metadata->>'desktopProtocol')`)
+      .where(sql`metadata->>'desktopProtocol' is not null and metadata->>'desktopProtocol' <> ''`),
   ],
 );
 
@@ -109,10 +115,15 @@ export const plans = pgTable(
     /** null = perpetual access. 30/365 = fixed term in days. Not a provider subscription. */
     accessTermDays: integer("access_term_days"),
     status: planStatusEnum("status").notNull().default("draft"),
+    /** Stable internal identifier — not display text or authorization source. */
+    internalCode: text("internal_code"),
     ...timestamps,
   },
   (table) => [
     unique("plan_product_slug_unique").on(table.productId, table.slug),
+    uniqueIndex("plans_product_internal_code_unique")
+      .on(table.productId, table.internalCode)
+      .where(sql`${table.internalCode} is not null`),
     index("plans_product_id_idx").on(table.productId),
     index("plans_status_idx").on(table.status),
   ],

@@ -36,6 +36,7 @@ export interface StudioPlan {
   id: string;
   publicId: string;
   slug: string;
+  internalCode: string | null;
   billingType: PlanBillingType;
   accessTermDays: number | null;
   status: PlanStatus;
@@ -43,6 +44,10 @@ export interface StudioPlan {
   nameEn: string | null;
   prices: StudioPrice[];
   features: StudioPlanFeature[];
+  useDefaultDevicePolicy: boolean;
+  selfServiceDeviceRemoval: boolean;
+  deviceTransferMax: number | null;
+  deviceTransferWindowDays: number | null;
 }
 
 export interface StudioFeatureOption {
@@ -63,6 +68,13 @@ export interface ProductStudioSnapshot {
   iconMediaId: string | null;
   iconMediaPublicId: string | null;
   metadata: Record<string, unknown>;
+  productCode: string | null;
+  accessFeatureKey: string | null;
+  desktopProtocol: string | null;
+  desktopClientId: string | null;
+  desktopCallbackUri: string | null;
+  identityLocked: boolean;
+  identityLockReason: string | null;
   updatedAt: Date;
   translations: StudioTranslation[];
   plans: StudioPlan[];
@@ -105,6 +117,10 @@ export interface SaveStudioDraftInput {
   productId: string;
   actorUserId?: string | null;
   slug?: string;
+  productCode?: string;
+  accessFeatureKey?: string;
+  desktopClientId?: string;
+  desktopProtocol?: string;
   licensingMode?: LicensingMode;
   productCategory?: ProductCategory | null;
   productType?: ProductType | null;
@@ -124,6 +140,7 @@ export interface SaveStudioDraftInput {
   plans: Array<{
     planId?: string;
     slug?: string;
+    internalPlanCode?: string;
     nameVi: string;
     nameEn?: string;
     amountMajor: string;
@@ -131,6 +148,11 @@ export interface SaveStudioDraftInput {
     termCount: number;
     accountRequired: boolean;
     deviceLimit: number;
+    useDefaultDevicePolicy?: boolean;
+    selfServiceDeviceRemoval?: boolean;
+    deviceTransferMax?: number;
+    deviceTransferWindowDays?: number;
+    useDefaultFeatures?: boolean;
     recommended?: boolean;
     remove?: boolean;
   }>;

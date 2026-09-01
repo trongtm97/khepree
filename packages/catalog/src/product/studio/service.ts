@@ -17,7 +17,7 @@ import {
   type LicensingMode,
   type ProductPlatform,
 } from "@khepree/db";
-import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@khepree/config";
+import { DEFAULT_CURRENCY, DEFAULT_LOCALE, DEFAULT_DEVICE_TRANSFER_LIMIT, DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS } from "@khepree/config";
 import { parseMoneyMinor } from "@khepree/types";
 import { formatPriceAmount } from "../pricing";
 import { normalizePlatformCapabilities, normalizeProductMetadata, parseOperatingSystems } from "../metadata";
@@ -30,6 +30,24 @@ import {
   STUDIO_FEATURE_KEYS,
   suggestPlanSlug,
 } from "../studio-field-policy";
+import {
+  assertUniqueDesktopClientId,
+  assertUniqueDesktopProtocol,
+  assertUniqueProductCode,
+  checkProductIdentityLocked,
+  loadDesktopClientForProduct,
+  resolveProductTechnicalFields,
+  syncDesktopClient,
+} from "./technical-persist";
+import {
+  deriveDesktopCallbackUri,
+  parseAccessFeatureKey,
+  parseDesktopProtocol,
+  parseProductCode,
+  suggestAccessFeatureKey,
+  suggestInternalPlanCode,
+  suggestProductCode,
+} from "../technical-identity";
 import { createProductPreviewToken } from "../preview-token";
 import { suggestProductSlug } from "../slug";
 import { CatalogError } from "../admin";
@@ -177,10 +195,18 @@ export class ProductStudioService {
       const planTrans = planTranslationRows.filter((t) => t.planId === plan.id);
       const planPrices = priceRows.filter((p) => p.planId === plan.id);
       const pfRows = planFeatureRows.filter((pf) => pf.planId === plan.id);
+      const transferMax = pfRows.find((f) => f.key === STUDIO_FEATURE_KEYS.deviceTransfersMax)?.integerValue;
+      const transferWindow = pfRows.find((f) => f.key === STUDIO_FEATURE_KEYS.deviceTransfersWindowDays)?.integerValue;
+      const hasTransferFeatures = pfRows.some(
+        (f) =>
+          f.key === STUDIO_FEATURE_KEYS.deviceTransfersMax ||
+          f.key === STUDIO_FEATURE_KEYS.deviceTransfersWindowDays,
+      );
       return {
         id: plan.id,
         publicId: plan.publicId,
         slug: plan.slug,
+        internalCode: plan.internalCode,
         billingType: plan.billingType,
         accessTermDays: plan.accessTermDays,
         status: plan.status,
@@ -208,8 +234,16 @@ export class ProductStudioService {
             stringValue: pf.stringValue,
           };
         }),
+        useDefaultDevicePolicy: !hasTransferFeatures,
+        selfServiceDeviceRemoval: transferMax === null || transferMax === undefined ? true : transferMax > 0,
+        deviceTransferMax: transferMax ?? null,
+        deviceTransferWindowDays: transferWindow ?? null,
       };
     });
+
+    const metadata = normalizeProductMetadata(product.metadata);
+    const identity = await checkProductIdentityLocked(this.db, productId);
+    const desktopClient = await loadDesktopClientForProduct(this.db, productId);
 
     return {
       id: product.id,
@@ -220,7 +254,14 @@ export class ProductStudioService {
       platformCapabilities: normalizePlatformCapabilities(product.platformCapabilities),
       iconMediaId: product.iconMediaId,
       iconMediaPublicId,
-      metadata: normalizeProductMetadata(product.metadata),
+      metadata,
+      productCode: parseProductCode(metadata),
+      accessFeatureKey: parseAccessFeatureKey(metadata),
+      desktopProtocol: parseDesktopProtocol(metadata),
+      desktopClientId: desktopClient?.clientId ?? null,
+      desktopCallbackUri: desktopClient?.callbackUri ?? null,
+      identityLocked: identity.locked,
+      identityLockReason: identity.reason,
       updatedAt: product.updatedAt,
       translations: translations.map((t) => ({
         locale: t.locale,
@@ -458,6 +499,7 @@ export class ProductStudioService {
     productId: string;
     planId?: string;
     slug: string;
+    internalCode?: string | null;
     billingType: PlanBillingType;
     accessTermDays?: number | null;
     nameVi: string;
@@ -474,6 +516,7 @@ export class ProductStudioService {
         .update(plans)
         .set({
           slug: input.slug.trim(),
+          internalCode: input.internalCode ?? null,
           billingType: input.billingType,
           accessTermDays: input.accessTermDays ?? null,
           ...(input.status ? { status: input.status } : {}),
@@ -499,6 +542,7 @@ export class ProductStudioService {
         publicId: createPublicId("plan"),
         productId: input.productId,
         slug: input.slug.trim(),
+        internalCode: input.internalCode ?? null,
         billingType: input.billingType,
         accessTermDays: input.accessTermDays ?? null,
         status: input.status ?? "draft",
@@ -770,6 +814,53 @@ export class ProductStudioService {
     if (recommendedPublicId) metadata.recommendedPlanPublicId = recommendedPublicId;
     else delete metadata.recommendedPlanPublicId;
 
+    const identityLock = await checkProductIdentityLocked(this.db, input.productId);
+    const previousType = parseProductType(snapshot.metadata);
+    if (
+      previousType === "desktop-software" &&
+      productType !== "desktop-software" &&
+      identityLock.locked
+    ) {
+      errors.push("Không thể đổi loại sản phẩm — đã có phiên desktop, entitlement hoặc đơn hàng.");
+    }
+
+    let technical: ReturnType<typeof resolveProductTechnicalFields> | null = null;
+    try {
+      technical = resolveProductTechnicalFields({
+        nameVi,
+        metadata: snapshot.metadata,
+        productType: productType ?? null,
+        overrides: {
+          productCode: identityLock.locked
+            ? parseProductCode(snapshot.metadata) ?? undefined
+            : input.productCode,
+          accessFeatureKey: identityLock.locked
+            ? parseAccessFeatureKey(snapshot.metadata) ?? undefined
+            : input.accessFeatureKey,
+          desktopClientId: identityLock.locked
+            ? snapshot.desktopClientId ?? undefined
+            : input.desktopClientId,
+          desktopProtocol: identityLock.locked
+            ? parseDesktopProtocol(snapshot.metadata) ?? undefined
+            : input.desktopProtocol,
+        },
+        identityLocked: identityLock.locked,
+      });
+      await assertUniqueProductCode(this.db, technical.productCode, input.productId);
+      if (technical.desktopProtocol) {
+        await assertUniqueDesktopProtocol(this.db, technical.desktopProtocol, input.productId);
+      }
+      if (technical.desktopClientId) {
+        await assertUniqueDesktopClientId(this.db, technical.desktopClientId, input.productId);
+      }
+      metadata.productCode = technical.productCode;
+      metadata.accessFeatureKey = technical.accessFeatureKey;
+      if (technical.desktopProtocol) metadata.desktopProtocol = technical.desktopProtocol;
+      else delete metadata.desktopProtocol;
+    } catch (cause) {
+      errors.push(cause instanceof Error ? cause.message : "Cấu hình technical identity không hợp lệ");
+    }
+
     if (errors.length > 0) return { ok: false, errors, warnings };
 
     try {
@@ -785,6 +876,37 @@ export class ProductStudioService {
         .update(products)
         .set({ metadata, updatedAt: new Date() })
         .where(eq(products.id, input.productId));
+
+      if (technical) {
+        const existingClient = await loadDesktopClientForProduct(this.db, input.productId);
+        const clientId =
+          technical.desktopClientId ??
+          existingClient?.clientId ??
+          snapshot.desktopClientId ??
+          "";
+        const callbackUri =
+          technical.desktopCallbackUri ?? existingClient?.callbackUri ?? snapshot.desktopCallbackUri ?? "";
+        if (productType === "desktop-software" && clientId && callbackUri) {
+          await syncDesktopClient(this.db, {
+            productId: input.productId,
+            displayName: nameVi,
+            clientId,
+            callbackUri,
+            active: true,
+          });
+        } else if (productType !== "desktop-software") {
+          const inactiveClient = await loadDesktopClientForProduct(this.db, input.productId);
+          if (inactiveClient) {
+            await syncDesktopClient(this.db, {
+              productId: input.productId,
+              displayName: nameVi,
+              clientId: inactiveClient.clientId,
+              callbackUri: inactiveClient.callbackUri ?? deriveDesktopCallbackUri("inactive"),
+              active: false,
+            });
+          }
+        }
+      }
 
       for (const tr of input.translations) {
         const current = snapshot.translations.find((t) => t.locale === tr.locale);
@@ -824,6 +946,13 @@ export class ProductStudioService {
         this.ensureFeatureByKey(STUDIO_FEATURE_KEYS.devicesMax, "integer", "Số thiết bị tối đa"),
         this.ensureFeatureByKey(STUDIO_FEATURE_KEYS.accountRequired, "boolean", "Yêu cầu tài khoản Khepree"),
       ]);
+      const accessFeatureKey =
+        technical?.accessFeatureKey ??
+        parseAccessFeatureKey(metadata) ??
+        suggestAccessFeatureKey(nameVi);
+      const accessFeature = await this.ensureFeatureByKey(accessFeatureKey, "boolean", "Product access");
+      const productCode =
+        technical?.productCode ?? parseProductCode(metadata) ?? suggestProductCode(nameVi);
 
       for (const planInput of input.plans) {
         if (planInput.remove && planInput.planId) {
@@ -842,10 +971,18 @@ export class ProductStudioService {
 
         const { billingType, accessTermDays } = resolveAccessTerm(planInput.termKind, planInput.termCount);
         const planSlug = planInput.slug?.trim() || suggestPlanSlug(nameVi);
+        const existingPlan = planInput.planId
+          ? snapshot.plans.find((p) => p.id === planInput.planId)
+          : undefined;
+        const internalCode =
+          planInput.internalPlanCode?.trim() ||
+          existingPlan?.internalCode ||
+          suggestInternalPlanCode(productCode, planInput.termKind, nameVi);
         const plan = await this.savePlan({
           productId: input.productId,
           planId: planInput.planId,
           slug: planSlug,
+          internalCode,
           billingType,
           accessTermDays,
           nameVi,
@@ -866,6 +1003,13 @@ export class ProductStudioService {
 
         await this.upsertPlanFeature({
           planId: plan.id,
+          featureId: accessFeature.id,
+          valueType: "boolean",
+          booleanValue: true,
+          actorUserId: input.actorUserId,
+        });
+        await this.upsertPlanFeature({
+          planId: plan.id,
           featureId: devicesFeature.id,
           valueType: "integer",
           integerValue: Math.max(1, planInput.deviceLimit),
@@ -876,6 +1020,11 @@ export class ProductStudioService {
           featureId: accountFeature.id,
           valueType: "boolean",
           booleanValue: planInput.accountRequired,
+          actorUserId: input.actorUserId,
+        });
+        await this.applyDeviceTransferPolicy({
+          planId: plan.id,
+          planInput,
           actorUserId: input.actorUserId,
         });
 
@@ -901,6 +1050,62 @@ export class ProductStudioService {
       { featureId: row.id, locale: "en", name: nameVi },
     ]);
     return row;
+  }
+
+  private async deletePlanFeatureByKey(planId: string, featureKey: string) {
+    const [feature] = await this.db.select().from(features).where(eq(features.key, featureKey)).limit(1);
+    if (!feature) return;
+    await this.db
+      .delete(planFeatures)
+      .where(and(eq(planFeatures.planId, planId), eq(planFeatures.featureId, feature.id)));
+  }
+
+  private async applyDeviceTransferPolicy(input: {
+    planId: string;
+    planInput: SaveStudioDraftInput["plans"][number];
+    actorUserId?: string | null;
+  }) {
+    const useDefault = input.planInput.useDefaultDevicePolicy !== false;
+    if (useDefault) {
+      await this.deletePlanFeatureByKey(input.planId, STUDIO_FEATURE_KEYS.deviceTransfersMax);
+      await this.deletePlanFeatureByKey(input.planId, STUDIO_FEATURE_KEYS.deviceTransfersWindowDays);
+      return;
+    }
+
+    const transfersFeature = await this.ensureFeatureByKey(
+      STUDIO_FEATURE_KEYS.deviceTransfersMax,
+      "integer",
+      "Giới hạn chuyển thiết bị",
+    );
+    const windowFeature = await this.ensureFeatureByKey(
+      STUDIO_FEATURE_KEYS.deviceTransfersWindowDays,
+      "integer",
+      "Cửa sổ chuyển thiết bị (ngày)",
+    );
+
+    const selfService = input.planInput.selfServiceDeviceRemoval !== false;
+    const maxTransfers = selfService
+      ? Math.max(0, input.planInput.deviceTransferMax ?? DEFAULT_DEVICE_TRANSFER_LIMIT)
+      : 0;
+    const windowDays = Math.max(
+      1,
+      input.planInput.deviceTransferWindowDays ?? DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS,
+    );
+
+    await this.upsertPlanFeature({
+      planId: input.planId,
+      featureId: transfersFeature.id,
+      valueType: "integer",
+      integerValue: maxTransfers,
+      actorUserId: input.actorUserId,
+    });
+    await this.upsertPlanFeature({
+      planId: input.planId,
+      featureId: windowFeature.id,
+      valueType: "integer",
+      integerValue: windowDays,
+      actorUserId: input.actorUserId,
+    });
   }
 
   async archivePlan(input: { planId: string; productId: string; actorUserId?: string | null }) {

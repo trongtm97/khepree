@@ -26,6 +26,20 @@ Actions: **Save Draft** · **Preview** · **Publish** — one screen, locale swi
 
 Advanced tools remain available for expert administration (slug, SEO overrides, plan slug, extra feature keys via legacy `/plans`, `/features`, `/prices` routes).
 
+### Technical Identity (Advanced — not on main form)
+
+| Field | Storage |
+|-------|---------|
+| Product ID | `products.public_id` (read-only) |
+| Product Code | `products.metadata.productCode` (unique index) |
+| Access Feature | `metadata.accessFeatureKey` + `plan_features` grant |
+| Desktop Client ID | `desktop_clients.client_id` (unique) |
+| Desktop Protocol | `metadata.desktopProtocol` (unique index) |
+| Callback URI | `desktop_clients.allowed_redirect_uris` (derived only) |
+| Internal Plan Code | `plans.internal_code` (unique per product) |
+
+Module: `packages/catalog/src/product/technical-identity.ts`
+
 ### Field count (normal workflow)
 
 | Metric | Before | After |
@@ -59,6 +73,12 @@ Advanced tools remain available for expert administration (slug, SEO overrides, 
 | Field | Rule |
 |-------|------|
 | Slug | `suggestProductSlug(nameVi)` |
+| **Product Code** | `suggestProductCode(nameVi)` → `KHEPREE_NOVEL_AI` |
+| **Access Feature** | `suggestAccessFeatureKey(nameVi)` → `novel_ai.access` |
+| **Desktop Client ID** | `suggestDesktopClientId(nameVi)` (desktop only) |
+| **Desktop Protocol** | `suggestDesktopProtocol(nameVi)` (desktop only) |
+| **Callback URI** | `{protocol}://auth/callback` (derived only) |
+| **Internal Plan Code** | `suggestInternalPlanCode(productCode, termKind)` |
 | SEO title | `{name} \| Khepree` |
 | Meta description | `short_description` |
 | Canonical | `/vi/products/{slug}` |

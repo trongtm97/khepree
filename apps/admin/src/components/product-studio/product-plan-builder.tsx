@@ -21,6 +21,11 @@ export type PlanDraft = {
   deviceLimit: number;
   recommended: boolean;
   slug?: string;
+  internalCode?: string | null;
+  useDefaultDevicePolicy: boolean;
+  selfServiceDeviceRemoval: boolean;
+  deviceTransferMax: number;
+  deviceTransferWindowDays: number;
   remove?: boolean;
 };
 
@@ -42,6 +47,11 @@ function planFromSnapshot(plan: StudioPlan, recommended: boolean): PlanDraft {
     deviceLimit,
     recommended,
     slug: plan.slug,
+    internalCode: plan.internalCode,
+    useDefaultDevicePolicy: plan.useDefaultDevicePolicy,
+    selfServiceDeviceRemoval: plan.selfServiceDeviceRemoval,
+    deviceTransferMax: plan.deviceTransferMax ?? 5,
+    deviceTransferWindowDays: plan.deviceTransferWindowDays ?? 30,
   };
 }
 
@@ -55,6 +65,10 @@ function emptyPlan(): PlanDraft {
     accountRequired: true,
     deviceLimit: 1,
     recommended: false,
+    useDefaultDevicePolicy: true,
+    selfServiceDeviceRemoval: true,
+    deviceTransferMax: 5,
+    deviceTransferWindowDays: 30,
   };
 }
 
@@ -180,8 +194,47 @@ export function ProductPlanBuilder({ plans, recommendedPlanPublicId }: Props) {
               {adv ? "Ẩn nâng cao" : "Nâng cao"}
             </button>
             {adv ? (
-              <div className="mt-2">
+              <div className="mt-2 space-y-3">
                 <Input name={`plan_${index}_slug`} label="Slug gói" defaultValue={plan.slug ?? ""} />
+                <Input
+                  name={`plan_${index}_internalCode`}
+                  label="Internal Plan Code"
+                  defaultValue={plan.internalCode ?? ""}
+                  className="font-mono text-sm uppercase"
+                />
+                <div className="rounded border border-khepree-mist/80 p-3">
+                  <p className="text-xs font-semibold text-khepree-slate">Device Policy</p>
+                  <label className="mt-2 flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name={`plan_${index}_useDefaultDevicePolicy`}
+                      defaultChecked={plan.useDefaultDevicePolicy}
+                    />
+                    Dùng chính sách mặc định Khepree
+                  </label>
+                  {!plan.useDefaultDevicePolicy ? (
+                    <div className="mt-2 space-y-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          name={`plan_${index}_selfServiceRemoval`}
+                          defaultChecked={plan.selfServiceDeviceRemoval}
+                        />
+                        Cho phép tự gỡ thiết bị
+                      </label>
+                      <Input
+                        name={`plan_${index}_transferMax`}
+                        label="Max transfers"
+                        defaultValue={String(plan.deviceTransferMax)}
+                      />
+                      <Input
+                        name={`plan_${index}_transferWindow`}
+                        label="Window (days)"
+                        defaultValue={String(plan.deviceTransferWindowDays)}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>
