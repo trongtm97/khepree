@@ -1,4 +1,5 @@
 import { ADMIN_PAGE_SIZE } from "@khepree/db";
+import { PRODUCT_TYPE_LABELS } from "@khepree/catalog";
 import { hasPermission } from "@khepree/security";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -16,12 +17,6 @@ import { labelStatus } from "@/lib/labels";
 import { formatDate, parsePage } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Sản phẩm" };
-
-const PLATFORM_LABEL: Record<string, string> = {
-  web: "Web",
-  desktop: "Desktop",
-  mobile: "Mobile",
-};
 
 export default async function ProductsPage({
   searchParams,
@@ -55,70 +50,55 @@ export default async function ProductsPage({
       />
       <SearchForm q={q} />
       <AdminTable
-        headers={["", "Sản phẩm", "Slug", "Trạng thái", "Nền tảng", "Gói/Giá", "Cập nhật", "SEO", "Sẵn sàng", ""]}
+        headers={["", "Sản phẩm", "Loại", "Trạng thái", "Gói", "Phiên bản", "Cập nhật", ""]}
         empty={rows.length === 0}
       >
         {rows.map((row) => {
           const previewUrl = studio.previewUrl({ id: row.id, slug: row.slug }, previewBase);
+          const productType = row.productType ? PRODUCT_TYPE_LABELS[row.productType as keyof typeof PRODUCT_TYPE_LABELS] ?? row.productType : "—";
           return (
-          <tr key={row.id}>
-            <AdminTd>
-              {row.iconMediaPublicId ? (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded bg-khepree-mist text-[10px] text-khepree-slate/60" title={row.iconMediaPublicId}>
-                  ◆
-                </span>
-              ) : (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded border border-dashed border-khepree-mist text-xs text-khepree-slate/40">—</span>
-              )}
-            </AdminTd>
-            <AdminTd>
-              <div className="font-medium">{row.nameVi ?? row.slug}</div>
-              {row.nameEn ? <div className="text-xs text-khepree-slate/70">{row.nameEn}</div> : null}
-            </AdminTd>
-            <AdminTd>{row.slug}</AdminTd>
-            <AdminTd>
-              <AdminStatusBadge label={labelStatus(row.status)} tone={statusTone(row.status)} />
-            </AdminTd>
-            <AdminTd>
-              {row.platformCapabilities.length
-                ? row.platformCapabilities.map((p) => PLATFORM_LABEL[p] ?? p).join(", ")
-                : "—"}
-            </AdminTd>
-            <AdminTd>
-              {row.primaryPlanLabel ?? "—"}
-              {row.primaryPriceLabel ? <div className="text-xs">{row.primaryPriceLabel}</div> : null}
-            </AdminTd>
-            <AdminTd>{formatDate(row.updatedAt)}</AdminTd>
-            <AdminTd>
-              {row.seoOk ? (
-                <AdminStatusBadge label="OK" tone="success" />
-              ) : (
-                <span className="text-xs text-amber-800">Thiếu</span>
-              )}
-            </AdminTd>
-            <AdminTd>
-              {row.readiness.ready ? (
-                <AdminStatusBadge label="Sẵn sàng" tone="success" />
-              ) : (
-                <span className="text-xs text-amber-800">Còn {row.readiness.blockingCount} mục</span>
-              )}
-            </AdminTd>
-            <AdminTd>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                <Link className="text-khepree-teal underline" href={`/products/${row.id}`}>
-                  Studio
-                </Link>
-                <Link className="text-khepree-teal underline" href={previewUrl} target="_blank" rel="noopener noreferrer">
-                  Xem trước
-                </Link>
-                {canWrite && row.status !== "retired" ? (
-                  <Link className="text-khepree-slate/70 underline" href={`/products/${row.id}?tab=publish`}>
-                    Lưu trữ
+            <tr key={row.id}>
+              <AdminTd>
+                {row.iconMediaPublicId ? (
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded bg-khepree-mist text-[10px] text-khepree-slate/60">
+                    ◆
+                  </span>
+                ) : (
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded border border-dashed border-khepree-mist text-xs text-khepree-slate/40">
+                    —
+                  </span>
+                )}
+              </AdminTd>
+              <AdminTd>
+                <div className="font-medium">{row.nameVi ?? row.slug}</div>
+                {row.nameEn ? <div className="text-xs text-khepree-slate/70">{row.nameEn}</div> : null}
+              </AdminTd>
+              <AdminTd>{productType}</AdminTd>
+              <AdminTd>
+                <AdminStatusBadge label={labelStatus(row.status)} tone={statusTone(row.status)} />
+              </AdminTd>
+              <AdminTd>
+                {row.planCount} gói
+                {row.primaryPriceLabel ? <div className="text-xs">{row.primaryPriceLabel}</div> : null}
+              </AdminTd>
+              <AdminTd>{row.latestReleaseVersion ?? "—"}</AdminTd>
+              <AdminTd>{formatDate(row.updatedAt)}</AdminTd>
+              <AdminTd>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                  <Link className="text-khepree-teal underline" href={`/products/${row.id}`}>
+                    Sửa
                   </Link>
-                ) : null}
-              </div>
-            </AdminTd>
-          </tr>
+                  <Link className="text-khepree-teal underline" href={previewUrl} target="_blank" rel="noopener noreferrer">
+                    Xem trước
+                  </Link>
+                  {canWrite && row.status === "draft" ? (
+                    <Link className="text-khepree-slate/70 underline" href={`/products/${row.id}`}>
+                      Xuất bản
+                    </Link>
+                  ) : null}
+                </div>
+              </AdminTd>
+            </tr>
           );
         })}
       </AdminTable>

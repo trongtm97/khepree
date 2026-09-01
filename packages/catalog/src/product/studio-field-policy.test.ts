@@ -47,7 +47,7 @@ describe("studio-field-policy", () => {
   });
 
   it("exposes description template sections", () => {
-    expect(PRODUCT_DESCRIPTION_TEMPLATE).toContain("# Giới thiệu");
-    expect(PRODUCT_DESCRIPTION_TEMPLATE).toContain("# Câu hỏi thường gặp");
+    expect(PRODUCT_DESCRIPTION_TEMPLATE).toContain("## Giới thiệu");
+    expect(PRODUCT_DESCRIPTION_TEMPLATE).toContain("## Câu hỏi thường gặp");
   });
 });

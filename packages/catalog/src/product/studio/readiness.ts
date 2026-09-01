@@ -1,4 +1,9 @@
-import { normalizePlatformCapabilities } from "../metadata";
+import {
+  mergeFullDescription,
+  parseProductCategory,
+  parseProductType,
+  productTypeNeedsRelease,
+} from "../studio-field-policy";
 import { isPurchasableBillingType } from "../types";
 import type { ProductStudioSnapshot, ReadinessItem, ReadinessResult } from "./types";
 
@@ -14,14 +19,32 @@ function hasSeo(snapshot: ProductStudioSnapshot): boolean {
   return Boolean(title && desc);
 }
 
+function fullDescription(snapshot: ProductStudioSnapshot, locale: string): string {
+  const tr = translation(snapshot, locale);
+  return mergeFullDescription(tr?.description ?? null, tr?.content ?? null);
+}
+
 export function computeProductReadiness(snapshot: ProductStudioSnapshot): ReadinessResult {
   const vi = translation(snapshot, "vi");
+  const productType = parseProductType(snapshot.metadata);
   const items: ReadinessItem[] = [];
 
   items.push({
     id: "name_vi",
     label: "Tên tiếng Việt",
     ok: Boolean(vi?.name.trim()),
+    required: true,
+  });
+  items.push({
+    id: "category",
+    label: "Danh mục",
+    ok: Boolean(parseProductCategory(snapshot.metadata)),
+    required: true,
+  });
+  items.push({
+    id: "product_type",
+    label: "Loại sản phẩm",
+    ok: Boolean(productType),
     required: true,
   });
   items.push({
@@ -34,11 +57,23 @@ export function computeProductReadiness(snapshot: ProductStudioSnapshot): Readin
     id: "short_vi",
     label: "Mô tả ngắn (VI)",
     ok: Boolean(vi?.shortDescription?.trim()),
-    required: false,
+    required: true,
+  });
+  items.push({
+    id: "full_vi",
+    label: "Mô tả đầy đủ (VI)",
+    ok: Boolean(fullDescription(snapshot, "vi").trim()),
+    required: true,
+  });
+  items.push({
+    id: "icon",
+    label: "Icon sản phẩm",
+    ok: Boolean(snapshot.iconMediaPublicId),
+    required: true,
   });
 
-  const activePlans = snapshot.plans.filter((plan) => plan.status === "active");
-  const purchasablePlans = snapshot.plans.filter((plan) => isPurchasableBillingType(plan.billingType));
+  const activePlans = snapshot.plans.filter((plan) => plan.status !== "archived");
+  const purchasablePlans = activePlans.filter((plan) => isPurchasableBillingType(plan.billingType));
   const needsCommercial = purchasablePlans.length > 0;
   const hasSellableOffer =
     activePlans.some((plan) => isPurchasableBillingType(plan.billingType)) &&
@@ -67,10 +102,10 @@ export function computeProductReadiness(snapshot: ProductStudioSnapshot): Readin
     required: true,
   });
 
-  const needsRelease = normalizePlatformCapabilities(snapshot.platformCapabilities).includes("desktop");
+  const needsRelease = productTypeNeedsRelease(productType);
   items.push({
     id: "release",
-    label: "Tệp phát hành (sản phẩm desktop)",
+    label: "Tệp phát hành (phần mềm desktop)",
     ok: !needsRelease || snapshot.publishedReleaseCount > 0,
     required: needsRelease,
   });

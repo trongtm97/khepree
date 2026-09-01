@@ -21,6 +21,15 @@ import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@khepree/config";
 import { parseMoneyMinor } from "@khepree/types";
 import { formatPriceAmount } from "../pricing";
 import { normalizePlatformCapabilities, normalizeProductMetadata, parseOperatingSystems } from "../metadata";
+import {
+  deriveSeoFields,
+  parseProductType,
+  productTypeToLicensingMode,
+  productTypeToPlatforms,
+  resolveAccessTerm,
+  STUDIO_FEATURE_KEYS,
+  suggestPlanSlug,
+} from "../studio-field-policy";
 import { createProductPreviewToken } from "../preview-token";
 import { suggestProductSlug } from "../slug";
 import { CatalogError } from "../admin";
@@ -28,6 +37,8 @@ import type { PlanBillingType, PlanStatus } from "../types";
 import { computeProductReadiness } from "./readiness";
 import type {
   ProductStudioSnapshot,
+  SaveStudioDraftInput,
+  SaveStudioDraftResult,
   StudioFeatureOption,
   StudioListRow,
   StudioPlan,
@@ -269,7 +280,10 @@ export class ProductStudioService {
         nameVi: vi?.name ?? null,
         nameEn: en?.name ?? null,
         iconMediaPublicId: snapshot.iconMediaPublicId,
+        productType: parseProductType(snapshot.metadata),
         platformCapabilities: snapshot.platformCapabilities,
+        planCount: snapshot.plans.filter((p) => p.status !== "archived").length,
+        latestReleaseVersion: null,
         updatedAt: product.updatedAt,
         primaryPlanLabel: primaryPlan ? primaryPlan.nameVi ?? primaryPlan.slug : null,
         primaryPriceLabel: primaryPrice
@@ -683,6 +697,229 @@ export class ProductStudioService {
       metadata: { reason: input.reason.trim() },
     });
     return row;
+  }
+
+  async createEmptyDraft(actorUserId?: string | null) {
+    return this.createDraft({
+      nameVi: "Sản phẩm mới",
+      actorUserId,
+    });
+  }
+
+  async saveStudioDraft(input: SaveStudioDraftInput): Promise<SaveStudioDraftResult> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const snapshot = await this.getSnapshot(input.productId);
+    if (!snapshot) {
+      return { ok: false, errors: ["Không tìm thấy sản phẩm"], warnings };
+    }
+
+    const viInput = input.translations.find((t) => t.locale === "vi");
+    const nameVi = viInput?.name?.trim() ?? snapshot.translations.find((t) => t.locale === "vi")?.name ?? "";
+    let slug = input.slug?.trim().toLowerCase() || snapshot.slug;
+    if (input.autoSlugFromName && nameVi) {
+      slug = suggestProductSlug(nameVi);
+    }
+    if (slug !== snapshot.slug) {
+      const [collision] = await this.db
+        .select({ id: products.id })
+        .from(products)
+        .where(eq(products.slug, slug))
+        .limit(1);
+      if (collision && collision.id !== input.productId) {
+        errors.push(`Slug "${slug}" đã được sử dụng`);
+      }
+      if (snapshot.status === "active") {
+        warnings.push("Sản phẩm đã xuất bản — đổi slug có thể gây broken URL nếu chưa cấu hình redirect");
+      }
+    }
+
+    const productType = input.productType ?? parseProductType(snapshot.metadata);
+    const licensingMode =
+      input.licensingMode ?? (productType ? productTypeToLicensingMode(productType) : snapshot.licensingMode);
+    const platformCapabilities = productType
+      ? productTypeToPlatforms(productType)
+      : snapshot.platformCapabilities;
+
+    const metadata = { ...normalizeProductMetadata(snapshot.metadata) };
+    if (input.productCategory !== undefined) {
+      metadata.productCategory = input.productCategory;
+    }
+    if (input.productType !== undefined) {
+      metadata.productType = input.productType;
+    }
+    if (input.coverMediaPublicId !== undefined) {
+      if (input.coverMediaPublicId) metadata.coverMediaPublicId = input.coverMediaPublicId;
+      else delete metadata.coverMediaPublicId;
+    }
+    if (input.galleryMediaPublicIds !== undefined) {
+      metadata.galleryMediaPublicIds = input.galleryMediaPublicIds;
+    }
+    if (input.operatingSystems !== undefined) {
+      metadata.operatingSystems = parseOperatingSystems({ operatingSystems: input.operatingSystems });
+    }
+
+    let recommendedPublicId = input.recommendedPlanPublicId ?? null;
+    const recommendedFromPlans = input.plans.find((p) => p.recommended);
+    if (recommendedFromPlans) {
+      const existing = recommendedFromPlans.planId
+        ? snapshot.plans.find((p) => p.id === recommendedFromPlans.planId)?.publicId
+        : null;
+      if (existing) recommendedPublicId = existing;
+    }
+    if (recommendedPublicId) metadata.recommendedPlanPublicId = recommendedPublicId;
+    else delete metadata.recommendedPlanPublicId;
+
+    if (errors.length > 0) return { ok: false, errors, warnings };
+
+    try {
+      await this.updateOverview({
+        productId: input.productId,
+        slug,
+        licensingMode,
+        platformCapabilities,
+        iconMediaPublicId: input.iconMediaPublicId,
+        actorUserId: input.actorUserId,
+      });
+      await this.db
+        .update(products)
+        .set({ metadata, updatedAt: new Date() })
+        .where(eq(products.id, input.productId));
+
+      for (const tr of input.translations) {
+        const current = snapshot.translations.find((t) => t.locale === tr.locale);
+        const name = tr.name?.trim() || current?.name;
+        if (!name?.trim()) continue;
+
+        let seoTitle = tr.seoTitle ?? current?.seoTitle ?? null;
+        let seoDescription = tr.seoDescription ?? current?.seoDescription ?? null;
+        if (input.autoSeo && tr.locale === "vi") {
+          const derived = deriveSeoFields({
+            name,
+            slug,
+            shortDescription: tr.shortDescription ?? current?.shortDescription ?? null,
+            seoTitleOverride: tr.seoTitle,
+            seoDescriptionOverride: tr.seoDescription,
+            hasCover: Boolean(input.coverMediaPublicId ?? metadata.coverMediaPublicId),
+            hasIcon: Boolean(input.iconMediaPublicId ?? snapshot.iconMediaPublicId),
+          });
+          if (!tr.seoTitle?.trim()) seoTitle = derived.seoTitle;
+          if (!tr.seoDescription?.trim()) seoDescription = derived.seoDescription;
+        }
+
+        await this.upsertTranslation({
+          productId: input.productId,
+          locale: tr.locale,
+          name,
+          shortDescription: tr.shortDescription ?? current?.shortDescription ?? null,
+          description: tr.fullDescription ?? current?.description ?? null,
+          content: null,
+          seoTitle,
+          seoDescription,
+          actorUserId: input.actorUserId,
+        });
+      }
+
+      const [devicesFeature, accountFeature] = await Promise.all([
+        this.ensureFeatureByKey(STUDIO_FEATURE_KEYS.devicesMax, "integer", "Số thiết bị tối đa"),
+        this.ensureFeatureByKey(STUDIO_FEATURE_KEYS.accountRequired, "boolean", "Yêu cầu tài khoản Khepree"),
+      ]);
+
+      for (const planInput of input.plans) {
+        if (planInput.remove && planInput.planId) {
+          try {
+            await this.archivePlan({ planId: planInput.planId, productId: input.productId, actorUserId: input.actorUserId });
+          } catch (cause) {
+            errors.push(
+              `Không thể xóa gói ${planInput.nameVi}: ${cause instanceof Error ? cause.message : "lỗi"}`,
+            );
+          }
+          continue;
+        }
+
+        const nameVi = planInput.nameVi.trim();
+        if (!nameVi) continue;
+
+        const { billingType, accessTermDays } = resolveAccessTerm(planInput.termKind, planInput.termCount);
+        const planSlug = planInput.slug?.trim() || suggestPlanSlug(nameVi);
+        const plan = await this.savePlan({
+          productId: input.productId,
+          planId: planInput.planId,
+          slug: planSlug,
+          billingType,
+          accessTermDays,
+          nameVi,
+          nameEn: planInput.nameEn,
+          status: "draft",
+          actorUserId: input.actorUserId,
+        });
+
+        const amount = planInput.amountMajor.replace(/\D/g, "");
+        await this.savePrice({
+          planId: plan.id,
+          priceId: snapshot.plans.find((p) => p.id === plan.id)?.prices[0]?.id,
+          currency: DEFAULT_CURRENCY,
+          amountMajor: amount || "0",
+          isActive: true,
+          actorUserId: input.actorUserId,
+        });
+
+        await this.upsertPlanFeature({
+          planId: plan.id,
+          featureId: devicesFeature.id,
+          valueType: "integer",
+          integerValue: Math.max(1, planInput.deviceLimit),
+          actorUserId: input.actorUserId,
+        });
+        await this.upsertPlanFeature({
+          planId: plan.id,
+          featureId: accountFeature.id,
+          valueType: "boolean",
+          booleanValue: planInput.accountRequired,
+          actorUserId: input.actorUserId,
+        });
+
+        if (planInput.recommended) {
+          metadata.recommendedPlanPublicId = plan.publicId;
+          await this.db.update(products).set({ metadata }).where(eq(products.id, input.productId));
+        }
+      }
+    } catch (cause) {
+      errors.push(cause instanceof Error ? cause.message : "Lưu thất bại");
+    }
+
+    return { ok: errors.length === 0, errors, warnings };
+  }
+
+  private async ensureFeatureByKey(key: string, valueType: FeatureValueType, nameVi: string) {
+    const [existing] = await this.db.select().from(features).where(eq(features.key, key)).limit(1);
+    if (existing) return existing;
+    const [row] = await this.db.insert(features).values({ key, valueType }).returning();
+    if (!row) throw new CatalogError("CONFLICT", `Không thể tạo feature ${key}`);
+    await this.db.insert(featureTranslations).values([
+      { featureId: row.id, locale: "vi", name: nameVi },
+      { featureId: row.id, locale: "en", name: nameVi },
+    ]);
+    return row;
+  }
+
+  async archivePlan(input: { planId: string; productId: string; actorUserId?: string | null }) {
+    const [plan] = await this.db
+      .select()
+      .from(plans)
+      .where(and(eq(plans.id, input.planId), eq(plans.productId, input.productId)))
+      .limit(1);
+    if (!plan) throw new CatalogError("NOT_FOUND", "Plan not found");
+    await this.db
+      .update(plans)
+      .set({ status: "archived", updatedAt: new Date() })
+      .where(eq(plans.id, input.planId));
+    await this.audit.record({
+      actorUserId: input.actorUserId ?? null,
+      action: "catalog.plan.archive",
+      resourceType: "plan",
+      resourceId: plan.publicId,
+    });
   }
 
   previewToken(productId: string): string {

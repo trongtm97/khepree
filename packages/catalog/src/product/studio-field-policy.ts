@@ -4,6 +4,8 @@
  */
 
 import { DEFAULT_LOCALE } from "@khepree/config";
+import type { LicensingMode, ProductPlatform } from "@khepree/db";
+import { suggestProductSlug } from "./slug";
 import type { PlanBillingType } from "./types";
 
 /** Catalog browse/filter categories — stored in products.metadata.productCategory */
@@ -48,18 +50,115 @@ export const STUDIO_FEATURE_KEYS = {
   leaseGraceSeconds: "lease.grace_seconds",
 } as const;
 
-export const PRODUCT_DESCRIPTION_TEMPLATE = `# Giới thiệu
+export const PRODUCT_DESCRIPTION_TEMPLATE = `## Giới thiệu
 
-# Tính năng nổi bật
+## Tính năng nổi bật
 
-# Phù hợp với ai?
+## Phù hợp với ai?
 
-# Cách hoạt động
+## Cách hoạt động
 
-# Yêu cầu hệ thống
+## Yêu cầu hệ thống
 
-# Câu hỏi thường gặp
+## Câu hỏi thường gặp
 `;
+
+export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
+  "ai-tools": "AI Tools",
+  translation: "Translation",
+  productivity: "Productivity",
+  "developer-tools": "Developer Tools",
+  creative: "Creative",
+  business: "Business",
+  other: "Other",
+};
+
+export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
+  "desktop-software": "Desktop Software",
+  "web-app": "Web App",
+  "mobile-app": "Mobile App",
+  plugin: "Plugin",
+  "digital-tool": "Digital Tool",
+};
+
+export function productTypeToPlatforms(type: ProductType): ProductPlatform[] {
+  switch (type) {
+    case "desktop-software":
+      return ["desktop"];
+    case "web-app":
+      return ["web"];
+    case "mobile-app":
+      return ["mobile"];
+    case "plugin":
+      return ["web", "desktop"];
+    case "digital-tool":
+      return ["web"];
+    default:
+      return [];
+  }
+}
+
+export function productTypeToLicensingMode(type: ProductType): LicensingMode {
+  switch (type) {
+    case "desktop-software":
+      return "LICENSE_KEY_DEVICE";
+    case "mobile-app":
+      return "DEVICE_LEASE";
+    case "web-app":
+    case "plugin":
+    case "digital-tool":
+      return "ACCOUNT";
+    default:
+      return "LICENSE_KEY_DEVICE";
+  }
+}
+
+export function productTypeNeedsRelease(type: ProductType | null): boolean {
+  return type === "desktop-software";
+}
+
+export function resolveAccessTerm(
+  kind: AccessTermKind,
+  count: number,
+): { billingType: PlanBillingType; accessTermDays: number | null } {
+  const preset = ACCESS_TERM_PRESETS.find((p) => p.kind === kind) ?? ACCESS_TERM_PRESETS[2];
+  if (kind === "lifetime") return { billingType: preset.billingType, accessTermDays: null };
+  const safeCount = Number.isFinite(count) && count > 0 ? Math.floor(count) : 1;
+  const days =
+    kind === "trial"
+      ? 1
+      : kind === "day"
+        ? safeCount
+        : kind === "month"
+          ? safeCount * 30
+          : kind === "year"
+            ? safeCount * 365
+            : safeCount;
+  return { billingType: preset.billingType, accessTermDays: days };
+}
+
+export function detectAccessTermKind(
+  billingType: PlanBillingType,
+  accessTermDays: number | null,
+): { kind: AccessTermKind; count: number } {
+  if (billingType === "perpetual" || accessTermDays === null) {
+    return { kind: "lifetime", count: 1 };
+  }
+  if (billingType === "free" && accessTermDays <= 1) {
+    return { kind: "trial", count: 1 };
+  }
+  if (accessTermDays % 365 === 0 && accessTermDays >= 365) {
+    return { kind: "year", count: accessTermDays / 365 };
+  }
+  if (accessTermDays % 30 === 0 && accessTermDays >= 30) {
+    return { kind: "month", count: accessTermDays / 30 };
+  }
+  return { kind: "day", count: accessTermDays };
+}
+
+export function suggestPlanSlug(name: string): string {
+  return suggestProductSlug(name);
+}
 
 const CATEGORY_SET = new Set<string>(PRODUCT_CATEGORIES);
 const TYPE_SET = new Set<string>(PRODUCT_TYPES);

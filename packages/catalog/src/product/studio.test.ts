@@ -65,7 +65,23 @@ function baseSnapshot(overrides: Partial<ProductStudioSnapshot> = {}): ProductSt
 
 describe("computeProductReadiness", () => {
   it("requires Vietnamese name and slug", () => {
-    const result = computeProductReadiness(baseSnapshot());
+    const result = computeProductReadiness(
+      baseSnapshot({
+        metadata: { productCategory: "ai-tools", productType: "web-app" },
+        iconMediaPublicId: "media_icon",
+        translations: [
+          {
+            locale: "vi",
+            name: "Sản phẩm demo",
+            shortDescription: "Mô tả ngắn",
+            description: "Mô tả đầy đủ",
+            content: null,
+            seoTitle: null,
+            seoDescription: null,
+          },
+        ],
+      }),
+    );
     expect(result.ready).toBe(true);
     expect(result.blockingCount).toBe(0);
   });
@@ -96,6 +112,19 @@ describe("computeProductReadiness", () => {
   it("passes when active plan has VND price", () => {
     const result = computeProductReadiness(
       baseSnapshot({
+        metadata: { productCategory: "ai-tools", productType: "web-app" },
+        iconMediaPublicId: "media_icon",
+        translations: [
+          {
+            locale: "vi",
+            name: "Sản phẩm demo",
+            shortDescription: "Mô tả ngắn",
+            description: "Mô tả đầy đủ",
+            content: null,
+            seoTitle: null,
+            seoDescription: null,
+          },
+        ],
         plans: [
           {
             id: "pl1",

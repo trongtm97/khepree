@@ -12,11 +12,15 @@ export function ActionForm({
   children,
   submitLabel,
   danger = false,
+  formId,
+  hideSubmit = false,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   children: ReactNode;
   submitLabel: string;
   danger?: boolean;
+  formId?: string;
+  hideSubmit?: boolean;
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(action, {});
@@ -27,18 +31,20 @@ export function ActionForm({
   }, [router, safeState.redirectTo]);
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form id={formId} action={formAction} className="space-y-3">
       {safeState.error ? <Alert variant="error">{safeState.error}</Alert> : null}
       {safeState.notice ? <Alert variant="success">{safeState.notice}</Alert> : null}
       {children}
-      <Button
-        type="submit"
-        disabled={pending}
-        variant={danger ? "secondary" : "primary"}
-        className={danger ? "border-red-300 text-red-700" : undefined}
-      >
-        {pending ? adminUi.working : submitLabel}
-      </Button>
+      {hideSubmit ? null : (
+        <Button
+          type="submit"
+          disabled={pending}
+          variant={danger ? "secondary" : "primary"}
+          className={danger ? "border-red-300 text-red-700" : undefined}
+        >
+          {pending ? adminUi.working : submitLabel}
+        </Button>
+      )}
     </form>
   );
 }

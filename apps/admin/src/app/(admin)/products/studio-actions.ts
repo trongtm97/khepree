@@ -1,6 +1,12 @@
 "use server";
 
-import { isCatalogError, suggestProductSlug } from "@khepree/catalog";
+import {
+  isCatalogError,
+  suggestProductSlug,
+  type AccessTermKind,
+  type ProductCategory,
+  type ProductType,
+} from "@khepree/catalog";
 import type { LicensingMode, ProductPlatform } from "@khepree/db";
 import { hasPermission, type Permission } from "@khepree/security";
 import { revalidatePath } from "next/cache";
@@ -27,6 +33,119 @@ function revalidateStudio(productId: string) {
   revalidatePath(`/products/${productId}`);
 }
 
+export async function createEmptyStudioProductAction(): Promise<ActionState> {
+  try {
+    const session = await actor("catalog.write");
+    const row = await getProductStudio().createEmptyDraft(session.user.id);
+    return { redirectTo: `/products/${row.id}` };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+function readLocaleField(formData: FormData, field: string, locale: "vi" | "en") {
+  return String(formData.get(`${field}_${locale}`) ?? "").trim();
+}
+
+function parsePlansFromForm(formData: FormData) {
+  const count = Number(formData.get("planCount") ?? 0);
+  const plans = [];
+  for (let index = 0; index < count; index += 1) {
+    const nameVi = String(formData.get(`plan_${index}_nameVi`) ?? "").trim();
+    const remove = String(formData.get(`plan_${index}_remove`) ?? "") === "1";
+    if (!nameVi && !remove) continue;
+    plans.push({
+      planId: String(formData.get(`plan_${index}_id`) ?? "") || undefined,
+      slug: String(formData.get(`plan_${index}_slug`) ?? "") || undefined,
+      nameVi,
+      amountMajor: String(formData.get(`plan_${index}_amount`) ?? "0"),
+      termKind: String(formData.get(`plan_${index}_termKind`) ?? "month") as AccessTermKind,
+      termCount: Number(formData.get(`plan_${index}_termCount`) ?? 1),
+      accountRequired: String(formData.get(`plan_${index}_accountRequired`) ?? "") === "on",
+      deviceLimit: Number(formData.get(`plan_${index}_deviceLimit`) ?? 1),
+      recommended: String(formData.get("recommendedPlan") ?? "") === String(index),
+      remove,
+    });
+  }
+  return plans;
+}
+
+function parseGalleryFromForm(formData: FormData): string[] {
+  const count = Number(formData.get("galleryMediaPublicId_count") ?? 0);
+  const ids: string[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const id = String(formData.get(`galleryMediaPublicId_${i}`) ?? "").trim();
+    if (id) ids.push(id);
+  }
+  return ids;
+}
+
+export async function saveStudioDraftAction(_s: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const session = await actor("catalog.write");
+    const productId = String(formData.get("productId") ?? "");
+    const categoryRaw = String(formData.get("productCategory") ?? "").trim();
+    const typeRaw = String(formData.get("productType") ?? "").trim();
+
+    const seoTitleVi =
+      String(formData.get("seoTitle_vi_input") ?? "").trim() || readLocaleField(formData, "seoTitle", "vi") || null;
+    const seoDescVi =
+      String(formData.get("seoDescription_vi_input") ?? "").trim() ||
+      readLocaleField(formData, "seoDescription", "vi") ||
+      null;
+    const seoTitleEn =
+      String(formData.get("seoTitle_en_input") ?? "").trim() || readLocaleField(formData, "seoTitle", "en") || null;
+    const seoDescEn =
+      String(formData.get("seoDescription_en_input") ?? "").trim() ||
+      readLocaleField(formData, "seoDescription", "en") ||
+      null;
+
+    const result = await getProductStudio().saveStudioDraft({
+      productId,
+      actorUserId: session.user.id,
+      slug: String(formData.get("slug") ?? "").trim() || undefined,
+      licensingMode: (String(formData.get("licensingMode") ?? "") || undefined) as LicensingMode | undefined,
+      productCategory: (categoryRaw || null) as ProductCategory | null,
+      productType: (typeRaw || null) as ProductType | null,
+      iconMediaPublicId: String(formData.get("iconMediaPublicId") ?? "") || null,
+      coverMediaPublicId: String(formData.get("coverMediaPublicId") ?? "") || null,
+      galleryMediaPublicIds: parseGalleryFromForm(formData),
+      autoSlugFromName: String(formData.get("autoSlug") ?? "") === "1",
+      autoSeo: String(formData.get("autoSeo") ?? "") === "1",
+      translations: [
+        {
+          locale: "vi",
+          name: readLocaleField(formData, "name", "vi"),
+          shortDescription: readLocaleField(formData, "shortDescription", "vi") || null,
+          fullDescription: readLocaleField(formData, "fullDescription", "vi") || null,
+          seoTitle: seoTitleVi,
+          seoDescription: seoDescVi,
+        },
+        {
+          locale: "en",
+          name: readLocaleField(formData, "name", "en") || readLocaleField(formData, "name", "vi"),
+          shortDescription: readLocaleField(formData, "shortDescription", "en") || null,
+          fullDescription: readLocaleField(formData, "fullDescription", "en") || null,
+          seoTitle: seoTitleEn,
+          seoDescription: seoDescEn,
+        },
+      ],
+      plans: parsePlansFromForm(formData),
+    });
+
+    revalidateStudio(productId);
+    if (!result.ok) {
+      return { error: result.errors.join(" · ") };
+    }
+    const notice = result.warnings.length
+      ? `Đã lưu nháp. Lưu ý: ${result.warnings.join(" · ")}`
+      : "Đã lưu nháp";
+    return { notice };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
 export async function createStudioProductAction(_s: ActionState, formData: FormData): Promise<ActionState> {
   let productId: string | undefined;
   try {
@@ -50,7 +169,7 @@ export async function createStudioProductAction(_s: ActionState, formData: FormD
   } catch (error) {
     return fail(error);
   }
-  return { redirectTo: `/products/${productId}?tab=overview` };
+  return { redirectTo: `/products/${productId}` };
 }
 
 export async function saveOverviewAction(_s: ActionState, formData: FormData): Promise<ActionState> {
