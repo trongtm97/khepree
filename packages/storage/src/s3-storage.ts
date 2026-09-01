@@ -3,7 +3,6 @@ import { buildPublicObjectUrl } from "./public-url";
 import {
   isPublicAclUnsupported,
   publicAclPutFields,
-  publicAclUploadHeaders,
   PUBLIC_ACL_UNSUPPORTED_MESSAGE,
   resolvePublicAccessMode,
 } from "./s3-access";
@@ -185,9 +184,10 @@ export class S3ObjectStorage implements ObjectStorage {
         ...aclFields,
       });
       const url = await getSignedUrl(this.client, command, { expiresIn });
+      // ponytail: Vietnix rejects browser PUT when x-amz-acl is sent alongside a presigned ACL —
+      // ACL is already bound in the signed PutObjectCommand (see ChapMee presign-upload).
       const headers: Record<string, string> = {
         "Content-Type": input.contentType,
-        ...(input.bucket === "public" ? publicAclUploadHeaders(this.publicAccessMode) : {}),
       };
       if (typeof input.contentLength === "number") {
         headers["Content-Length"] = String(input.contentLength);

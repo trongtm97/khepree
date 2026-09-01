@@ -40,7 +40,8 @@ export function resolveStorageCredentials(env: Env = getEnv()): ResolvedStorageC
     publicBucket: env.S3_BUCKET_PUBLIC,
     privateBucket: env.S3_BUCKET_PRIVATE,
     publicBaseUrl: env.S3_PUBLIC_BASE_URL,
-    forcePathStyle: env.S3_FORCE_PATH_STYLE === "true",
+    // Vietnix/MinIO-style endpoints need path-style URLs (ChapMee default: not "false").
+    forcePathStyle: env.S3_FORCE_PATH_STYLE !== "false",
   };
 }
 

@@ -34,6 +34,31 @@ describe("storage-env", () => {
     expect(resolvePublicAccessMode(env)).toBe("acl");
   });
 
+  it("defaults forcePathStyle to true when unset (Vietnix/ChapMee)", () => {
+    const env = getEnv({
+      S3_ENDPOINT: "https://s3.vietnix.example",
+      S3_REGION: "auto",
+      S3_ACCESS_KEY_ID: "key",
+      S3_SECRET_ACCESS_KEY: "secret",
+      S3_BUCKET_PUBLIC: "khepree-public",
+      S3_BUCKET_PRIVATE: "khepree-private",
+    });
+    expect(resolveStorageCredentials(env)?.forcePathStyle).toBe(true);
+  });
+
+  it("allows explicit forcePathStyle=false", () => {
+    const env = getEnv({
+      S3_ENDPOINT: "https://s3.vietnix.example",
+      S3_REGION: "auto",
+      S3_ACCESS_KEY_ID: "key",
+      S3_SECRET_ACCESS_KEY: "secret",
+      S3_BUCKET_PUBLIC: "khepree-public",
+      S3_BUCKET_PRIVATE: "khepree-private",
+      S3_FORCE_PATH_STYLE: "false",
+    });
+    expect(resolveStorageCredentials(env)?.forcePathStyle).toBe(false);
+  });
+
   it("requires S3_REGION for configured storage", () => {
     const env = getEnv({
       S3_ENDPOINT: "https://s3.vietnix.example",

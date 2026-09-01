@@ -38,7 +38,8 @@ describe("MediaService.prepareUpload", () => {
       namespace: "media",
       pathPrefix: "media",
     });
-    expect(result.upload.headers["x-amz-acl"]).toBe("public-read");
+    expect(result.upload.headers["x-amz-acl"]).toBeUndefined();
+    expect(result.upload.headers["Content-Type"]).toBe("image/webp");
   });
 
   it("uses canonical pathPrefix for public media library uploads", async () => {

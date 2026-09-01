@@ -69,9 +69,6 @@ export class MockObjectStorage implements ObjectStorage {
       expiresAt,
       headers: {
         "Content-Type": input.contentType,
-        ...(input.bucket === "public" && this.publicAccessMode === "acl"
-          ? { "x-amz-acl": "public-read" }
-          : {}),
         ...(typeof input.contentLength === "number"
           ? { "Content-Length": String(input.contentLength) }
           : {}),
