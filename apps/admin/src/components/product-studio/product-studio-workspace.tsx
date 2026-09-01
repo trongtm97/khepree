@@ -206,6 +206,7 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
             <ProductMediaField
               label="Icon / Logo"
               name="iconMediaPublicId"
+              imageSlot="icon"
               productId={snapshot.id}
               defaultPublicId={snapshot.iconMediaPublicId}
               required
@@ -213,6 +214,7 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
             <ProductMediaField
               label="Cover / Hero"
               name="coverMediaPublicId"
+              imageSlot="cover"
               productId={snapshot.id}
               defaultPublicId={coverId}
             />
@@ -220,6 +222,7 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
           <ProductMediaField
             label="Gallery"
             name="galleryMediaPublicId"
+            imageSlot="gallery"
             productId={snapshot.id}
             multiple
             defaultGalleryIds={galleryIds}

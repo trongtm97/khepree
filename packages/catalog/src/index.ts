@@ -135,6 +135,25 @@ export {
 } from "./product/compose-legacy-description";
 export { resolvePublicSeoFields } from "./product/public-display";
 export {
+  PRODUCT_IMAGE_SPECS,
+  productImageCropNoticeVi,
+  productImageNeedsCropNotice,
+  productImageSpec,
+  productImageTargetAspect,
+  type ProductImageSlot,
+  type ProductImageSpec,
+} from "./product/image-specs";
+export { processProductImageUpload } from "./product/process-product-image";
+export {
+  RASTER_ACCEPTED_MIME_TYPES,
+  RASTER_MAX_INPUT_BYTES,
+  isRasterImageMime,
+  processRasterToWebp,
+  processRasterToWebpCropped,
+  type ProcessedRasterImage,
+  type RasterCropSpec,
+} from "./media/process-raster-image";
+export {
   deriveDesktopCallbackUri,
   deriveTechnicalIdentity,
   parseAccessFeatureKey,

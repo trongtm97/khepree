@@ -17,7 +17,7 @@ export function ProductHeroVisual({
         <img
           src={media.url}
           alt={media.altText || productName}
-          className="aspect-[16/10] w-full object-cover object-top"
+          className="aspect-video w-full object-cover object-top"
           fetchPriority={priority ? "high" : undefined}
         />
       </div>

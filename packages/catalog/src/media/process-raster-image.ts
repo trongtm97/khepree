@@ -50,3 +50,42 @@ export async function processRasterToWebp(input: Buffer): Promise<ProcessedRaste
 export function isRasterImageMime(mimeType: string): boolean {
   return (RASTER_ACCEPTED_MIME_TYPES as readonly string[]).includes(mimeType);
 }
+
+export type RasterCropSpec = {
+  width: number;
+  height: number;
+};
+
+/** Crop to exact aspect (cover / centre) then encode WebP — for product studio slots. */
+export async function processRasterToWebpCropped(
+  input: Buffer,
+  crop: RasterCropSpec,
+): Promise<ProcessedRasterImage> {
+  const base = sharp(input, { failOn: "error" }).rotate();
+  const metadata = await base.metadata();
+
+  if (metadata.format === "gif") {
+    throw new Error("GIF is not supported. Use JPG, PNG, or WebP.");
+  }
+  if (!isAllowedInputFormat(metadata.format)) {
+    throw new Error("Unsupported image type. Use JPG, PNG, or WebP.");
+  }
+
+  const { data, info } = await base
+    .resize({
+      width: crop.width,
+      height: crop.height,
+      fit: "cover",
+      position: "centre",
+    })
+    .webp({ quality: RASTER_WEBP_QUALITY })
+    .toBuffer({ resolveWithObject: true });
+
+  return {
+    buffer: data,
+    width: info.width,
+    height: info.height,
+    mimeType: "image/webp",
+    sizeBytes: data.byteLength,
+  };
+}

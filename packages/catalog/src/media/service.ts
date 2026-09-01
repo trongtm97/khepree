@@ -175,6 +175,53 @@ export class MediaService {
     return mapMedia(row, this.publicStorage);
   }
 
+  /** Server-side put after raster processing (product studio, CMS pipeline). */
+  async uploadProcessedPublicRaster(input: {
+    body: Buffer;
+    mimeType: string;
+    sizeBytes: number;
+    width: number;
+    height: number;
+    altText: string;
+    context?: string | null;
+    ownerType?: string | null;
+    ownerId?: string | null;
+    namespace?: string;
+    pathPrefix?: string;
+  }): Promise<MediaRecord> {
+    const prepared = await this.prepareUpload({
+      mimeType: input.mimeType,
+      sizeBytes: input.sizeBytes,
+      visibility: "public",
+      namespace: input.namespace ?? "media",
+      pathPrefix: input.pathPrefix ?? "media",
+      context: input.context ?? null,
+      ownerType: input.ownerType ?? null,
+      ownerId: input.ownerId ?? null,
+      contentClass: "marketing_raster",
+    });
+
+    await this.publicStorage.putObject({
+      key: prepared.objectKey,
+      bucket: "public",
+      body: input.body,
+      contentType: input.mimeType,
+    });
+
+    return this.completeUpload({
+      objectKey: prepared.objectKey,
+      bucket: "public",
+      mimeType: input.mimeType,
+      expectedSizeBytes: input.sizeBytes,
+      altText: input.altText,
+      context: input.context ?? null,
+      ownerType: input.ownerType ?? null,
+      ownerId: input.ownerId ?? null,
+      width: input.width,
+      height: input.height,
+    });
+  }
+
   async getByPublicId(publicId: string): Promise<MediaRecord | null> {
     const [row] = await this.db
       .select()

@@ -90,7 +90,7 @@ function ProductShowcaseRow({
               <img
                 src={media.url}
                 alt={media.altText || product.name}
-                className="aspect-[16/10] w-full object-cover object-top"
+                className="aspect-video w-full object-cover object-top"
               />
             </div>
           ) : (
