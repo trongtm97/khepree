@@ -127,6 +127,13 @@
       "when": 1788032000000,
       "tag": "0017_phase_k05_device_management",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788033000000,
+      "tag": "0018_product_technical_identity",
+      "breakpoints": true
     }
   ]
 }
