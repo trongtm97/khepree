@@ -23,6 +23,7 @@ npm-debug.log*
 pnpm-debug.log*
 .deploy-log.txt
 .deploy-*.tar.gz
+.deploy-*.tar.gz.tmp.tar
 
 # OS
 .DS_Store
