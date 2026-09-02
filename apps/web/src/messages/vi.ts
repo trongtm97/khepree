@@ -100,6 +100,8 @@ export const vi = {
       changelog: "Changelog",
     },
     fullChangelog: "Xem tất cả bản phát hành",
+    expandDescription: "Xem tất cả",
+    collapseDescription: "Thu gọn",
     relatedLinks: {
       heading: "Tìm hiểu thêm",
       docs: "Tài liệu",

@@ -13,10 +13,7 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const objectKey = segments.map((segment) => decodeURIComponent(segment)).join("/");
-  if (!objectKey.startsWith("pub/")) {
-    return new NextResponse("Not found", { status: 404 });
-  }
+  const objectKey = `pub/${segments.map((segment) => decodeURIComponent(segment)).join("/")}`;
 
   try {
     assertSafeObjectKey(objectKey);

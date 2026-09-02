@@ -1,17 +1,14 @@
 "use client";
 
-import { publishProductAction } from "@/app/(admin)/products/studio-actions";
-import { ActionForm } from "@/components/action-form";
 import { Button } from "@khepree/ui";
 import Link from "next/link";
 
 type Props = {
-  productId: string;
   previewUrl: string;
   formId: string;
 };
 
-export function StudioActionBar({ productId, previewUrl, formId }: Props) {
+export function StudioActionBar({ previewUrl, formId }: Props) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-khepree-mist bg-khepree-white/95 px-4 py-3 backdrop-blur md:left-56">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-end gap-2">
@@ -23,12 +20,12 @@ export function StudioActionBar({ productId, previewUrl, formId }: Props) {
         >
           Xem trước
         </Link>
-        <Button type="submit" form={formId} variant="secondary">
+        <Button type="submit" form={formId} name="studioIntent" value="draft" variant="secondary">
           Lưu nháp
         </Button>
-        <ActionForm action={publishProductAction} submitLabel="Xuất bản">
-          <input type="hidden" name="productId" value={productId} />
-        </ActionForm>
+        <Button type="submit" form={formId} name="studioIntent" value="publish">
+          Xuất bản
+        </Button>
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { PricingPlanCard } from "./pricing-plan-card";
 import { ProductLocalNav } from "./product-local-nav";
 import { ProductMobileCta } from "./product-mobile-cta";
+import { ProductDescription } from "./product-description";
 import { ProductHeroVisual } from "./product-visual";
 
 function Section({
@@ -32,12 +33,15 @@ function Section({
   intro,
   children,
   dark,
+  inset,
 }: {
   id: string;
   title: string;
   intro?: string;
   children: ReactNode;
   dark?: boolean;
+  /** Padded inner frame on dark sections — CTA blocks. */
+  inset?: boolean;
 }) {
   return (
     <section
@@ -45,10 +49,17 @@ function Section({
       className={`scroll-mt-32 border-t border-border py-14 lg:scroll-mt-36 lg:py-20 ${dark ? "tech-section relative overflow-hidden" : ""}`}
     >
       {dark ? <HeroEnergyField intensity="soft" /> : null}
-      <div className={dark ? "relative" : undefined}>
+      <div
+        className={cn(
+          dark && "relative",
+          dark &&
+            inset &&
+            "rounded-[var(--radius-card)] border border-white/12 bg-white/[0.05] p-6 sm:p-8 lg:p-10",
+        )}
+      >
         <Title className={dark ? "text-foreground" : undefined}>{title}</Title>
         {intro ? <BodyText className="mt-3 max-w-3xl text-muted">{intro}</BodyText> : null}
-        <div className="mt-8">{children}</div>
+        <div className={inset ? "mt-6" : "mt-8"}>{children}</div>
       </div>
     </section>
   );
@@ -152,9 +163,10 @@ export function ProductDetailSections({
             <ProductHeroVisual media={heroMedia} productName={product.name} priority />
           </div>
           {fullDescriptionHtml ? (
-            <div
-              className="prose prose-slate mt-12 max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: fullDescriptionHtml }}
+            <ProductDescription
+              html={fullDescriptionHtml}
+              expandLabel={messages.catalog.expandDescription}
+              collapseLabel={messages.catalog.collapseDescription}
             />
           ) : null}
         </section>
@@ -317,7 +329,7 @@ export function ProductDetailSections({
         </Section>
 
         {finalCta ? (
-          <Section id="cta" title={messages.catalog.sections.cta} dark>
+          <Section id="cta" title={messages.catalog.sections.cta} dark inset>
             <div className="max-w-2xl">
               <h3 className="text-2xl font-semibold text-foreground">
                 {marketing.cta?.headline ?? heroOutcome ?? product.name}

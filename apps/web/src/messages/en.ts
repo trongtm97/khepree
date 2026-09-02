@@ -98,6 +98,8 @@ export const en = {
       changelog: "Changelog",
     },
     fullChangelog: "View all releases",
+    expandDescription: "View all",
+    collapseDescription: "Show less",
     relatedLinks: {
       heading: "Learn more",
       docs: "Documentation",

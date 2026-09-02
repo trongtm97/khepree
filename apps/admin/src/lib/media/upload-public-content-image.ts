@@ -1,6 +1,5 @@
 "use client";
 
-import { completeEditorMediaUploadAction } from "@/app/(admin)/content/content-media-actions";
 import { uploadViaPresignedPublic } from "@/lib/media/presigned-public-upload";
 
 const ACCEPTED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);

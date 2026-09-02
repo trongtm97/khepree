@@ -14,7 +14,7 @@ import {
 } from "@khepree/catalog/product/studio-field-policy";
 import { Input, Select, Textarea } from "@khepree/ui";
 import { useMemo, useState } from "react";
-import { saveStudioDraftAction } from "@/app/(admin)/products/studio-actions";
+import { studioFormAction } from "@/app/(admin)/products/studio-actions";
 import { ActionForm } from "@/components/action-form";
 import { ReleaseUploadForm } from "@/components/release/release-upload-form";
 import { ProductDescriptionEditor } from "@/components/product-studio/product-description-editor";
@@ -96,7 +96,7 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
 
   return (
     <div className="pb-24">
-      <ActionForm action={saveStudioDraftAction} submitLabel="Lưu nháp" formId="studio-save-form" hideSubmit>
+      <ActionForm action={studioFormAction} submitLabel="Lưu nháp" formId="studio-save-form" hideSubmit>
         <input type="hidden" name="productId" value={snapshot.id} />
         <input type="hidden" name="autoSlug" value="1" />
         <input type="hidden" name="autoSeo" value="1" />
@@ -252,7 +252,7 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
           </section>
         ) : null}
       </ActionForm>
-      <StudioActionBar productId={snapshot.id} previewUrl={previewUrl} formId="studio-save-form" />
+      <StudioActionBar previewUrl={previewUrl} formId="studio-save-form" />
     </div>
   );
 }

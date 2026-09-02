@@ -32,7 +32,7 @@ export function ProductReadinessPanel({ readiness }: Props) {
         Còn {readiness.blockingCount} mục bắt buộc trước khi xuất bản
       </p>
       <p className="mt-1 text-xs text-khepree-slate/80">
-        Bấm <strong>Lưu nháp</strong> sau khi sửa — xuất bản chỉ kiểm tra dữ liệu đã lưu.
+        <strong>Xuất bản</strong> sẽ tự lưu thay đổi trước khi kiểm tra điều kiện xuất bản.
       </p>
       <ul className="mt-3 space-y-1.5 text-xs">
         {required.map((item) => (

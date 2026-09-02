@@ -6,6 +6,9 @@ if docker image inspect "khepree-web:${TAG}" >/dev/null 2>&1; then
   : > "$ROLLBACK_FILE"
   save_rb() {
     local img="$1" key="$2"
+    if ! docker image inspect "${img}:${TAG}" >/dev/null 2>&1; then
+      return
+    fi
     local rb="${img}:rollback-${DEPLOY_TAG}"
     docker tag "${img}:${TAG}" "$rb"
     echo "${key}=${rb}" >> "$ROLLBACK_FILE"

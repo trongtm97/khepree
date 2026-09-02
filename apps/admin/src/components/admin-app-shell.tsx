@@ -5,6 +5,7 @@ import { marketingPublicUrl } from "@khepree/config";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
+import { AdminNotifierProvider } from "@/components/admin-notifier";
 import { AdminNavList } from "@/components/admin/admin-nav-list";
 import { adminUi } from "@/lib/labels";
 import type { AdminNavGroup } from "@/lib/routes";
@@ -47,6 +48,7 @@ export function AdminAppShell({
   }
 
   return (
+    <AdminNotifierProvider>
     <div className="flex min-h-screen flex-col bg-khepree-cloud">
       <header className="border-b border-khepree-mist bg-khepree-white">
         <Container className="flex h-14 items-center justify-between gap-4">
@@ -123,5 +125,6 @@ export function AdminAppShell({
         </main>
       </div>
     </div>
+    </AdminNotifierProvider>
   );
 }

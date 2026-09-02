@@ -35,9 +35,6 @@ export function ProductMediaPickerDialog({
 
   useEffect(() => {
     if (!open) return;
-    setUploadAlt(altText);
-    setError(null);
-    setLoading(true);
     let cancelled = false;
     void listEditorMediaImagesAction()
       .then((items) => {
@@ -52,7 +49,7 @@ export function ProductMediaPickerDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, altText]);
+  }, [open]);
 
   async function onUpload(file: File | undefined) {
     if (!file) return;

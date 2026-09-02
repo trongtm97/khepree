@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  productImageCropNoticeVi,
-  productImageNeedsCropNotice,
-  productImageSpec,
-  type ProductImageSlot,
-} from "@khepree/catalog/product/image-specs";
+import { productImageSpec, type ProductImageSlot } from "@khepree/catalog/product/image-specs";
 import { Alert, Button } from "@khepree/ui";
 import { useEffect, useState } from "react";
 import { resolveMediaPublicUrlAction } from "@/app/(admin)/content/content-media-actions";
@@ -45,23 +40,27 @@ export function ProductMediaField({
 }: Props) {
   const spec = productImageSpec(imageSlot);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerSession, setPickerSession] = useState(0);
   const [publicId, setPublicId] = useState(defaultPublicId ?? "");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewFailed, setPreviewFailed] = useState(false);
+  const [previewFailedId, setPreviewFailedId] = useState<string | null>(null);
   const [gallery, setGallery] = useState<string[]>(defaultGalleryIds);
   const [galleryUrls, setGalleryUrls] = useState<Record<string, string>>({});
   const [galleryPreviewFailed, setGalleryPreviewFailed] = useState<Record<string, boolean>>({});
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!publicId) {
-      setPreviewUrl(null);
-      setPreviewFailed(false);
-      return;
-    }
-    setPreviewFailed(false);
-    void resolveMediaPublicUrlAction(publicId).then((r) => setPreviewUrl(r.url));
+    if (!publicId) return;
+    let cancelled = false;
+    void resolveMediaPublicUrlAction(publicId).then((r) => {
+      if (!cancelled) setPreviewUrl(r.url);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [publicId]);
+
+  const previewFailed = previewFailedId === publicId;
 
   useEffect(() => {
     let cancelled = false;
@@ -89,7 +88,7 @@ export function ProductMediaField({
       } else {
         setPublicId(id);
         setPreviewUrl(displayUrl);
-        setPreviewFailed(false);
+        setPreviewFailedId(null);
         setSuccess("Đã chọn ảnh · Nhớ bấm Lưu nháp để gắn vào sản phẩm.");
       }
     });
@@ -107,7 +106,10 @@ export function ProductMediaField({
             type="button"
             variant="secondary"
             className="text-xs"
-            onClick={() => setPickerOpen(true)}
+            onClick={() => {
+              setPickerSession((n) => n + 1);
+              setPickerOpen(true);
+            }}
           >
             {publicId || gallery.length ? "Chọn / thay ảnh" : "Chọn ảnh"}
           </Button>
@@ -118,6 +120,8 @@ export function ProductMediaField({
               className="text-xs"
               onClick={() => {
                 setPublicId("");
+                setPreviewUrl(null);
+                setPreviewFailedId(null);
                 setSuccess(null);
               }}
             >
@@ -133,13 +137,13 @@ export function ProductMediaField({
         className={`mb-3 overflow-hidden rounded-md border border-dashed border-khepree-mist bg-khepree-cloud/30 ${aspectPreviewClass(imageSlot)} max-h-56 w-full`}
         title={`Khung hiển thị ${spec.aspectLabel}`}
       >
-        {previewUrl && !multiple && !previewFailed ? (
+        {publicId && previewUrl && !multiple && !previewFailed ? (
           // eslint-disable-next-line @next/next/no-img-element -- admin product media preview
           <img
             alt=""
             className="h-full w-full object-cover object-center"
             src={previewUrl}
-            onError={() => setPreviewFailed(true)}
+            onError={() => setPreviewFailedId(publicId)}
           />
         ) : previewFailed && publicId ? (
           <div className="flex h-full min-h-[5rem] items-center justify-center px-3 text-center text-[10px] text-khepree-slate/60">
@@ -153,6 +157,7 @@ export function ProductMediaField({
       </div>
 
       <ProductMediaPickerDialog
+        key={pickerSession}
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         productId={productId}

@@ -147,6 +147,10 @@ export async function saveStudioDraftAction(_s: ActionState, formData: FormData)
     if (!result.ok) {
       return { error: result.errors.join(" · ") };
     }
+    const updated = await getProductStudio().getSnapshot(productId);
+    if (updated?.status === "active" && updated.slug) {
+      await revalidateMarketingProduct(updated.slug);
+    }
     const notice = result.warnings.length
       ? `Đã lưu nháp. Lưu ý: ${result.warnings.join(" · ")}`
       : "Đã lưu nháp";
@@ -418,6 +422,17 @@ export async function createStudioFeatureAction(_s: ActionState, formData: FormD
   } catch (error) {
     return fail(error);
   }
+}
+
+export async function studioFormAction(_s: ActionState, formData: FormData): Promise<ActionState> {
+  const intent = String(formData.get("studioIntent") ?? "draft");
+  const saveResult = await saveStudioDraftAction({}, formData);
+  if (saveResult.error) return saveResult;
+  if (intent !== "publish") return { notice: saveResult.notice ?? "Đã lưu nháp" };
+
+  const publishResult = await publishProductAction({}, formData);
+  if (publishResult.error) return publishResult;
+  return { notice: publishResult.notice ?? "Đã xuất bản sản phẩm" };
 }
 
 export async function publishProductAction(_s: ActionState, formData: FormData): Promise<ActionState> {
