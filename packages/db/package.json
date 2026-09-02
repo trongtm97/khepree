@@ -22,7 +22,7 @@
   "dependencies": {
     "@khepree/config": "workspace:*",
     "@khepree/types": "workspace:*",
-    "drizzle-orm": "^0.44.5",
+    "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.7",
     "zod": "^3.25.76"
   },
@@ -30,7 +30,7 @@
     "@khepree/eslint-config": "workspace:*",
     "@khepree/typescript-config": "workspace:*",
     "@types/node": "^22.18.0",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.34.0",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",

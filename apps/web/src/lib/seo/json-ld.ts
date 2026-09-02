@@ -1,4 +1,4 @@
-import { BRAND } from "@khepree/config";
+import { BRAND, getOfficialSocialSameAsUrls, OFFICIAL_CONTACT_TELEPHONE_E164 } from "@khepree/config";
 import type { PublicProductDetail } from "@khepree/catalog";
 import { isPurchasableBillingType, minorToMajor, selectDisplayPrice } from "@khepree/catalog";
 import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION, getPublicContactAddresses } from "@khepree/config";
@@ -6,14 +6,6 @@ import { siteUrl } from "./metadata";
 
 function schemaPrice(amountMinor: string, currency: string): string {
   return String(minorToMajor(BigInt(amountMinor), currency));
-}
-
-function getSocialUrls(): string[] {
-  return [
-    process.env.NEXT_PUBLIC_SOCIAL_TWITTER,
-    process.env.NEXT_PUBLIC_SOCIAL_GITHUB,
-    process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN,
-  ].filter((url): url is string => Boolean(url && url.startsWith("http")));
 }
 
 /** Factual organization fields only — no invented founding date, awards, or employee counts. */
@@ -24,6 +16,7 @@ export function organizationJsonLd() {
       "@type": "ContactPoint",
       contactType: "customer support",
       email: contacts.support,
+      telephone: OFFICIAL_CONTACT_TELEPHONE_E164,
     },
     ...(contacts.billing
       ? [{ "@type": "ContactPoint", contactType: "billing", email: contacts.billing }]
@@ -37,10 +30,8 @@ export function organizationJsonLd() {
     url: siteUrl(),
     logo: siteUrl("/brand/logo.png"),
     contactPoint,
+    sameAs: getOfficialSocialSameAsUrls(),
   };
-
-  const sameAs = getSocialUrls();
-  if (sameAs.length > 0) payload.sameAs = sameAs;
 
   return payload;
 }

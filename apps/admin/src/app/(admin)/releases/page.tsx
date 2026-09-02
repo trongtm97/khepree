@@ -10,20 +10,13 @@ import {
   AdminTd,
   statusTone,
 } from "@/components/admin";
-import { ActionForm } from "@/components/action-form";
 import { ReleaseUploadForm } from "@/components/release/release-upload-form";
 import { requireAdmin } from "@/lib/admin-session";
 import { formatDate } from "@/lib/format";
 import { labelStatus } from "@/lib/labels";
-import { publishReleaseAction } from "@/app/(admin)/products/release-actions";
+import { getReleaseService } from "@/lib/release-service";
 
 export const metadata: Metadata = { title: "Phiên bản" };
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
 
 export default async function ReleasesPage({
   searchParams,
@@ -35,6 +28,13 @@ export default async function ReleasesPage({
   const products = await listAdminProductsForPicker();
   const productId = (await searchParams).productId ?? products[0]?.id ?? "";
   const rows = productId ? await listAdminReleases({ productId, page: 1 }) : [];
+  const readinessByReleaseId = new Map(
+    await Promise.all(
+      rows
+        .filter((row) => row.status === "draft")
+        .map(async (row) => [row.id, await getReleaseService().getPublishReadiness(row.id)] as const),
+    ),
+  );
 
   return (
     <div className="space-y-6">
@@ -54,7 +54,7 @@ export default async function ReleasesPage({
         ))}
       </div>
       <AdminTable
-        headers={["Sản phẩm", "Phiên bản", "Nền tảng", "Kiến trúc", "Kênh", "Kích thước", "Trạng thái", "Ngày phát hành", ""]}
+        headers={["Sản phẩm", "Phiên bản", "Nền tảng", "Kiến trúc", "Kênh", "Verified", "Trạng thái", "Ngày phát hành", ""]}
         empty={rows.length === 0}
       >
         {rows.map((row) => (
@@ -68,18 +68,25 @@ export default async function ReleasesPage({
             <AdminTd>{row.platform}</AdminTd>
             <AdminTd>{row.architecture}</AdminTd>
             <AdminTd>{row.channel}</AdminTd>
-            <AdminTd>{formatSize(row.fileSize)}</AdminTd>
+            <AdminTd>
+              {row.status === "draft" ? (
+                readinessByReleaseId.get(row.id)?.ready ? (
+                  <AdminStatusBadge label="Sẵn sàng publish" tone="success" />
+                ) : (
+                  <AdminStatusBadge label="Chưa verified" tone="warning" />
+                )
+              ) : (
+                "—"
+              )}
+            </AdminTd>
             <AdminTd>
               <AdminStatusBadge label={labelStatus(row.status)} tone={statusTone(row.status)} />
             </AdminTd>
             <AdminTd>{row.publishedAt ? formatDate(row.publishedAt) : "—"}</AdminTd>
             <AdminTd>
-              {canWrite && row.status === "draft" ? (
-                <ActionForm action={publishReleaseAction} submitLabel="Xuất bản">
-                  <input type="hidden" name="releaseId" value={row.id} />
-                  <input type="hidden" name="productId" value={row.productId} />
-                </ActionForm>
-              ) : null}
+              <Link className="text-khepree-teal underline" href={`/releases/${row.publicId}`}>
+                Chi tiết
+              </Link>
             </AdminTd>
           </tr>
         ))}

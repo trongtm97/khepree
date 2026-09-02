@@ -1,3 +1,4 @@
+import { getOfficialSocialSameAsUrls } from "@khepree/config";
 import { describe, expect, it } from "vitest";
 import { organizationJsonLd, websiteJsonLd } from "./json-ld";
 
@@ -12,6 +13,7 @@ describe("organizationJsonLd", () => {
     expect(data).not.toHaveProperty("foundingDate");
     expect(data).not.toHaveProperty("numberOfEmployees");
     expect(data).not.toHaveProperty("description");
+    expect(data.sameAs).toEqual(getOfficialSocialSameAsUrls());
   });
 });
 

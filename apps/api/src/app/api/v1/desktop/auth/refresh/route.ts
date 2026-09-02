@@ -4,8 +4,8 @@ import { clientIp, enforceRateLimit, RATE_LIMITS } from "@khepree/security";
 import { getRequestId, jsonError, jsonOk } from "@/lib/api-response";
 import {
   desktopActivateErrorResponse,
+  desktopDeviceProofBodySha256,
   readDesktopRefreshBody,
-  sha256Hex,
 } from "@/lib/desktop-http";
 import { getPlatform } from "@/lib/platform";
 
@@ -19,7 +19,6 @@ export async function POST(request: Request) {
   if (limited) return limited;
 
   const rawBody = await request.text();
-  const bodySha256 = sha256Hex(rawBody);
   let body: Record<string, unknown> = {};
   try {
     body = JSON.parse(rawBody || "{}") as Record<string, unknown>;
@@ -35,6 +34,10 @@ export async function POST(request: Request) {
       requestId,
     );
   }
+  const bodySha256 = desktopDeviceProofBodySha256({
+    sessionPublicId: input.sessionPublicId,
+    refreshToken: input.refreshToken,
+  });
 
   try {
     const platform = getPlatform();

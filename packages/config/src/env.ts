@@ -41,6 +41,19 @@ const envSchema = z.object({
   LICENSE_SIGNING_PRIVATE_KEY: z.string().optional(),
   LICENSE_SIGNING_PUBLIC_KEY: z.string().optional(),
 
+  /** Ed25519 SPKI (base64 DER) for release update manifest verification — public key only. */
+  UPDATE_SIGNING_PUBLIC_KEY: z.string().optional(),
+  /** Comma-separated trusted key IDs; defaults to key derived from UPDATE_SIGNING_PUBLIC_KEY. */
+  UPDATE_SIGNING_TRUSTED_KEY_IDS: z.string().optional(),
+
+  /** Comma-separated product UUIDs allowed to download updates without entitlement. */
+  DESKTOP_PUBLIC_UPDATE_PRODUCT_IDS: z.string().optional(),
+
+  /** When true, beta Squirrel feed endpoints are enabled. Alpha remains disabled. */
+  SQUIRREL_BETA_FEED_ENABLED: z.enum(["true", "false"]).optional(),
+  /** HMAC secret for Squirrel feed/artifact tickets — falls back to BETTER_AUTH_SECRET in dev. */
+  SQUIRREL_UPDATE_TICKET_SECRET: z.string().optional(),
+
   EMAIL_FROM: z.string().optional(),
   MAIL_FROM: z.string().optional(),
   MAIL_REPLY_TO: z.string().optional(),

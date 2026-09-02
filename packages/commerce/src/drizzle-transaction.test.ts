@@ -61,7 +61,7 @@ describe.skipIf(!pg)("Drizzle commerce transactions (Postgres)", () => {
       const payment = await store.insertPayment({
         orderId: order.id,
         provider: "sepay",
-        providerPaymentId: `KHP_${order.publicId}`,
+        providerPaymentId: "KHP12345678",
         amountMinor: 599000n,
         currency: "VND",
         status: "succeeded",

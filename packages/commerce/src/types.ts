@@ -170,6 +170,8 @@ export interface CreateCheckoutInput {
   customerId?: string;
   description?: string;
   paymentMethod?: string;
+  /** Reuse an existing provider payment id when rebuilding QR checkout UI. */
+  providerCheckoutId?: string;
 }
 
 export interface CreateCheckoutResult {

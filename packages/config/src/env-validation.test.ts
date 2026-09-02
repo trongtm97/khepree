@@ -28,6 +28,8 @@ function productionBase() {
     S3_PUBLIC_BASE_URL: "https://cdn.example.com",
     LICENSE_SIGNING_PRIVATE_KEY: "priv",
     LICENSE_SIGNING_PUBLIC_KEY: "pubk",
+    UPDATE_SIGNING_PUBLIC_KEY:
+      "MCowBQYDK2VwAyEAnMRKyH59oj8cyNtfiusEqn73AR6x1VgGSNjsQqP75jo=",
     MAIL_FROM: "Khepree <no-reply@khepree.com>",
     EMAIL_PROVIDER: "smtp" as const,
     SMTP_HOST: "smtp.example.com",
@@ -141,6 +143,23 @@ describe("validateRuntimeEnv", () => {
         }),
       ),
     ).toThrow(/bucket configuration/);
+  });
+
+  it("rejects production without UPDATE_SIGNING_PUBLIC_KEY", () => {
+    process.env.NEXT_PHASE = "";
+    expect(() =>
+      validateRuntimeEnv(
+        getEnv({
+          ...productionBase(),
+          UPDATE_SIGNING_PUBLIC_KEY: undefined,
+          PAYMENT_PROVIDER: "sepay",
+          SEPAY_BANK_CODE: "MBBank",
+          SEPAY_BANK_ACCOUNT_NUMBER: "0123456789",
+          SEPAY_BANK_ACCOUNT_NAME: "KHEPREE",
+          SEPAY_WEBHOOK_SECRET: "secret",
+        }),
+      ),
+    ).toThrow(/UPDATE_SIGNING_PUBLIC_KEY/);
   });
 
   it("rejects http public media base URL", () => {

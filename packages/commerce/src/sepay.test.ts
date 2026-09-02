@@ -7,6 +7,7 @@ import {
   parseSepayTransferWebhook,
   sanitizeSepayTransferPayload,
   sepayInvoiceNumber,
+  sepayTransferCode,
 } from "./sepay";
 
 const WEBHOOK_SECRET = "test-webhook-secret";
@@ -26,7 +27,11 @@ function signBody(rawBody: string) {
 }
 
 describe("SePay QR checkout", () => {
-  it("uses unique invoice numbers that round-trip to the order public id", () => {
+  it("generates an 11-char numeric transfer code", () => {
+    expect(sepayTransferCode()).toMatch(/^KHP\d{8}$/);
+  });
+
+  it("still recognizes legacy invoice numbers for webhook matching", () => {
     expect(sepayInvoiceNumber("ord_abcDEF123456")).toBe("KHP_ord_abcDEF123456");
   });
 
@@ -36,12 +41,12 @@ describe("SePay QR checkout", () => {
         accountNumber: "0123456789",
         bankCode: "MBBank",
         amountMinor: 599000n,
-        transferContent: "KHP_ord_abc",
+        transferContent: "KHP12345678",
       }),
-    ).toBe("https://qr.sepay.vn/img?acc=0123456789&bank=MBBank&amount=599000&des=KHP_ord_abc");
+    ).toBe("https://qr.sepay.vn/img?acc=0123456789&bank=MBBank&amount=599000&des=KHP12345678");
   });
 
-  it("returns qr_display checkout action", async () => {
+  it("returns qr_display checkout action with a short transfer code", async () => {
     const result = await provider().createCheckout({
       orderPublicId: "ord_abc",
       amountMinor: 599000n,
@@ -51,9 +56,24 @@ describe("SePay QR checkout", () => {
     });
     expect(result.checkoutAction.mode).toBe("qr_display");
     if (result.checkoutAction.mode !== "qr_display") throw new Error("expected qr_display");
-    expect(result.providerCheckoutId).toBe("KHP_ord_abc");
-    expect(result.checkoutAction.transferContent).toBe("KHP_ord_abc");
+    expect(result.providerCheckoutId).toMatch(/^KHP\d{8}$/);
+    expect(result.checkoutAction.transferContent).toBe(result.providerCheckoutId);
     expect(result.checkoutAction.qrUrl).toContain("amount=599000");
+  });
+
+  it("reuses an existing provider checkout id when rebuilding QR UI", async () => {
+    const result = await provider().createCheckout({
+      orderPublicId: "ord_abc",
+      amountMinor: 599000n,
+      currency: "VND",
+      successUrl: "https://account.example/billing",
+      cancelUrl: "https://account.example/checkout",
+      providerCheckoutId: "KHP87654321",
+    });
+    expect(result.providerCheckoutId).toBe("KHP87654321");
+    expect(result.checkoutAction.mode).toBe("qr_display");
+    if (result.checkoutAction.mode !== "qr_display") throw new Error("expected qr_display");
+    expect(result.checkoutAction.transferContent).toBe("KHP87654321");
   });
 
   it("rejects non-VND checkout", async () => {
@@ -75,17 +95,26 @@ describe("SePay transfer webhook", () => {
     gateway: "MBBank",
     transactionDate: "2026-08-31 12:00:00",
     accountNumber: "0123456789",
-    code: "KHP_ord_abc",
-    content: "KHP_ord_abc thanh toan",
+    code: "KHP12345678",
+    content: "KHP12345678 thanh toan",
     transferType: "in",
     transferAmount: 599000,
   };
 
-  it("parses incoming transfer payload", () => {
+  it("parses incoming transfer payload with short code", () => {
     const parsed = parseSepayTransferWebhook(transferIn);
-    expect(parsed?.invoiceNumber).toBe("KHP_ord_abc");
+    expect(parsed?.invoiceNumber).toBe("KHP12345678");
     expect(parsed?.amountMinor).toBe(599000n);
     expect(parsed?.eventId).toBe("transfer:123456");
+  });
+
+  it("parses legacy KHP_ord_* transfer content", () => {
+    const parsed = parseSepayTransferWebhook({
+      ...transferIn,
+      code: "KHP_ord_abc",
+      content: "KHP_ord_abc thanh toan",
+    });
+    expect(parsed?.invoiceNumber).toBe("KHP_ord_abc");
   });
 
   it("accepts a valid HMAC signature and normalizes payment_succeeded", async () => {
@@ -96,7 +125,7 @@ describe("SePay transfer webhook", () => {
     });
     const event = provider().normalizeWebhookEvent(verified);
     expect(event?.type).toBe("payment_succeeded");
-    expect(event?.providerPaymentId).toBe("KHP_ord_abc");
+    expect(event?.providerPaymentId).toBe("KHP12345678");
     expect(event?.amountMinor).toBe(599000n);
     expect(event?.paymentMethod).toBe("BANK_TRANSFER");
   });
@@ -126,7 +155,7 @@ describe("SePay transfer webhook", () => {
       description: "secret bank memo",
       accumulated: 9999999,
     });
-    expect(sanitized.code).toBe("KHP_ord_abc");
+    expect(sanitized.code).toBe("KHP12345678");
     expect(sanitized).not.toHaveProperty("description");
     expect(sanitized).not.toHaveProperty("accumulated");
   });

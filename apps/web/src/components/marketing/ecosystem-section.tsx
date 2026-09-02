@@ -1,4 +1,5 @@
 import type { ResolvedKhepreeSurface } from "@khepree/config";
+import { getOutboundLinkAttributes } from "@khepree/config";
 import { BodyText, Container, Title } from "@khepree/ui";
 import Link from "next/link";
 import type { Messages } from "@/lib/i18n/get-messages";
@@ -29,12 +30,15 @@ export function EcosystemSection({
         </div>
 
         <ul className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
-          {launcherSurfaces.map((surface) => (
+          {launcherSurfaces.map((surface) => {
+            const outbound = getOutboundLinkAttributes(surface.url, {
+              forceNewTab: surface.openBehavior === "new-tab",
+            });
+            return (
             <li key={surface.id}>
               <Link
                 href={surface.url}
-                target={surface.external ? "_blank" : undefined}
-                rel={surface.external ? "noopener noreferrer" : undefined}
+                {...outbound}
                 className="group flex h-full min-h-[7.5rem] flex-col rounded-[var(--radius-card)] border border-border bg-surface p-5 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-teal/35 hover:shadow-[var(--shadow-soft)] sm:p-6"
               >
                 <div className="flex items-start gap-3">
@@ -47,7 +51,8 @@ export function EcosystemSection({
                 <span className="mt-auto pt-4 text-sm font-medium text-teal">{messages.ecosystem.open} →</span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </Container>
     </section>

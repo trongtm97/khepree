@@ -65,11 +65,60 @@ export {
   DownloadService,
   createDownloadService,
   defaultDownloadAccessPolicy,
+  DESKTOP_RELEASE_DOWNLOAD_TTL_SECONDS,
   isReleaseMediaContext,
   type DownloadAccessPolicy,
   type DownloadAuthorizationContext,
   productIdFromMediaContext,
 } from "./download/service";
+export { MemoryDownloadTicketStore, type DownloadTicketStore } from "./download/ticket-store";
+
+export {
+  AnnouncementService,
+  createAnnouncementService,
+} from "./announcement/service";
+export {
+  sanitizeAnnouncementBody,
+  renderAnnouncementBodyHtml,
+} from "./announcement/body";
+export {
+  buildAnnouncementTargetingSummary,
+  formatUtcDateTimeLocal,
+  parseAnnouncementDraftForm,
+  parseUtcDateTimeLocal,
+} from "./announcement/admin-form";
+export {
+  isAllowedAnnouncementUrl,
+  validateAnnouncementCta,
+} from "./announcement/cta-policy";
+export {
+  assertValidAnnouncementSchedule,
+  assertValidAppVersionRange,
+  matchesAnnouncementTargeting,
+  matchesAppVersionRange,
+} from "./announcement/targeting";
+export {
+  hasDefaultLocaleTranslation,
+  resolveAnnouncementCopy,
+} from "./announcement/locale";
+export type { DesktopAnnouncementQuery } from "./announcement/targeting";
+export {
+  clampAnnouncementLimit,
+  decodeAnnouncementCursor,
+  encodeAnnouncementCursor,
+  paginateAnnouncements,
+} from "./announcement/pagination";
+export type {
+  AdminAnnouncementListItem,
+  AnnouncementRecord,
+  AnnouncementTranslationInput,
+  CreateAnnouncementDraftInput,
+  DesktopAnnouncementView,
+  DesktopAnnouncementsPage,
+  ListAdminAnnouncementsQuery,
+  ListDesktopAnnouncementsQuery,
+  UpdateAnnouncementDraftInput,
+} from "./announcement/types";
 
 export {
   ReleaseService,
@@ -79,15 +128,66 @@ export {
 export {
   compareReleaseVersions,
   isReleaseVersionNewer,
+  matchesReleaseChannelPolicy,
   meetsMinimumVersion,
   parseReleaseVersion,
+  pickLatestCompatibleRelease,
+  pickLatestPublishedRelease,
 } from "./release/version";
+export type { LatestReleaseCandidate } from "./release/version";
+export {
+  assertPublishableArtifacts,
+  hasRequiredArtifacts,
+  mediaContextMatchesRelease,
+  requiredArtifactKinds,
+  WINDOWS_SQUIRREL_REQUIRED_KINDS,
+} from "./release/artifact-policy";
 export { resolveReleaseNotes, sortPublicChangelog } from "./release/public-changelog";
+export { serializeDesktopLatestUpdate, type DesktopLatestUpdatePayload } from "./release/desktop-update";
+export {
+  SquirrelFeedService,
+  createSquirrelFeedService,
+  type SquirrelFeedBuildInput,
+  type SquirrelFeedBuildResult,
+} from "./release/squirrel-feed-service";
+export {
+  buildSquirrelReleasesFile,
+  filterSquirrelEntriesToKnownArtifacts,
+  formatSquirrelReleaseEntry,
+  parseSquirrelReleasesFile,
+  rewriteSquirrelReleaseEntryUrl,
+  sanitizeSquirrelNupkgFilename,
+  type SquirrelReleaseEntry,
+} from "./release/squirrel-releases";
+export {
+  mintSquirrelTicket,
+  squirrelTicketLogRef,
+  verifySquirrelTicket,
+  type SquirrelTicketKind,
+  type SquirrelTicketPayload,
+} from "./release/squirrel-ticket";
+export { assertPublishableReleaseNotes } from "./release/release-notes-policy";
+export { sha256HexOfBytes, verifyStoredObjectSha256 } from "./release/artifact-verify";
+export {
+  assessReleasePublishReadiness,
+  verifyReleaseArtifact,
+} from "./release/publish-gate";
+export {
+  buildUpdateArtifactManifest,
+  canonicalizeUpdateArtifactManifest,
+  verifyUpdateArtifactManifestSignature,
+  type UpdateArtifactManifest,
+} from "./release/update-signing";
 export type {
+  AddReleaseArtifactInput,
+  ArtifactVerificationResult,
+  ArtifactVerificationState,
   CreateReleaseDraftInput,
   LatestReleaseQuery,
   PrepareReleaseUploadInput,
   PublicChangelogEntry,
+  ReleaseArtifactRecord,
+  ReleasePublishReadiness,
   ReleaseRecord,
 } from "./release/types";
 

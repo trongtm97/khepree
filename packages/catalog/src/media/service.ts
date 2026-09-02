@@ -18,6 +18,7 @@ import {
   validateUpload,
   type ObjectStorage,
 } from "@khepree/storage";
+import { sha256HexOfBytes } from "../release/artifact-verify";
 import type {
   CompleteMediaUploadInput,
   MediaRecord,
@@ -145,6 +146,21 @@ export class MediaService {
 
     if (input.ownerId && !objectKeyIncludesOwner(input.objectKey, input.ownerId)) {
       throw new Error("Uploaded object does not belong to this owner");
+    }
+
+    if (
+      input.checksumSha256 &&
+      (contentClass === "software_release" || input.context?.startsWith("release"))
+    ) {
+      const bytes = await storage.getObject(input.objectKey, input.bucket);
+      if (!bytes) {
+        throw new Error("Uploaded object not found for checksum verification");
+      }
+      const actual = sha256HexOfBytes(bytes);
+      const expected = input.checksumSha256.trim().toLowerCase();
+      if (actual !== expected) {
+        throw new Error("Uploaded object SHA-256 does not match declared checksum");
+      }
     }
 
     if (input.bucket === "public" && storage.verifyPublicReadAccess) {

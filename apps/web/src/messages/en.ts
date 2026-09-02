@@ -301,6 +301,8 @@ export const en = {
     cookies: "Cookies",
     copyright: "All rights reserved.",
     ecosystem: "Khepree tools",
+    connect: "Connect",
+    officialChannels: "Official channels",
   },
   pages: {
     products: {
@@ -400,6 +402,17 @@ export const en = {
           "error message or screenshot.",
         ],
         safetyNote: "Do not send passwords, secrets, API keys, or full payment details by email.",
+      },
+      officialChannels: {
+        heading: "Connect with Khepree",
+        description: "Follow Khepree Labs or reach us through our official channels.",
+        labels: {
+          facebook: "Facebook",
+          youtube: "YouTube",
+          tiktok: "TikTok",
+          telegram: "Telegram",
+          zalo: "Phone / Zalo",
+        },
       },
     },
     support: {

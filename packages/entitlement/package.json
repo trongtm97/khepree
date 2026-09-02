@@ -13,7 +13,7 @@
     "@khepree/db": "workspace:*",
     "@khepree/events": "workspace:*",
     "@khepree/types": "workspace:*",
-    "drizzle-orm": "^0.44.5"
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@khepree/eslint-config": "workspace:*",

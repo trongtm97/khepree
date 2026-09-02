@@ -50,9 +50,19 @@ export function AccountAppShell({
     <div className="flex min-h-screen flex-col bg-khepree-cloud">
       <header className="border-b border-khepree-mist bg-khepree-white">
         <Container className="flex h-14 items-center justify-between gap-4">
-          <Link href={marketingPublicUrl()} target="_blank" rel="noopener noreferrer">
-            <BrandLogo context="app" />
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <BrandLogo context="app" />
+            </Link>
+            <a
+              href={`${marketingPublicUrl()}/${locale}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden text-sm text-khepree-slate/70 hover:text-khepree-ink sm:inline"
+            >
+              {copy.nav.home}
+            </a>
+          </div>
           <div className="flex items-center gap-3 text-sm">
             <LocaleSwitch locale={locale} />
             <span className="hidden text-khepree-slate/70 sm:inline">{userName || userEmail}</span>
@@ -68,6 +78,14 @@ export function AccountAppShell({
           className="hidden w-56 shrink-0 border-r border-khepree-mist bg-khepree-white p-4 md:block"
         >
           <nav className="flex flex-col gap-1">
+            <a
+              href={`${marketingPublicUrl()}/${locale}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-[var(--radius-control)] px-3 py-2 text-sm text-khepree-slate/70 transition-colors hover:bg-khepree-mist/60 hover:text-khepree-ink"
+            >
+              {copy.nav.home}
+            </a>
             {ACCOUNT_NAV.map((item) => {
               const active = pathname === item.href;
               return (

@@ -30,6 +30,6 @@ export function AdminStatusBadge({
 export function statusTone(status: string): keyof typeof toneClass {
   if (["active", "published", "succeeded", "paid", "available", "approved"].includes(status)) return "success";
   if (["pending", "draft"].includes(status)) return "warning";
-  if (["suspended", "blocked", "failed", "revoked", "voided", "archived", "retired"].includes(status)) return "danger";
+  if (["suspended", "blocked", "failed", "revoked", "voided", "archived", "retired", "expired"].includes(status)) return "danger";
   return "muted";
 }

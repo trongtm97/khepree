@@ -14,6 +14,27 @@ export {
 } from "./desktop-checkout";
 
 export type { DesktopPurchasablePlan, DesktopPlansResponse } from "./desktop-plans";
+export type {
+  DesktopAnnouncementCta,
+  DesktopAnnouncementCtaKind,
+  DesktopAnnouncementDismissResponse,
+  DesktopAnnouncementItem,
+  DesktopAnnouncementReadResponse,
+  DesktopAnnouncementsResponse,
+  DesktopAnnouncementSeverity,
+} from "./desktop-announcements";
+export type {
+  DesktopLatestUpdate,
+  DesktopLatestUpdateResponse,
+  DesktopUpdateArtifact,
+  DesktopUpdateDownloadRequest,
+  DesktopUpdateDownloadResponse,
+} from "./desktop-updates";
+export {
+  buildSquirrelFeedUrl,
+  type DesktopSquirrelFeedTicketRequest,
+  type DesktopSquirrelFeedTicketResponse,
+} from "./desktop-squirrel-feed";
 
 import type {
   DesktopAllowedActions,
@@ -59,6 +80,12 @@ export const DESKTOP_ERROR_CODES = [
   "ENTITLEMENT_EXPIRED",
   "ENTITLEMENT_SUSPENDED",
   "PRODUCT_NOT_FOUND",
+  "ANNOUNCEMENT_NOT_FOUND",
+  "RELEASE_NOT_FOUND",
+  "ARTIFACT_NOT_FOUND",
+  "DOWNLOAD_NOT_AUTHORIZED",
+  "DOWNLOAD_TICKET_REPLAY",
+  "INVALID_INPUT",
   "CHECKOUT_NOT_AVAILABLE",
   "PAYMENT_PENDING",
 ] as const;

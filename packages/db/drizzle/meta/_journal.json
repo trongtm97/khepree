@@ -134,6 +134,20 @@
       "when": 1788033000000,
       "tag": "0018_product_technical_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788034000000,
+      "tag": "0019_release_artifacts",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788035000000,
+      "tag": "0020_system_announcements",
+      "breakpoints": true
     }
   ]
 }

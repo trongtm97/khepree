@@ -303,6 +303,8 @@ export const vi = {
     cookies: "Cookie",
     copyright: "Bảo lưu mọi quyền.",
     ecosystem: "Các công cụ Khepree",
+    connect: "Kết nối",
+    officialChannels: "Kênh chính thức",
   },
   pages: {
     products: {
@@ -402,6 +404,17 @@ export const vi = {
           "thông báo lỗi hoặc ảnh chụp màn hình.",
         ],
         safetyNote: "Không gửi mật khẩu, mã bí mật, khóa API hoặc thông tin thanh toán đầy đủ qua email.",
+      },
+      officialChannels: {
+        heading: "Kết nối với Khepree",
+        description: "Theo dõi Khepree Labs và liên hệ nhanh qua các kênh chính thức.",
+        labels: {
+          facebook: "Facebook",
+          youtube: "YouTube",
+          tiktok: "TikTok",
+          telegram: "Telegram",
+          zalo: "Điện thoại / Zalo",
+        },
       },
     },
     support: {

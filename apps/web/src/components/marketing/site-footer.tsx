@@ -1,19 +1,12 @@
-import { statusPublicUrl } from "@khepree/config";
-import type { ResolvedKhepreeSurface } from "@khepree/config";
+import { statusPublicUrl, getOutboundLinkAttributes, type ResolvedKhepreeSurface } from "@khepree/config";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandLogo, Container } from "@khepree/ui";
 import type { Messages } from "@/lib/i18n/get-messages";
 import { localePath, type SupportedLocale } from "@/lib/i18n/config";
+import { ExternalLink } from "./external-link";
 import { LanguageSwitcher } from "./language-switcher";
-
-function socialLinks() {
-  return [
-    { label: "Twitter", url: process.env.NEXT_PUBLIC_SOCIAL_TWITTER },
-    { label: "GitHub", url: process.env.NEXT_PUBLIC_SOCIAL_GITHUB },
-    { label: "LinkedIn", url: process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN },
-  ].filter((item): item is { label: string; url: string } => Boolean(item.url?.startsWith("http")));
-}
+import { OfficialContactFooterIcons } from "./official-contact-channels";
 
 function FooterLinkList({
   title,
@@ -55,7 +48,6 @@ export interface SiteFooterProps {
 }
 
 export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterProps) {
-  const social = socialLinks();
   const year = new Date().getFullYear();
   const statusUrl = statusPublicUrl();
 
@@ -125,9 +117,9 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
               </li>
               {statusUrl ? (
                 <li>
-                  <a href={statusUrl} rel="noopener noreferrer" target="_blank" className={linkClass}>
+                  <ExternalLink href={statusUrl} className={linkClass}>
                     {messages.footer.status}
-                  </a>
+                  </ExternalLink>
                 </li>
               ) : null}
             </ul>
@@ -146,18 +138,18 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
           {ecosystemSurfaces.length > 0 ? (
             <FooterLinkList title={messages.footer.ecosystem} collapsible>
               <ul className="space-y-1 text-sm sm:space-y-2">
-                {ecosystemSurfaces.map((surface) => (
-                  <li key={surface.id}>
-                    <a
-                      href={surface.url}
-                      target={surface.external ? "_blank" : undefined}
-                      rel={surface.external ? "noopener noreferrer" : undefined}
-                      className={linkClass}
-                    >
-                      {surface.label}
-                    </a>
-                  </li>
-                ))}
+                {ecosystemSurfaces.map((surface) => {
+                  const outbound = getOutboundLinkAttributes(surface.url, {
+                    forceNewTab: surface.openBehavior === "new-tab",
+                  });
+                  return (
+                    <li key={surface.id}>
+                      <a href={surface.url} className={linkClass} {...outbound}>
+                        {surface.label}
+                      </a>
+                    </li>
+                  );
+                })}
               </ul>
             </FooterLinkList>
           ) : null}
@@ -195,27 +187,12 @@ export function SiteFooter({ locale, messages, ecosystemSurfaces }: SiteFooterPr
             </ul>
           </div>
 
-          <div className="flex flex-col gap-3 sm:items-end">
+          <div className="flex flex-col gap-4 sm:items-end">
+            <OfficialContactFooterIcons messages={messages} />
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted">{messages.footer.language}</span>
               <LanguageSwitcher locale={locale} />
             </div>
-            {social.length > 0 ? (
-              <ul className="flex gap-4 text-sm text-muted">
-                {social.map((item) => (
-                  <li key={item.label}>
-                    <a
-                      href={item.url}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      className="transition-colors hover:text-foreground"
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
           </div>
         </div>
 

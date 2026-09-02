@@ -12,6 +12,7 @@ import {
   mailFromAddress,
   resolvePublicMediaBaseUrl,
 } from "./env";
+import { isUpdateSigningConfigured } from "./update-signing";
 
 export class EnvValidationError extends Error {
   constructor(message: string) {
@@ -150,6 +151,10 @@ export function validateRuntimeEnv(env: Env = getEnv()): void {
 
   if (!isLicenseSigningConfigured(env)) {
     throw new EnvValidationError("LICENSE_SIGNING_PRIVATE_KEY and LICENSE_SIGNING_PUBLIC_KEY are required in production");
+  }
+
+  if (!isUpdateSigningConfigured(env)) {
+    throw new EnvValidationError("UPDATE_SIGNING_PUBLIC_KEY is required in production for release publish verification");
   }
 
   validateProductionEmail(env);

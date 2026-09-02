@@ -1,3 +1,5 @@
+import { getOutboundLinkAttributes } from "@khepree/config";
+
 /** Escape HTML special characters in text nodes. */
 export function escapeHtml(text: string): string {
   return text
@@ -139,10 +141,10 @@ export function sanitizeContentHtml(html: string): string {
       if (name === "href") {
         const safe = sanitizeHref(value);
         if (safe) {
-          const external = /^https?:\/\//i.test(safe);
           attrs.push(`href="${escapeHtml(safe)}"`);
-          if (external) attrs.push('rel="noopener noreferrer"');
-          if (external) attrs.push('target="_blank"');
+          const outbound = getOutboundLinkAttributes(safe);
+          if (outbound.target) attrs.push(`target="${outbound.target}"`);
+          if (outbound.rel) attrs.push(`rel="${escapeHtml(outbound.rel)}"`);
         }
         continue;
       }

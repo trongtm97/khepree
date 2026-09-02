@@ -238,6 +238,7 @@ export class CommerceService {
       errorUrl: input.errorUrl ?? input.cancelUrl,
       customerId: input.owner.type === "user" ? input.owner.userId : input.owner.organizationId,
       description: item ? `${item.productNameSnapshot} — ${item.planNameSnapshot}` : session.order.publicId,
+      providerCheckoutId: pending.providerPaymentId ?? undefined,
     });
     return {
       orderPublicId: session.order.publicId,
@@ -443,6 +444,18 @@ export class CommerceService {
       this.options.store.listPaymentsByOrder(order.id),
     ]);
     return { order, items, payments };
+  }
+
+  async cancelOrderForOwner(input: {
+    orderPublicId: string;
+    owner: CustomerOwner;
+    actorUserId?: string;
+  }): Promise<OrderRecord> {
+    const order = await this.getOrderForOwner(input.orderPublicId, input.owner);
+    if (!order) {
+      throw new CommerceError("NOT_FOUND", "Order not found");
+    }
+    return this.cancelOrder({ orderId: order.id, actorUserId: input.actorUserId });
   }
 
   private async confirmPaymentOn(

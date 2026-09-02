@@ -63,6 +63,8 @@ export function ReleaseUploadForm({ productId }: { productId: string }) {
       draftData.set("fileSize", String(file.size));
       draftData.set("checksumSha256", checksum);
       draftData.set("objectKey", prepared.objectKey);
+      draftData.set("manifestSignature", String(formData.get("manifestSignature") ?? ""));
+      draftData.set("signingKeyId", String(formData.get("signingKeyId") ?? ""));
 
       const created = await createReleaseDraftAction({}, draftData);
       if (created.error) {
@@ -123,8 +125,14 @@ export function ReleaseUploadForm({ productId }: { productId: string }) {
           className="block w-full text-sm"
         />
       </label>
-      <Textarea name="releaseNotesVi" label="Ghi chú phát hành (VI)" />
+      <Textarea name="releaseNotesVi" label="Ghi chú phát hành (VI)" required />
       <Textarea name="releaseNotesEn" label="Ghi chú phát hành (EN, tùy chọn)" />
+      <Input name="manifestSignature" label="Chữ ký manifest (CI, base64)" required />
+      <Input name="signingKeyId" label="Update signing keyId (CI)" required />
+      <p className="text-xs text-khepree-slate/60">
+        SHA-256 được xác minh lại trên server sau upload. ETag multipart không dùng thay SHA-256. Private update key
+        chỉ nằm trong CI — backend giữ public key qua UPDATE_SIGNING_PUBLIC_KEY.
+      </p>
       <Input name="minimumSupportedVersion" label="Phiên bản tối thiểu (tùy chọn)" placeholder="1.0.0" />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="mandatoryUpdate" /> Bắt buộc cập nhật

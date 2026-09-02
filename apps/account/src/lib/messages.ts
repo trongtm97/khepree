@@ -2,6 +2,7 @@ import { DEFAULT_LOCALE, type SupportedLocale } from "@khepree/config";
 
 const vi = {
   nav: {
+    home: "Trang chủ",
     dashboard: "Tổng quan",
     products: "Sản phẩm",
     licenses: "Giấy phép",
@@ -126,6 +127,10 @@ const vi = {
     checking: "Đang kiểm tra…",
     waiting: "Đang chờ xác nhận giao dịch từ ngân hàng.",
     paidRedirect: "Thanh toán đã được xác nhận. Đang chuyển…",
+    cancelPayment: "Hủy thanh toán",
+    cancellingPayment: "Đang hủy…",
+    cancelPaymentConfirm: "Bạn có chắc muốn hủy thanh toán này? Đơn hàng sẽ bị hủy.",
+    cancelledRedirect: "Đã hủy thanh toán. Đang chuyển…",
     card: "Thẻ",
     termsImplicit: "Bằng việc tiếp tục thanh toán, bạn đồng ý với",
     termsLink: "Điều khoản",
@@ -164,6 +169,9 @@ const vi = {
     paidAt: "Ngày thanh toán",
     viewOrder: "Xem đơn hàng",
     retry: "Thử lại",
+    cancelOrder: "Hủy đơn hàng",
+    cancellingOrder: "Đang hủy…",
+    cancelOrderConfirm: "Bạn có chắc muốn hủy đơn hàng này?",
     statuses: {
       draft: "Nháp",
       pending_payment: "Chờ thanh toán",
@@ -234,6 +242,7 @@ const vi = {
 
 const en = {
   nav: {
+    home: "Home",
     dashboard: "Dashboard",
     products: "Products",
     licenses: "Licenses",
@@ -358,6 +367,10 @@ const en = {
     checking: "Checking…",
     waiting: "Waiting for bank confirmation.",
     paidRedirect: "Payment confirmed. Redirecting…",
+    cancelPayment: "Cancel payment",
+    cancellingPayment: "Cancelling…",
+    cancelPaymentConfirm: "Cancel this payment? The order will be cancelled.",
+    cancelledRedirect: "Payment cancelled. Redirecting…",
     card: "Card",
     termsImplicit: "By continuing to checkout, you agree to the",
     termsLink: "Terms",
@@ -397,6 +410,9 @@ const en = {
     paidAt: "Payment date",
     viewOrder: "View order",
     retry: "Try again",
+    cancelOrder: "Cancel order",
+    cancellingOrder: "Cancelling…",
+    cancelOrderConfirm: "Cancel this order?",
     statuses: {
       draft: "Draft",
       pending_payment: "Pending payment",

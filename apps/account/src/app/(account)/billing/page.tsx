@@ -1,8 +1,10 @@
 import { requireSession } from "@khepree/auth/session";
 import { formatBillingInterval, formatPriceAmount } from "@khepree/catalog";
+import { canTransitionOrder } from "@khepree/commerce";
 import { Alert, Card, CardTitle, EmptyState } from "@khepree/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CancelOrderButton } from "@/components/cancel-order-button";
 import { ConfirmingPaymentPoll } from "@/components/confirming-payment-poll";
 import { DesktopReturnLink } from "@/components/desktop-return-link";
 import { getCommerce } from "@/lib/commerce";
@@ -62,6 +64,11 @@ export default async function BillingPage({
           </Link>
         </Alert>
       ) : null}
+      {params.checkout === "cancelled" ? (
+        <Alert variant="warning" title={copy.statuses.cancelled}>
+          {messages.checkout.cancelledBody}
+        </Alert>
+      ) : null}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">{copy.orders}</h2>
@@ -72,13 +79,24 @@ export default async function BillingPage({
             {billing.orders.map((order) => {
               const item = order.items[0];
               const payment = order.payments[0];
+              const canCancel = canTransitionOrder(order.status, "cancelled");
               return (
                 <Card key={order.publicId}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <CardTitle className="text-base">{item?.productNameSnapshot ?? order.publicId}</CardTitle>
-                    <span className="text-sm text-khepree-slate/70">
-                      {copy.statuses[order.status] ?? order.status}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm text-khepree-slate/70">
+                        {copy.statuses[order.status] ?? order.status}
+                      </span>
+                      {canCancel ? (
+                        <CancelOrderButton
+                          orderPublicId={order.publicId}
+                          label={copy.cancelOrder}
+                          cancellingLabel={copy.cancellingOrder}
+                          confirmMessage={copy.cancelOrderConfirm}
+                        />
+                      ) : null}
+                    </div>
                   </div>
                   <dl className="mt-3 space-y-1 text-sm text-khepree-slate/80">
                     <div>

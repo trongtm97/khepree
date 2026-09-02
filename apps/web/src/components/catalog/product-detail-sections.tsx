@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { PublicProductDetail, PublicProductMedia } from "@khepree/catalog";
 import { renderContentBody } from "@khepree/catalog/content/body-html";
-import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION } from "@khepree/config";
+import { DEFAULT_CURRENCY, DEFAULT_MARKET_REGION, getOutboundLinkAttributes } from "@khepree/config";
 import {
   Badge,
   BodyText,
@@ -106,9 +106,10 @@ export function ProductDetailSections({
   const hasPlans = product.plans.length > 0;
   const iconUrl = product.icon?.url ?? null;
 
-  const primaryCtaLinkProps = primaryCta.external
-    ? { href: primaryCta.href, target: "_blank" as const, rel: "noopener noreferrer" as const }
-    : { href: primaryCta.href };
+  const primaryCtaLinkProps = {
+    href: primaryCta.href,
+    ...getOutboundLinkAttributes(primaryCta.href, { forceNewTab: Boolean(primaryCta.external) }),
+  };
 
   return (
     <>
@@ -338,9 +339,10 @@ export function ProductDetailSections({
                 <BodyText className="mt-3 text-lg text-muted">{marketing.cta.description}</BodyText>
               ) : null}
               <ButtonLink
-                {...(finalCta.external
-                  ? { href: finalCta.href, target: "_blank" as const, rel: "noopener noreferrer" as const }
-                  : { href: finalCta.href })}
+                href={finalCta.href}
+                {...getOutboundLinkAttributes(finalCta.href, {
+                  forceNewTab: Boolean(finalCta.external),
+                })}
                 variant="accent"
                 showArrow
                 fullWidthMobile

@@ -9,6 +9,10 @@ const pg = Boolean(db && process.env.INTEGRATION === "1");
 const CRITICAL_TABLES = [
   "outbox_events",
   "software_releases",
+  "release_artifacts",
+  "system_announcements",
+  "announcement_translations",
+  "announcement_receipts",
   "release_translations",
   "url_redirects",
   "content_categories",

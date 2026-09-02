@@ -1,7 +1,8 @@
 import { requireSession } from "@khepree/auth/session";
-import { Card, CardDescription, CardTitle, EmptyState } from "@khepree/ui";
-import { isEntitlementActive } from "@khepree/db";
+import type { PublicProductSummary } from "@khepree/catalog";
 import { createProductService } from "@khepree/catalog";
+import { isEntitlementActive } from "@khepree/db";
+import { EmptyState, ProductCard } from "@khepree/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPlatform } from "@/lib/commerce";
@@ -10,6 +11,12 @@ import { accountMessages } from "@/lib/messages";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Products" };
+
+function productCardImage(product: Pick<PublicProductSummary, "name" | "gallery" | "icon">) {
+  const media = product.gallery?.[0] ?? product.icon;
+  if (!media?.url) return undefined;
+  return { src: media.url, alt: media.altText || product.name };
+}
 
 export default async function ProductsPage() {
   const session = await requireSession();
@@ -42,23 +49,23 @@ export default async function ProductsPage() {
               const slug = row.productSlug;
               const catalog = slug ? catalogBySlug.get(slug) : undefined;
               const href = slug ? `/products/${slug}` : null;
-              return (
-                <Card key={row.entitlement.publicId}>
-                  <CardTitle className="text-base">
-                    {catalog?.name ?? row.productSlug ?? row.entitlement.productId}
-                  </CardTitle>
-                  <CardDescription className="mt-2">
-                    {row.planSlug ?? "Plan"} · {row.entitlement.status}
-                  </CardDescription>
-                  {href ? (
-                    <Link
-                      href={href}
-                      className="mt-4 inline-flex text-sm font-medium text-khepree-teal hover:underline"
-                    >
-                      {copy.viewProduct}
-                    </Link>
-                  ) : null}
-                </Card>
+              const title = catalog?.name ?? row.productSlug ?? row.entitlement.productId;
+              const card = (
+                <ProductCard
+                  className="group h-full"
+                  title={title}
+                  description={`${row.planSlug ?? "Plan"} · ${row.entitlement.status}`}
+                  image={catalog ? productCardImage(catalog) : undefined}
+                  fallbackInitial={title.slice(0, 1)}
+                  ctaLabel={href ? copy.viewProduct : undefined}
+                />
+              );
+              return href ? (
+                <Link key={row.entitlement.publicId} href={href} className="block h-full">
+                  {card}
+                </Link>
+              ) : (
+                <div key={row.entitlement.publicId}>{card}</div>
               );
             })}
           </div>
@@ -72,18 +79,20 @@ export default async function ProductsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {catalogProducts.map((product) => (
-              <Card key={product.publicId}>
-                <CardTitle className="text-base">{product.name}</CardTitle>
-                <CardDescription className="mt-2">
-                  {product.shortDescription ?? product.description ?? "—"}
-                </CardDescription>
-                <Link
-                  href={`/products/${product.slug}`}
-                  className="mt-4 inline-flex text-sm font-medium text-khepree-teal hover:underline"
-                >
-                  {copy.viewProduct}
-                </Link>
-              </Card>
+              <Link
+                key={product.publicId}
+                href={`/products/${product.slug}`}
+                className="group block h-full"
+              >
+                <ProductCard
+                  className="group h-full"
+                  title={product.name}
+                  description={product.shortDescription ?? product.description ?? ""}
+                  image={productCardImage(product)}
+                  fallbackInitial={product.name.slice(0, 1)}
+                  ctaLabel={copy.viewProduct}
+                />
+              </Link>
             ))}
           </div>
         )}

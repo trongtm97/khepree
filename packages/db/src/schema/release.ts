@@ -7,8 +7,10 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { timestamps } from "./_shared";
 import { mediaAssets } from "./content";
 import { products } from "./catalog";
@@ -25,12 +27,27 @@ export const releaseArchitectureEnum = pgEnum("release_architecture", [
 
 export const releaseChannelEnum = pgEnum("release_channel", ["stable", "beta", "alpha"]);
 
+export const releaseArtifactKindEnum = pgEnum("release_artifact_kind", [
+  "installer",
+  "full-nupkg",
+  "delta-nupkg",
+  "releases-index",
+]);
+
 export type ReleaseStatus = (typeof releaseStatusEnum.enumValues)[number];
 export type ReleasePlatform = (typeof releasePlatformEnum.enumValues)[number];
 export type ReleaseArchitecture = (typeof releaseArchitectureEnum.enumValues)[number];
 export type ReleaseChannel = (typeof releaseChannelEnum.enumValues)[number];
+export type ReleaseArtifactKind = (typeof releaseArtifactKindEnum.enumValues)[number];
 
-/** Desktop software release artifact bound to a product and private media. */
+/** Singleton artifact kinds — at most one row per release (delta-nupkg excluded). */
+export const RELEASE_SINGLETON_ARTIFACT_KINDS = [
+  "installer",
+  "full-nupkg",
+  "releases-index",
+] as const satisfies readonly ReleaseArtifactKind[];
+
+/** Desktop software release bound to a product; artifacts live in release_artifacts. */
 export const softwareReleases = pgTable(
   "software_releases",
   {
@@ -67,6 +84,38 @@ export const softwareReleases = pgTable(
       table.architecture,
       table.channel,
     ),
+  ],
+);
+
+/** Binary payload for a software release (installer, nupkg, RELEASES index, …). */
+export const releaseArtifacts = pgTable(
+  "release_artifacts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    publicId: text("public_id").notNull().unique(),
+    releaseId: uuid("release_id")
+      .notNull()
+      .references(() => softwareReleases.id, { onDelete: "cascade" }),
+    kind: releaseArtifactKindEnum("kind").notNull(),
+    mediaAssetId: uuid("media_asset_id")
+      .notNull()
+      .references(() => mediaAssets.id, { onDelete: "restrict" }),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
+    sha256: text("sha256").notNull(),
+    signature: text("signature"),
+    signingKeyId: text("signing_key_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("release_artifacts_release_id_idx").on(table.releaseId),
+    unique("release_artifacts_release_file_unique").on(table.releaseId, table.fileName),
+    uniqueIndex("release_artifacts_release_singleton_kind_unique")
+      .on(table.releaseId, table.kind)
+      .where(
+        sql`${table.kind} in ('installer', 'full-nupkg', 'releases-index')`,
+      ),
   ],
 );
 

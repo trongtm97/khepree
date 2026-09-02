@@ -1,5 +1,6 @@
 "use client";
 
+import { getOutboundLinkAttributes } from "@khepree/config";
 import { cn } from "@khepree/ui";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -58,9 +59,10 @@ export function ProductLocalNav({
     return () => observer.disconnect();
   }, [sections]);
 
-  const ctaProps = primaryCta.external
-    ? { href: primaryCta.href, target: "_blank" as const, rel: "noopener noreferrer" as const }
-    : { href: primaryCta.href };
+  const ctaProps = {
+    href: primaryCta.href,
+    ...getOutboundLinkAttributes(primaryCta.href, { forceNewTab: Boolean(primaryCta.external) }),
+  };
 
   return (
     <div className="sticky top-14 z-40 border-b border-border/80 bg-background/92 backdrop-blur-md">

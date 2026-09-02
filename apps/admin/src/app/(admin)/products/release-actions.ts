@@ -3,6 +3,7 @@
 import { isCatalogError } from "@khepree/catalog";
 import type {
   ReleaseArchitecture,
+  ReleaseArtifactKind,
   ReleaseChannel,
   ReleasePlatform,
 } from "@khepree/db";
@@ -87,6 +88,8 @@ export async function createReleaseDraftAction(
       releaseNotesEn: String(formData.get("releaseNotesEn") ?? "") || null,
       mandatoryUpdate: formData.get("mandatoryUpdate") === "on",
       minimumSupportedVersion: String(formData.get("minimumSupportedVersion") ?? "") || null,
+      signature: String(formData.get("manifestSignature") ?? "") || null,
+      signingKeyId: String(formData.get("signingKeyId") ?? "") || null,
       actorUserId: session.user.id,
     });
     revalidateRelease(productId);
@@ -101,9 +104,39 @@ export async function publishReleaseAction(_s: ActionState, formData: FormData):
     const session = await actor("catalog.write");
     const releaseId = String(formData.get("releaseId") ?? "");
     const productId = String(formData.get("productId") ?? "");
+    const readiness = await getReleaseService().getPublishReadiness(releaseId);
+    if (!readiness.ready) {
+      return { error: readiness.blockers[0] ?? "Release chưa verified" };
+    }
     await getReleaseService().publish(releaseId, session.user.id);
     revalidateRelease(productId);
+    revalidatePath(`/releases/${String(formData.get("releasePublicId") ?? "")}`);
     return { notice: "Đã xuất bản phiên bản" };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function addReleaseArtifactAction(_s: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const session = await actor("catalog.write");
+    const releaseId = String(formData.get("releaseId") ?? "");
+    const productId = String(formData.get("productId") ?? "");
+    await getReleaseService().addArtifact({
+      releaseId,
+      kind: String(formData.get("kind") ?? "installer") as ReleaseArtifactKind,
+      fileName: String(formData.get("fileName") ?? ""),
+      fileSize: Number(formData.get("fileSize") ?? 0),
+      checksumSha256: String(formData.get("checksumSha256") ?? ""),
+      objectKey: String(formData.get("objectKey") ?? ""),
+      mimeType: String(formData.get("mimeType") ?? "application/octet-stream"),
+      signature: String(formData.get("manifestSignature") ?? "") || null,
+      signingKeyId: String(formData.get("signingKeyId") ?? "") || null,
+      actorUserId: session.user.id,
+    });
+    revalidateRelease(productId);
+    revalidatePath(`/releases/${String(formData.get("releasePublicId") ?? "")}`);
+    return { notice: "Đã thêm artifact" };
   } catch (error) {
     return fail(error);
   }

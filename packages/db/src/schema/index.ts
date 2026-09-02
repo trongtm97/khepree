@@ -8,6 +8,7 @@ export * from "./desktop";
 export * from "./partner";
 export * from "./system";
 export * from "./outbox";
+export * from "./announcement";
 
 import * as identity from "./identity";
 import * as catalog from "./catalog";
@@ -19,6 +20,7 @@ import * as desktop from "./desktop";
 import * as partner from "./partner";
 import * as system from "./system";
 import * as outbox from "./outbox";
+import * as announcement from "./announcement";
 
 export const schema = {
   ...identity,
@@ -31,6 +33,7 @@ export const schema = {
   ...partner,
   ...system,
   ...outbox,
+  ...announcement,
 };
 
 /** Better Auth expects this export shape — do not duplicate auth tables elsewhere. */

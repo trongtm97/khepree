@@ -27,13 +27,13 @@ Register webhook on SePay dashboard:
 
 `https://<public-api-host>/api/v1/webhooks/payments/sepay`
 
-Configure payment code prefix **`KHP`** on SePay (Company → General → Payment code structure). Transfer content must be `KHP_<orderPublicId>`.
+Configure payment code prefix **`KHP`** on SePay (Company → General → Payment code structure): prefix `KHP`, suffix **6–8 digits** (digits only). Transfer content is a short code like `KHP12345678` (11 characters).
 
 ### Simulate webhook (after a pending checkout exists)
 
 ```bash
 API_URL=https://api.khepree.com SEPAY_WEBHOOK_SECRET=<secret> \
-  node scripts/integrations/sepay-send-test-ipn.mjs --order ord_xxxxxxxx --amount 599000
+  node scripts/integrations/sepay-send-test-ipn.mjs --code KHP12345678 --amount 599000
 ```
 
 Expect HTTP 200 and `{"success":true}`. Verify in admin **Bán hàng → SePay → Webhook gần đây**.
@@ -44,7 +44,7 @@ Expect HTTP 200 and `{"success":true}`. Verify in admin **Bán hàng → SePay �
 2. Open a product / pricing page. Choose a **VND** plan (region VN).
 3. Sign in on account. Checkout review shows Vietnamese copy.
 4. Submit checkout → account `/checkout/pay/{orderPublicId}` shows VietQR + bank details.
-5. Transfer exact amount with content `KHP_{orderPublicId}`.
+5. Transfer exact amount with content shown on the pay page (e.g. `KHP12345678`).
 6. Confirm webhook: payment `succeeded`, order `paid`, entitlement active.
 7. License exists **only** if the product `licensingMode` is `LICENSE_KEY_DEVICE` or `DEVICE_LEASE`.
 8. Account billing lists the order with VND formatting.

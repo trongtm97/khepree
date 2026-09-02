@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { accountPublicUrl } from "@khepree/config";
+import { accountPublicUrl, getOutboundLinkAttributes } from "@khepree/config";
 import {
   BodyText,
   Container,
@@ -22,9 +22,9 @@ import { notFound } from "next/navigation";
 function resolveCategoryHref(
   locale: SupportedLocale,
   category: { hrefKind: string; path: string },
-): { href: string; external?: boolean } {
+): { href: string; openInNewTab?: boolean } {
   if (category.hrefKind === "account") {
-    return { href: `${accountPublicUrl()}/${category.path.replace(/^\//, "")}`, external: true };
+    return { href: `${accountPublicUrl()}/${category.path.replace(/^\//, "")}`, openInNewTab: true };
   }
   return { href: localePath(locale, category.path) };
 }
@@ -84,9 +84,7 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
                       <Link
                         href={link.href}
                         className="font-medium text-teal hover:underline"
-                        {...(link.external
-                          ? { target: "_blank", rel: "noopener noreferrer" }
-                          : {})}
+                        {...getOutboundLinkAttributes(link.href, { forceNewTab: link.openInNewTab })}
                       >
                         {category.linkLabel}
                       </Link>

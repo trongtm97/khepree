@@ -10,6 +10,10 @@ describe("desktop rate limits", () => {
     "DESKTOP_HEARTBEAT",
     "DESKTOP_LOGOUT",
     "DESKTOP_ME",
+    "DESKTOP_PLANS",
+    "DESKTOP_ANNOUNCEMENTS",
+    "DESKTOP_UPDATES",
+    "SQUIRREL_FEED",
     "DESKTOP_CHECKOUT",
   ] as const;
 

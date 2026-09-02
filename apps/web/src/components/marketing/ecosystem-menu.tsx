@@ -1,6 +1,7 @@
 "use client";
 
 import type { ResolvedKhepreeSurface } from "@khepree/config";
+import { getOutboundLinkAttributes } from "@khepree/config";
 import { cn } from "@khepree/ui";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
@@ -16,11 +17,13 @@ function EcosystemLinkItem({
   onNavigate?: () => void;
   compact?: boolean;
 }) {
+  const outbound = getOutboundLinkAttributes(surface.url, {
+    forceNewTab: surface.openBehavior === "new-tab",
+  });
   return (
     <Link
       href={surface.url}
-      target={surface.external ? "_blank" : undefined}
-      rel={surface.external ? "noopener noreferrer" : undefined}
+      {...outbound}
       role="menuitem"
       className={cn(
         "flex min-h-11 items-start gap-3 rounded-[var(--radius-control)] transition-colors hover:bg-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40",

@@ -75,6 +75,9 @@ export default async function CheckoutPayPage({
               waiting: copy.waiting,
               paid: copy.paidRedirect,
               expired: copy.cancelled,
+              cancelPayment: copy.cancelPayment,
+              cancellingPayment: copy.cancellingPayment,
+              cancelPaymentConfirm: copy.cancelPaymentConfirm,
             }}
           />
         </div>

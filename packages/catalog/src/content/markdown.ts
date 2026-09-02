@@ -1,10 +1,12 @@
+import { getOutboundLinkAttributes } from "@khepree/config";
 import { escapeHtml, sanitizeContentHtml, stripUnsafeMarkdownSource } from "./sanitize";
 
-export interface ProductCtaBlock {
-  slug: string;
-  name: string;
-  description: string;
-  href: string;
+function linkAttrString(href: string): string {
+  const outbound = getOutboundLinkAttributes(href);
+  const parts: string[] = [];
+  if (outbound.target) parts.push(`target="${outbound.target}"`);
+  if (outbound.rel) parts.push(`rel="${escapeHtml(outbound.rel)}"`);
+  return parts.length ? ` ${parts.join(" ")}` : "";
 }
 
 function renderInline(text: string): string {
@@ -17,11 +19,16 @@ function renderInline(text: string): string {
     if (!/^https?:\/\//i.test(safeHref) && !safeHref.startsWith("/") && !safeHref.startsWith("#")) {
       return escapeHtml(label);
     }
-    const external = /^https?:\/\//i.test(safeHref);
-    const rel = external ? ' rel="noopener noreferrer" target="_blank"' : "";
-    return `<a href="${escapeHtml(safeHref)}"${rel}>${escapeHtml(label)}</a>`;
+    return `<a href="${escapeHtml(safeHref)}"${linkAttrString(safeHref)}>${escapeHtml(label)}</a>`;
   });
   return out;
+}
+
+export interface ProductCtaBlock {
+  slug: string;
+  name: string;
+  description: string;
+  href: string;
 }
 
 function productCtaHtml(block: ProductCtaBlock): string {

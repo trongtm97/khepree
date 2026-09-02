@@ -93,6 +93,9 @@ export const RATE_LIMITS = {
   DESKTOP_LOGOUT: { name: "desktop.logout", windowMs: 60_000, max: 30 },
   DESKTOP_ME: { name: "desktop.me", windowMs: 60_000, max: 60 },
   DESKTOP_PLANS: { name: "desktop.plans", windowMs: 60_000, max: 60 },
+  DESKTOP_ANNOUNCEMENTS: { name: "desktop.announcements", windowMs: 60_000, max: 60 },
+  DESKTOP_UPDATES: { name: "desktop.updates", windowMs: 60_000, max: 60 },
+  SQUIRREL_FEED: { name: "squirrel.feed", windowMs: 60_000, max: 120 },
   DESKTOP_CHECKOUT: { name: "desktop.checkout", windowMs: 60_000, max: 20 },
 } as const satisfies Record<string, RateLimitPolicy>;
 

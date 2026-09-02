@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isCatalogError } from "@khepree/catalog";
 import { isCommerceError } from "@khepree/commerce";
 import { isDesktopAuthError } from "@khepree/desktop-auth";
 import { isLicensingError } from "@khepree/licensing";
@@ -45,6 +46,25 @@ export function desktopActivateErrorResponse(error: unknown, requestId: string):
   if (isDesktopAuthError(error)) {
     return jsonError(error.code, error.message, desktopAuthStatus(error.code), requestId);
   }
+  if (isCatalogError(error)) {
+    if (error.code === "NOT_FOUND") {
+      const message = error.message.toLowerCase();
+      const code = message.includes("artifact")
+        ? "ARTIFACT_NOT_FOUND"
+        : message.includes("release")
+          ? "RELEASE_NOT_FOUND"
+          : "ANNOUNCEMENT_NOT_FOUND";
+      return jsonError(code, error.message, 404, requestId);
+    }
+    if (error.code === "FORBIDDEN") {
+      return jsonError("DOWNLOAD_NOT_AUTHORIZED", error.message, 403, requestId);
+    }
+    if (error.code === "CONFLICT") {
+      return jsonError("DOWNLOAD_TICKET_REPLAY", error.message, 409, requestId);
+    }
+    const status = error.code === "INVALID_INPUT" ? 400 : 400;
+    return jsonError(error.code, error.message, status, requestId);
+  }
   if (isLicensingError(error)) {
     const code = mapLicensingToDesktopCode(error.code);
     return jsonError(
@@ -73,6 +93,11 @@ export function desktopAuthErrorResponse(error: unknown, requestId: string): Res
 
 export function sha256Hex(value: string): string {
   return createHash("sha256").update(value).digest("hex");
+}
+
+/** SHA-256 of canonical desktop signed payload (request fields excluding deviceProof). */
+export function desktopDeviceProofBodySha256(payload: Record<string, string>): string {
+  return sha256Hex(JSON.stringify(payload));
 }
 
 export function readDesktopDeviceProof(body: Record<string, unknown>) {

@@ -27,6 +27,7 @@ export function labelStatus(status: string): string {
     active: "Hoạt động",
     draft: "Nháp",
     published: "Đã xuất bản",
+    expired: "Hết hạn",
     archived: "Lưu trữ",
     retired: "Ngừng",
     suspended: "Tạm dừng",

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@khepree/ui";
+import { CancelOrderButton } from "@/components/cancel-order-button";
 
 type SePayQrCheckoutPanelProps = {
   orderPublicId: string;
@@ -29,6 +30,9 @@ type SePayQrCheckoutPanelProps = {
     waiting: string;
     paid: string;
     expired: string;
+    cancelPayment: string;
+    cancellingPayment: string;
+    cancelPaymentConfirm: string;
   };
 };
 
@@ -194,6 +198,17 @@ export function SePayQrCheckoutPanel({
             <Button type="button" variant="secondary" onClick={() => void copyAll()}>
               {copiedKey === "all" ? copy.copiedAll : copy.copyAll}
             </Button>
+            {!terminal ? (
+              <CancelOrderButton
+                orderPublicId={orderPublicId}
+                label={copy.cancelPayment}
+                cancellingLabel={copy.cancellingPayment}
+                confirmMessage={copy.cancelPaymentConfirm}
+                redirectTo="/billing?checkout=cancelled"
+                variant="ghost"
+                onCancelled={() => setStatus("cancelled")}
+              />
+            ) : null}
           </div>
         </div>
       </div>

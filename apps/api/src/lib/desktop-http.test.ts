@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { desktopAuthStatus, readDesktopCheckoutBody, readDesktopExchangeBody } from "./desktop-http";
+import { desktopAuthStatus, readDesktopAccessToken, readDesktopCheckoutBody, readDesktopExchangeBody } from "./desktop-http";
 
 describe("desktop-http", () => {
   it("maps auth failures to 401", () => {
     expect(desktopAuthStatus("AUTH_CODE_INVALID")).toBe(401);
     expect(desktopAuthStatus("PKCE_INVALID")).toBe(401);
     expect(desktopAuthStatus("SESSION_EXPIRED")).toBe(401);
+    expect(desktopAuthStatus("SESSION_REVOKED")).toBe(401);
+    expect(desktopAuthStatus("AUTH_REQUIRED")).toBe(401);
   });
 
   it("maps entitlement failures to 403", () => {
@@ -43,5 +45,23 @@ describe("desktop-http", () => {
       pricePublicId: "price_vnd",
       locale: "vi",
     });
+  });
+
+  it("reads bearer access token from Authorization header", () => {
+    expect(readDesktopAccessToken(new Request("http://localhost/"))).toBeNull();
+    expect(
+      readDesktopAccessToken(
+        new Request("http://localhost/", {
+          headers: { Authorization: "Bearer short" },
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      readDesktopAccessToken(
+        new Request("http://localhost/", {
+          headers: { Authorization: "Bearer desktop-access-token-123456" },
+        }),
+      ),
+    ).toBe("desktop-access-token-123456");
   });
 });

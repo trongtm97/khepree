@@ -79,7 +79,7 @@ export default async function SepaySettingsPage() {
             </dd>
             <dd className="mt-1 text-khepree-slate/70">
               Tiền tố mã thanh toán trên SePay: <code>KHP</code> (nội dung chuyển khoản dạng{" "}
-              <code>KHP_ord_…</code>)
+              <code>KHP12345678</code> — 8 chữ số, dễ nhập tay)
             </dd>
           </div>
           <div>

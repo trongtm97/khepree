@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { parseMoneyMinor } from "@khepree/types";
 import { CommerceError } from "./errors";
 import type { PaymentProvider, PaymentProviderCapabilities } from "./provider";
@@ -15,7 +15,11 @@ import type {
 export const SEPAY_PROVIDER_ID = "sepay";
 
 const DEFAULT_QR_BASE_URL = "https://qr.sepay.vn/img";
-const INVOICE_PREFIX = "KHP_";
+/** SePay dashboard prefix — no separator (matches DH123456 style). */
+export const SEPAY_TRANSFER_PREFIX = "KHP";
+const LEGACY_TRANSFER_PREFIX = "KHP_";
+const SHORT_TRANSFER_CODE = /^KHP\d{6,8}$/i;
+const LEGACY_TRANSFER_CODE = /KHP_ord_[A-Za-z0-9_-]+/;
 
 /** Official bank-transfer webhook fields we persist. */
 const SANITIZED_TRANSFER_KEYS = [
@@ -48,11 +52,17 @@ export const SEPAY_CAPABILITIES: PaymentProviderCapabilities = {
   supportsVoid: false,
 };
 
+/** Short numeric transfer memo for manual bank entry (SePay suffix 6–8 digits). */
+export function sepayTransferCode(): string {
+  return `${SEPAY_TRANSFER_PREFIX}${randomInt(10_000_000, 100_000_000)}`;
+}
+
+/** @deprecated Pre-short-code invoices; kept for legacy webhook matching only. */
 export function sepayInvoiceNumber(orderPublicId: string): string {
   if (!orderPublicId || orderPublicId.includes("/")) {
     throw new CommerceError("INVALID_AMOUNT", "Order public id is required for SePay invoice");
   }
-  return `${INVOICE_PREFIX}${orderPublicId}`;
+  return `${LEGACY_TRANSFER_PREFIX}${orderPublicId}`;
 }
 
 export function generateSepayQrUrl(input: {
@@ -112,17 +122,30 @@ function parseTransferAmount(payload: Record<string, unknown>): bigint | null {
   return null;
 }
 
+function normalizeTransferCode(value: string): string | null {
+  const trimmed = value.trim();
+  if (SHORT_TRANSFER_CODE.test(trimmed)) return trimmed.toUpperCase();
+  const legacy = trimmed.match(LEGACY_TRANSFER_CODE);
+  if (legacy) return legacy[0];
+  return null;
+}
+
 function resolveInvoiceNumber(payload: Record<string, unknown>): string | null {
   const code = asString(payload.code);
-  if (code?.startsWith(INVOICE_PREFIX)) return code;
+  if (code) {
+    const normalized = normalizeTransferCode(code);
+    if (normalized) return normalized;
+  }
 
   const content = asString(payload.content) ?? asString(payload.transfer_content);
   if (content) {
-    const match = content.match(new RegExp(`${INVOICE_PREFIX}[A-Za-z0-9_]+`));
-    if (match) return match[0];
+    const shortMatch = content.match(SHORT_TRANSFER_CODE);
+    if (shortMatch) return shortMatch[0].toUpperCase();
+    const legacyMatch = content.match(LEGACY_TRANSFER_CODE);
+    if (legacyMatch) return legacyMatch[0];
   }
 
-  return code?.startsWith(INVOICE_PREFIX) ? code : null;
+  return null;
 }
 
 export function sanitizeSepayTransferPayload(payload: Record<string, unknown>): Record<string, unknown> {
@@ -240,7 +263,9 @@ export class SePayPaymentProvider implements PaymentProvider {
       throw new CommerceError("INVALID_AMOUNT", "SePay order amount must be greater than 0");
     }
 
-    const invoice = sepayInvoiceNumber(input.orderPublicId);
+    const invoice =
+      input.providerCheckoutId?.trim() ||
+      sepayTransferCode();
     const qrUrl = generateSepayQrUrl({
       accountNumber: this.options.bankAccountNumber,
       bankCode: this.options.bankCode,

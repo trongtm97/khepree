@@ -3,10 +3,10 @@
  * Send a bank-transfer webhook to Khepree API (B1 validation helper).
  *
  * Usage:
- *   node scripts/integrations/sepay-send-test-ipn.mjs --order ord_xxx --amount 599000
- *   API_URL=https://api.khepree.com SEPAY_WEBHOOK_SECRET=... node scripts/integrations/sepay-send-test-ipn.mjs --order ord_xxx
+ *   node scripts/integrations/sepay-send-test-ipn.mjs --code KHP12345678 --amount 599000
+ *   API_URL=https://api.khepree.com SEPAY_WEBHOOK_SECRET=... node scripts/integrations/sepay-send-test-ipn.mjs --code KHP12345678
  *
- * Requires an existing pending payment with providerPaymentId KHP_<orderPublicId>.
+ * Requires an existing pending payment with matching providerPaymentId (shown on checkout pay page).
  */
 
 import { createHmac } from "node:crypto";
@@ -19,14 +19,15 @@ function readArg(name, fallback = "") {
   return args[idx + 1] ?? fallback;
 }
 
-const orderPublicId = readArg("--order");
+const transferCode = readArg("--code") || (readArg("--order") ? `KHP_${readArg("--order")}` : "");
 const amount = readArg("--amount", "599000");
 const apiUrl = (process.env.API_URL ?? readArg("--api", "http://localhost:3005")).replace(/\/$/, "");
 const webhookSecret = process.env.SEPAY_WEBHOOK_SECRET ?? readArg("--secret");
 const accountNumber = process.env.SEPAY_BANK_ACCOUNT_NUMBER ?? readArg("--account", "0123456789");
 
-if (!orderPublicId) {
-  console.error("Missing --order <orderPublicId> (pending checkout required)");
+if (!transferCode) {
+  console.error("Missing --code <KHP12345678> (from pending checkout pay page)");
+  console.error("Legacy: --order <orderPublicId> builds KHP_<orderPublicId> for old payments");
   process.exit(1);
 }
 if (!webhookSecret) {
@@ -34,14 +35,13 @@ if (!webhookSecret) {
   process.exit(1);
 }
 
-const invoice = `KHP_${orderPublicId}`;
 const body = {
   id: Date.now(),
   gateway: "MBBank",
   transactionDate: "2026-08-31 12:00:00",
   accountNumber,
-  code: invoice,
-  content: `${invoice} Khepree test`,
+  code: transferCode,
+  content: `${transferCode} Khepree test`,
   transferType: "in",
   transferAmount: Number(amount),
 };

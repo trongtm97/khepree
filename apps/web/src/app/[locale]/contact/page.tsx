@@ -1,6 +1,7 @@
 import {
   getPartnerContact,
   getPublicContactAddresses,
+  getOutboundLinkAttributes,
   type PartnerContact,
   type PublicContactAddresses,
 } from "@khepree/config";
@@ -8,6 +9,7 @@ import { BodyText, Container, GlassPanel, GradientMesh, HeroEnergyField, HeroTit
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ButtonLink } from "@/components/marketing/button-link";
+import { OfficialContactChannelGrid } from "@/components/marketing/official-contact-channels";
 import { ScrollReveal } from "@/components/marketing/scroll-reveal";
 import { getMessages, type Messages } from "@/lib/i18n/get-messages";
 import { isSupportedLocale, localePath, type SupportedLocale } from "@/lib/i18n/config";
@@ -21,36 +23,28 @@ function ContactCard({
   href,
   label,
   cta,
-  external,
+  openInNewTab,
 }: {
   title: string;
   copy: string;
   href: string;
   label: string;
   cta?: string;
-  external?: boolean;
+  openInNewTab?: boolean;
 }) {
+  const linkAttrs = getOutboundLinkAttributes(href, { forceNewTab: openInNewTab });
   return (
     <GlassPanel className="flex h-full flex-col p-6">
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <BodyText className="mt-3 flex-1">{copy}</BodyText>
       <p className="mt-4">
-        <a
-          href={href}
-          className="font-medium text-teal hover:underline"
-          {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-        >
+        <a href={href} className="font-medium text-teal hover:underline" {...linkAttrs}>
           {label}
         </a>
       </p>
       {cta ? (
         <div className="mt-4">
-          <ButtonLink
-            href={href}
-            variant="secondary"
-            fullWidthMobile
-            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-          >
+          <ButtonLink href={href} variant="secondary" fullWidthMobile {...linkAttrs}>
             {cta}
           </ButtonLink>
         </div>
@@ -72,7 +66,7 @@ function buildContactCards(
     href: string;
     label: string;
     cta?: string;
-    external?: boolean;
+    openInNewTab?: boolean;
   };
 
   const items: CardItem[] = [
@@ -121,7 +115,7 @@ function buildContactCards(
       href: partner.href,
       label: partner.label,
       cta: cards.partner.ctaPortal,
-      external: true,
+      openInNewTab: true,
     });
   } else {
     items.push({
@@ -188,11 +182,15 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                   href={card.href}
                   label={card.label}
                   cta={card.cta}
-                  external={card.external}
+                  openInNewTab={card.openInNewTab}
                 />
               </ScrollReveal>
             ))}
           </div>
+
+          <ScrollReveal>
+            <OfficialContactChannelGrid messages={messages} />
+          </ScrollReveal>
 
           <ScrollReveal>
             <section className="mt-14 rounded-[var(--radius-card)] border border-border bg-surface/50 p-6 sm:p-8">

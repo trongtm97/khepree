@@ -2,6 +2,7 @@ import { getSession } from "@khepree/auth/session";
 import {
   createDownloadService,
   createMediaService,
+  isReleaseMediaContext,
   productIdFromMediaContext,
 } from "@khepree/catalog";
 import { RATE_LIMITS, enforceRateLimit } from "@khepree/security";
@@ -28,6 +29,15 @@ export async function GET(
     const media = await createMediaService().getByPublicId(publicId);
     if (!media) {
       return jsonError("NOT_FOUND", "Media not found", 404, requestId);
+    }
+
+    if (isReleaseMediaContext(media.context)) {
+      return jsonError(
+        "FORBIDDEN",
+        "Release artifacts must use the desktop updates download API",
+        403,
+        requestId,
+      );
     }
 
     const productId = productIdFromMediaContext(media.context);

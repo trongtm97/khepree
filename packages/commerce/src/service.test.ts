@@ -148,6 +148,52 @@ describe("order transitions", () => {
   });
 });
 
+describe("cancelOrderForOwner", () => {
+  it("cancels a pending checkout for the order owner", async () => {
+    const { commerce, store } = createTestCommerce();
+    const intent = await startCheckout(commerce);
+    const cancelled = await commerce.cancelOrderForOwner({
+      orderPublicId: intent.orderPublicId,
+      owner: OWNER,
+      actorUserId: OWNER.userId,
+    });
+    expect(cancelled.status).toBe("cancelled");
+    expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("cancelled");
+    expect(store.payments[0]?.status).toBe("failed");
+  });
+
+  it("rejects cancel for another user", async () => {
+    const { commerce } = createTestCommerce();
+    const intent = await startCheckout(commerce);
+    await expect(
+      commerce.cancelOrderForOwner({
+        orderPublicId: intent.orderPublicId,
+        owner: { type: "user", userId: "user_other" },
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("rejects cancel after payment succeeds", async () => {
+    const { commerce } = createTestCommerce();
+    const intent = await startCheckout(commerce);
+    await postWebhook(commerce, "payment.succeeded", `mockpay_${intent.orderPublicId}`, 599000n, "evt_paid");
+    await expect(
+      commerce.cancelOrderForOwner({
+        orderPublicId: intent.orderPublicId,
+        owner: OWNER,
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_TRANSITION" });
+  });
+
+  it("is idempotent when already cancelled", async () => {
+    const { commerce } = createTestCommerce();
+    const intent = await startCheckout(commerce);
+    await commerce.cancelOrderForOwner({ orderPublicId: intent.orderPublicId, owner: OWNER });
+    const again = await commerce.cancelOrderForOwner({ orderPublicId: intent.orderPublicId, owner: OWNER });
+    expect(again.status).toBe("cancelled");
+  });
+});
+
 describe("commerce checkout and payments", () => {
   it("confirms payment success from a verified webhook and does not invent a provider subscription", async () => {
     const { commerce, store } = createTestCommerce();
@@ -395,27 +441,33 @@ function createSepayCommerce(hooks?: {
   return { commerce, store, records, provider };
 }
 
-function sepayTransferBody(orderPublicId: string, amount = 599000) {
+function sepayTransferBody(transferCode: string, amount = 599000) {
   return JSON.stringify({
     id: Date.now(),
     gateway: "MBBank",
     transactionDate: "2026-08-31 12:00:00",
     accountNumber: "0123456789",
-    code: `KHP_${orderPublicId}`,
-    content: `KHP_${orderPublicId}`,
+    code: transferCode,
+    content: transferCode,
     transferType: "in",
     transferAmount: amount,
   });
 }
 
-async function postSepayTransfer(commerce: CommerceService, orderPublicId: string, amount = 599000) {
-  const rawBody = sepayTransferBody(orderPublicId, amount);
+async function postSepayTransfer(commerce: CommerceService, transferCode: string, amount = 599000) {
+  const rawBody = sepayTransferBody(transferCode, amount);
   const signature = createHmac("sha256", SEPAY_WEBHOOK_SECRET).update(rawBody, "utf8").digest("hex");
   return commerce.processWebhook({
     providerId: "sepay",
     headers: { "x-sepay-signature": signature },
     rawBody,
   });
+}
+
+function requireSepayTransferCode(store: MemoryCommerceRepository): string {
+  const code = store.payments[0]?.providerPaymentId;
+  if (!code) throw new Error("missing SePay transfer code");
+  return code;
 }
 
 describe("SePay QR refund and one-time access", () => {
@@ -427,7 +479,7 @@ describe("SePay QR refund and one-time access", () => {
       },
     });
     const intent = await startCheckout(commerce);
-    await postSepayTransfer(commerce, intent.orderPublicId);
+    await postSepayTransfer(commerce, requireSepayTransferCode(store));
     const payment = store.payments[0];
     if (!payment) throw new Error("missing payment");
 
@@ -453,7 +505,7 @@ describe("SePay QR refund and one-time access", () => {
       },
     });
     const intent = await startCheckout(commerce);
-    await postSepayTransfer(commerce, intent.orderPublicId);
+    await postSepayTransfer(commerce, requireSepayTransferCode(store));
     const payment = store.payments[0];
     if (!payment) throw new Error("missing payment");
 
@@ -488,7 +540,7 @@ describe("SePay QR refund and one-time access", () => {
   it("does not create a provider subscription for a one-time annual SePay purchase", async () => {
     const { commerce, store } = createSepayCommerce();
     const intent = await startCheckout(commerce);
-    await postSepayTransfer(commerce, intent.orderPublicId);
+    await postSepayTransfer(commerce, requireSepayTransferCode(store));
     expect((await store.getOrderByPublicId(intent.orderPublicId))?.status).toBe("paid");
     expect(store.subscriptions).toHaveLength(0);
   });

@@ -27,6 +27,17 @@ describe("renderContentMarkdown", () => {
     expect(html).toContain('<a href="/vi/products">Khepree</a>');
   });
 
+  it("applies nofollow to third-party markdown links", () => {
+    const html = renderContentMarkdown("[Facebook](https://www.facebook.com/KhepreeLabs)");
+    expect(html).toContain('rel="nofollow noopener noreferrer"');
+    expect(html).toContain('target="_blank"');
+  });
+
+  it("does not nofollow first-party absolute links", () => {
+    const html = renderContentMarkdown("[Account](https://account.khepree.com)");
+    expect(html).not.toContain("nofollow");
+  });
+
   it("resolves product CTA blocks", () => {
     const html = renderContentMarkdown("[[product:translate]]\n", {
       productBlocks: {

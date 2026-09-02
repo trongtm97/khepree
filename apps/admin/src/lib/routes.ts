@@ -33,6 +33,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { label: "Sản phẩm", href: "/products", anyOf: ["catalog.read"] },
       { label: "Gói & Giá", href: "/plans", anyOf: ["catalog.read"] },
       { label: "Phiên bản", href: "/releases", anyOf: ["content.read"] },
+      { label: "Thông báo hệ thống", href: "/announcements", anyOf: ["catalog.read"] },
       { label: "Tải xuống", href: "/downloads", anyOf: ["content.read"] },
     ],
   },
