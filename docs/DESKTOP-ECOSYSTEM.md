@@ -163,6 +163,26 @@ Signed with the device private key; verified server-side against `device_public_
 
 Feature checks use keys like `devices.max` — never `if (plan === "PRO")`.
 
+### Desktop capability keys (Phase 19)
+
+The lease `features` map and the `/desktop/activate` entitlement response already carry all feature values as `Record<string, PlanFeatureValue>`. Desktop reads capabilities via the helper `resolveDesktopCapabilities(snapshot)` from `@khepree/entitlement`.
+
+| Feature key | Type | Default | Meaning |
+|---|---|---|---|
+| `batch_import_enabled` | boolean | `false` | Bulk import of multiple source documents |
+| `campaigns_enabled` | boolean | `false` | Campaign / multi-project workspace |
+| `max_campaign_projects` | integer | `1` | Max projects per campaign (≥ 1 enforced) |
+| `max_concurrent_novels` | integer | `1` | Max novels open simultaneously (≥ 1 enforced) |
+| `whole_book_audit_enabled` | boolean | `false` | Full-manuscript audit task |
+| `series_memory_enabled` | boolean | `false` | Cross-novel series memory |
+| `campaign_status_sync_enabled` | boolean | `false` | Campaign status pushed to desktop |
+
+**Backward-compat contract:**
+- Old desktop + new server: unknown keys are ignored; old clients keep existing behaviour.
+- New desktop + old server: missing keys fall back to the safe defaults above (all disabled / limit 1).
+- Admin sets values per plan via the existing plan-feature UI (integer bound 0–9 999, validated server-side).
+- Capability changes take effect on next lease refresh; local data is never locked on expiry — only new tasks are blocked per policy.
+
 ## Payment flow
 
 Desktop clients do **not** embed checkout. When entitlement is missing or expired:

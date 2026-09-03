@@ -139,6 +139,12 @@ function Save-DockerImageGzip([string[]]$Tags, [string]$OutputPath) {
 function Build-KhepreeImages([string]$TagProduction, [string]$TagDeploy) {
     $dbUrl = if ($env:DATABASE_URL) { $env:DATABASE_URL } else { "postgresql://khepree:khepree_local@127.0.0.1:5434/khepree_local" }
     $cdnUrl = if ($env:S3_PUBLIC_BASE_URL) { $env:S3_PUBLIC_BASE_URL } else { "https://cdn.khepree.com" }
+    $s3Endpoint = if ($env:S3_ENDPOINT) { $env:S3_ENDPOINT } else { "https://s3.vn-hcm-1.vietnix.cloud" }
+    $s3Region = if ($env:S3_REGION) { $env:S3_REGION } else { "vn-hcm-1" }
+    $s3PublicBucket = if ($env:S3_BUCKET_PUBLIC) { $env:S3_BUCKET_PUBLIC } else { "khepree-public" }
+    $s3PrivateBucket = if ($env:S3_BUCKET_PRIVATE) { $env:S3_BUCKET_PRIVATE } else { "khepree-private" }
+    $s3AccessKey = if ($env:S3_ACCESS_KEY_ID) { $env:S3_ACCESS_KEY_ID } else { "build-only-not-for-runtime" }
+    $s3SecretKey = if ($env:S3_SECRET_ACCESS_KEY) { $env:S3_SECRET_ACCESS_KEY } else { "build-only-not-for-runtime" }
 
     Write-Step "Migrate database for SSG build ($dbUrl)"
     Push-Location $RepoRoot
@@ -172,6 +178,14 @@ function Build-KhepreeImages([string]$TagProduction, [string]$TagDeploy) {
                 --build-arg "PORT=$($app.Port)" `
                 --build-arg "DATABASE_URL=$dbUrl" `
                 --build-arg "S3_PUBLIC_BASE_URL=$cdnUrl" `
+                --build-arg "STORAGE_PROVIDER=s3" `
+                --build-arg "S3_ENDPOINT=$s3Endpoint" `
+                --build-arg "S3_REGION=$s3Region" `
+                --build-arg "S3_ACCESS_KEY_ID=$s3AccessKey" `
+                --build-arg "S3_SECRET_ACCESS_KEY=$s3SecretKey" `
+                --build-arg "S3_BUCKET_PUBLIC=$s3PublicBucket" `
+                --build-arg "S3_BUCKET_PRIVATE=$s3PrivateBucket" `
+                --build-arg "S3_FORCE_PATH_STYLE=true" `
                 .
             if ($LASTEXITCODE -ne 0) { throw "docker build failed for $($app.Image)" }
         }
@@ -190,14 +204,17 @@ function Build-KhepreeImages([string]$TagProduction, [string]$TagDeploy) {
 
 function Bootstrap-Vps {
     Write-Step "Bootstrap VPS paths and compose file"
+    $sharedVps = ($ComposeFile -eq "compose.shared-vps.yml")
     Invoke-SshBash @"
 set -euo pipefail
-sudo mkdir -p '$VpsPath' '$VpsPath/images' /etc/khepree
-sudo chown deploy:deploy '$VpsPath' '$VpsPath/images'
+sudo mkdir -p '$VpsPath' '$VpsPath/images' '$VpsPath/docker' /etc/khepree
+sudo chown deploy:deploy '$VpsPath' '$VpsPath/images' '$VpsPath/docker'
 sudo chown root:deploy /etc/khepree
 sudo chmod 750 /etc/khepree
-docker network inspect chapmee_chapmee_net >/dev/null
 "@
+    if ($sharedVps) {
+        Invoke-Ssh "docker network inspect chapmee_chapmee_net >/dev/null"
+    }
 
     $composeLocal = Join-Path $RepoRoot $ComposeFile
     if (-not (Test-Path $composeLocal)) { throw "Missing $composeLocal" }
@@ -238,8 +255,14 @@ sudo chmod 640 '$EnvFile'
         Write-Host "Env file already exists: $EnvFile"
     }
 
-    Write-Step "Append Khepree Caddy blocks (if not present)"
-    Invoke-RemoteScript "append-caddy.sh" @{ VPS_PATH = $VpsPath }
+    if ($sharedVps) {
+        Write-Step "Append Khepree Caddy blocks (if not present)"
+        Invoke-RemoteScript "append-caddy.sh" @{ VPS_PATH = $VpsPath }
+    } else {
+        $caddyLocal = Join-Path $RepoRoot "docker/Caddyfile"
+        if (-not (Test-Path $caddyLocal)) { throw "Missing $caddyLocal" }
+        Invoke-Scp $caddyLocal "$VpsPath/docker/Caddyfile"
+    }
 }
 
 Assert-Command docker
@@ -318,8 +341,8 @@ Invoke-RemoteScript "load-images.sh" @{
     ARCHIVE_REMOTE  = $ArchiveRemote
 }
 
-Write-Step "Pull base images on VPS (postgres, redis)"
-Invoke-Ssh "docker pull postgres:17-alpine; docker pull redis:7.4.2-alpine"
+Write-Step "Pull base images on VPS (postgres, redis, caddy)"
+Invoke-Ssh "docker pull postgres:17-alpine; docker pull redis:7.4.2-alpine; docker pull caddy:2.9.1-alpine"
 
 Write-Step "Update image tags in env + docker compose up (NO --build)"
 Invoke-RemoteScript "compose-up.sh" @{

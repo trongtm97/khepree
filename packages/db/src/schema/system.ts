@@ -29,6 +29,8 @@ export const notifications = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     channel: text("channel").notNull(),
+    /** Opaque dedup key for programmatic notifications (e.g. "userId:campaignId:stage"). */
+    resourceId: text("resource_id"),
     title: text("title").notNull(),
     body: text("body"),
     readAt: timestamp("read_at", { withTimezone: true }),

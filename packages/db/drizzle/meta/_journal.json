@@ -148,6 +148,20 @@
       "when": 1788035000000,
       "tag": "0020_system_announcements",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788036000000,
+      "tag": "0021_phase20_campaign_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1757340600000,
+      "tag": "0022_phase21_announcement_type",
+      "breakpoints": true
     }
   ]
 }

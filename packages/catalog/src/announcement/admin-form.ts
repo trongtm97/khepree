@@ -1,6 +1,7 @@
 import type {
   AnnouncementCtaKind,
   AnnouncementSeverity,
+  AnnouncementType,
   ReleaseArchitecture,
   ReleaseChannel,
   ReleasePlatform,
@@ -20,6 +21,7 @@ const PLATFORMS = new Set<ReleasePlatform>(["windows", "macos", "linux"]);
 const ARCHITECTURES = new Set<ReleaseArchitecture>(["x64", "arm64", "universal"]);
 const CHANNELS = new Set<ReleaseChannel>(["stable", "beta", "alpha"]);
 const CTA_KINDS = new Set<AnnouncementCtaKind>(["none", "open_url", "open_path"]);
+const ANNOUNCEMENT_TYPES = new Set<AnnouncementType>(["general", "whats_new", "urgent"]);
 
 function optionalEnum<T extends string>(value: string, allowed: Set<T>): T | null {
   const trimmed = value.trim();
@@ -46,6 +48,7 @@ export function formatUtcDateTimeLocal(value: Date | null | undefined): string {
 export interface AnnouncementDraftFormInput {
   productId?: string | null;
   severity?: string;
+  type?: string;
   targetPlatform?: string;
   targetArchitecture?: string;
   releaseChannel?: string;
@@ -60,12 +63,15 @@ export interface AnnouncementDraftFormInput {
   titleEn?: string;
   bodyVi?: string;
   bodyEn?: string;
+  ctaLabelVi?: string;
+  ctaLabelEn?: string;
 }
 
 export function parseAnnouncementDraftForm(
   input: AnnouncementDraftFormInput,
 ): CreateAnnouncementDraftInput {
   const severity = optionalEnum(input.severity ?? "info", SEVERITIES) ?? "info";
+  const type = optionalEnum(input.type ?? "general", ANNOUNCEMENT_TYPES) ?? "general";
   const ctaKind = optionalEnum(input.ctaKind ?? "none", CTA_KINDS) ?? "none";
 
   let ctaPayload: Record<string, unknown> | null = null;
@@ -87,6 +93,7 @@ export function parseAnnouncementDraftForm(
       locale: "vi",
       title: titleVi,
       body: sanitizeAnnouncementBody(input.bodyVi),
+      ctaLabel: String(input.ctaLabelVi ?? "").trim() || null,
     });
   }
   if (titleEn) {
@@ -94,6 +101,7 @@ export function parseAnnouncementDraftForm(
       locale: "en",
       title: titleEn,
       body: sanitizeAnnouncementBody(input.bodyEn),
+      ctaLabel: String(input.ctaLabelEn ?? "").trim() || null,
     });
   }
 
@@ -105,6 +113,7 @@ export function parseAnnouncementDraftForm(
   return {
     productId,
     severity,
+    type,
     targetPlatform: platform,
     targetArchitecture: architecture,
     releaseChannel: channel,

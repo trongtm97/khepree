@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { safeReturnPath } from "@khepree/auth/safe-return-path";
 import {
   attachSecurityHeaders,
   enforceRateLimit,
@@ -48,14 +47,8 @@ export async function proxy(request: NextRequest) {
     return finish(request, NextResponse.redirect(url));
   }
 
-  if (hasSession && pathname === AUTH_ROUTES.signIn) {
-    const next = safeReturnPath(request.nextUrl.searchParams.get("next"));
-    const url = request.nextUrl.clone();
-    const [path, query] = next.split("?");
-    url.pathname = path || "/dashboard";
-    url.search = query ? `?${query}` : "";
-    return finish(request, NextResponse.redirect(url));
-  }
+  // ponytail: cookie presence ≠ valid session; bouncing sign-in→dashboard here
+  // loops with requireSession when the cookie is stale. Sign-in page uses getSession.
 
   if (!hasSession && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();
@@ -75,5 +68,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon|icon.png|apple-icon).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon|icon.png|apple-icon|brand).*)"],
 };

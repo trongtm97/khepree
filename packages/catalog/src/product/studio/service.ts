@@ -18,6 +18,8 @@ import {
   type ProductPlatform,
 } from "@khepree/db";
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE, DEFAULT_DEVICE_TRANSFER_LIMIT, DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS } from "@khepree/config";
+// ponytail: mirrors MAX_CAPABILITY_INTEGER from @khepree/entitlement; keep in sync if ceiling changes.
+const MAX_PLAN_FEATURE_INTEGER = 9_999;
 import { parseMoneyMinor } from "@khepree/types";
 import { formatPriceAmount } from "../pricing";
 import { normalizePlatformCapabilities, normalizeProductMetadata, parseOperatingSystems } from "../metadata";
@@ -637,6 +639,15 @@ export class ProductStudioService {
     stringValue?: string;
     actorUserId?: string | null;
   }) {
+    if (input.valueType === "integer") {
+      const v = input.integerValue ?? 0;
+      if (!Number.isInteger(v) || v < 0 || v > MAX_PLAN_FEATURE_INTEGER) {
+        throw new CatalogError(
+          "INVALID_INPUT",
+          `Giá trị integer phải từ 0 đến ${MAX_PLAN_FEATURE_INTEGER}`,
+        );
+      }
+    }
     const values =
       input.valueType === "boolean"
         ? { booleanValue: Boolean(input.booleanValue), integerValue: null, stringValue: null }

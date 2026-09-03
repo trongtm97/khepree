@@ -1,15 +1,30 @@
 import type { PlanFeatureValue } from "@khepree/db";
 import {
+  BATCH_IMPORT_FEATURE,
+  CAMPAIGNS_FEATURE,
+  CAMPAIGN_STATUS_SYNC_FEATURE,
+  DEFAULT_BATCH_IMPORT_ENABLED,
+  DEFAULT_CAMPAIGNS_ENABLED,
+  DEFAULT_CAMPAIGN_STATUS_SYNC_ENABLED,
   DEFAULT_DEVICE_LIMIT,
   DEFAULT_DEVICE_TRANSFER_LIMIT,
   DEFAULT_DEVICE_TRANSFER_WINDOW_DAYS,
   DEFAULT_GRACE_PERIOD_SECONDS,
   DEFAULT_LEASE_TTL_SECONDS,
+  DEFAULT_MAX_CAMPAIGN_PROJECTS,
+  DEFAULT_MAX_CONCURRENT_NOVELS,
+  DEFAULT_SERIES_MEMORY_ENABLED,
+  DEFAULT_WHOLE_BOOK_AUDIT_ENABLED,
   DEVICE_LIMIT_FEATURE,
   DEVICE_TRANSFER_LIMIT_FEATURE,
   DEVICE_TRANSFER_WINDOW_FEATURE,
   LEASE_GRACE_FEATURE,
   LEASE_TTL_FEATURE,
+  MAX_CAMPAIGN_PROJECTS_FEATURE,
+  MAX_CONCURRENT_NOVELS_FEATURE,
+  SERIES_MEMORY_FEATURE,
+  WHOLE_BOOK_AUDIT_FEATURE,
+  type DesktopCapabilities,
   type FeatureSnapshot,
   type FeatureSnapshotEntry,
   type OfflinePolicy,
@@ -81,4 +96,27 @@ export function compactFeatures(snapshot: FeatureSnapshot): Record<string, PlanF
   const out: Record<string, PlanFeatureValue> = {};
   for (const entry of snapshot.entries) out[entry.key] = entry.value;
   return out;
+}
+
+export function booleanFeature(snapshot: FeatureSnapshot, key: string): boolean | null {
+  const entry = snapshot.entries.find((row) => row.key === key);
+  if (!entry || entry.value.valueType !== "boolean") return null;
+  return entry.value.booleanValue;
+}
+
+/**
+ * Resolve the full desktop capability set from a feature snapshot.
+ * Missing keys fall back to safe defaults — old server responses remain safe for new clients,
+ * and new server responses remain safe for old clients (old clients just ignore unknown keys).
+ */
+export function resolveDesktopCapabilities(snapshot: FeatureSnapshot): DesktopCapabilities {
+  return {
+    batchImportEnabled: booleanFeature(snapshot, BATCH_IMPORT_FEATURE) ?? DEFAULT_BATCH_IMPORT_ENABLED,
+    campaignsEnabled: booleanFeature(snapshot, CAMPAIGNS_FEATURE) ?? DEFAULT_CAMPAIGNS_ENABLED,
+    maxCampaignProjects: Math.max(1, integerFeature(snapshot, MAX_CAMPAIGN_PROJECTS_FEATURE) ?? DEFAULT_MAX_CAMPAIGN_PROJECTS),
+    maxConcurrentNovels: Math.max(1, integerFeature(snapshot, MAX_CONCURRENT_NOVELS_FEATURE) ?? DEFAULT_MAX_CONCURRENT_NOVELS),
+    wholeBookAuditEnabled: booleanFeature(snapshot, WHOLE_BOOK_AUDIT_FEATURE) ?? DEFAULT_WHOLE_BOOK_AUDIT_ENABLED,
+    seriesMemoryEnabled: booleanFeature(snapshot, SERIES_MEMORY_FEATURE) ?? DEFAULT_SERIES_MEMORY_ENABLED,
+    campaignStatusSyncEnabled: booleanFeature(snapshot, CAMPAIGN_STATUS_SYNC_FEATURE) ?? DEFAULT_CAMPAIGN_STATUS_SYNC_ENABLED,
+  };
 }

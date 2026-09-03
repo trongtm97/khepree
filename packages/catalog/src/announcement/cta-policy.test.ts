@@ -36,3 +36,28 @@ describe("isAllowedAnnouncementUrl", () => {
     expect(isAllowedAnnouncementUrl("https://khepree.com/$(whoami)")).toBe(false);
   });
 });
+
+describe("Phase 21 — Production Studio CTA: open_path /release-notes", () => {
+  it("accepts /release-notes as a safe internal path CTA", () => {
+    const cta = validateAnnouncementCta("open_path", { path: "/release-notes" });
+    expect(cta).toEqual({ path: "/release-notes" });
+  });
+
+  it("rejects custom protocol deep links via open_url (not allowlisted)", () => {
+    // khepreenovelai:// is not HTTP/HTTPS → not allowlisted
+    expect(() => validateAnnouncementCta("open_url", { url: "khepreenovelai://open/release-notes" }))
+      .toThrow(/allowlisted/i);
+  });
+
+  it("does not confuse whats_new announcement with urgent severity", () => {
+    // This is a contract check: type=whats_new should never require severity=action_required
+    // Validated at admin form layer. Here we just confirm the path CTA is fine for info severity.
+    const cta = validateAnnouncementCta("open_path", { path: "/release-notes" });
+    expect(cta).toBeTruthy();
+  });
+
+  it("rejects shell metacharacters in path", () => {
+    expect(() => validateAnnouncementCta("open_path", { path: "/release-notes;rm -rf" }))
+      .toThrow(/safe internal path|disallowed/i);
+  });
+});

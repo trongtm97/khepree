@@ -2,6 +2,7 @@ import type {
   AnnouncementCtaKind,
   AnnouncementSeverity,
   AnnouncementStatus,
+  AnnouncementType,
   ReleaseArchitecture,
   ReleaseChannel,
   ReleasePlatform,
@@ -11,6 +12,8 @@ export interface AnnouncementTranslationInput {
   locale: string;
   title: string;
   body?: string | null;
+  /** Locale-specific CTA button label. Null = use platform default. */
+  ctaLabel?: string | null;
 }
 
 export interface AnnouncementRecord {
@@ -19,6 +22,7 @@ export interface AnnouncementRecord {
   productId: string | null;
   severity: AnnouncementSeverity;
   status: AnnouncementStatus;
+  type: AnnouncementType;
   targetPlatform: ReleasePlatform | null;
   targetArchitecture: ReleaseArchitecture | null;
   releaseChannel: ReleaseChannel | null;
@@ -39,6 +43,7 @@ export interface AnnouncementRecord {
 export interface CreateAnnouncementDraftInput {
   productId?: string | null;
   severity?: AnnouncementSeverity;
+  type?: AnnouncementType;
   targetPlatform?: ReleasePlatform | null;
   targetArchitecture?: ReleaseArchitecture | null;
   releaseChannel?: ReleaseChannel | null;
@@ -59,8 +64,10 @@ export interface UpdateAnnouncementDraftInput extends CreateAnnouncementDraftInp
 export interface DesktopAnnouncementView {
   publicId: string;
   severity: AnnouncementSeverity;
+  type: AnnouncementType;
   title: string;
   body: string | null;
+  ctaLabel: string | null;
   ctaKind: AnnouncementCtaKind;
   ctaPayload: Record<string, unknown> | null;
   publishedAt: Date | null;

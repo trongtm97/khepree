@@ -38,9 +38,22 @@ export const announcementCtaKindEnum = pgEnum("announcement_cta_kind", [
   "open_path",
 ]);
 
+/**
+ * Announcement type — determines desktop rendering lane.
+ * `general`  : standard notification panel entry
+ * `whats_new`: routed to What's New / release notes panel (never urgent modal)
+ * `urgent`   : elevated modal (only for `error` / `action_required` severity)
+ */
+export const announcementTypeEnum = pgEnum("announcement_type", [
+  "general",
+  "whats_new",
+  "urgent",
+]);
+
 export type AnnouncementSeverity = (typeof announcementSeverityEnum.enumValues)[number];
 export type AnnouncementStatus = (typeof announcementStatusEnum.enumValues)[number];
 export type AnnouncementCtaKind = (typeof announcementCtaKindEnum.enumValues)[number];
+export type AnnouncementType = (typeof announcementTypeEnum.enumValues)[number];
 
 /** Broadcast announcement — one row, many readers via announcement_receipts. */
 export const systemAnnouncements = pgTable(
@@ -59,6 +72,8 @@ export const systemAnnouncements = pgTable(
     startsAt: timestamp("starts_at", { withTimezone: true }),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     publishedAt: timestamp("published_at", { withTimezone: true }),
+    /** Desktop rendering lane: general | whats_new | urgent. Defaults to general. */
+    type: announcementTypeEnum("type").notNull().default("general"),
     ctaKind: announcementCtaKindEnum("cta_kind").notNull().default("none"),
     ctaPayload: jsonb("cta_payload").$type<Record<string, unknown>>(),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
@@ -84,6 +99,8 @@ export const announcementTranslations = pgTable(
     locale: text("locale").notNull(),
     title: text("title").notNull(),
     body: text("body"),
+    /** Locale-specific CTA button label. Null = use platform default. */
+    ctaLabel: text("cta_label"),
     ...timestamps,
   },
   (table) => [

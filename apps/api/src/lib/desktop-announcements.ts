@@ -80,8 +80,10 @@ export function serializeDesktopAnnouncement(item: DesktopAnnouncementView): Des
   return {
     publicId: item.publicId,
     severity: item.severity as AnnouncementSeverity,
+    type: item.type,
     title: item.title,
     body: item.body,
+    ctaLabel: item.ctaLabel ?? null,
     publishedAt: item.publishedAt?.toISOString() ?? null,
     expiresAt: item.expiresAt?.toISOString() ?? null,
     cta: {

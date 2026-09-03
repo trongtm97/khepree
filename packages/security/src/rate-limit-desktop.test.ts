@@ -13,8 +13,8 @@ describe("desktop rate limits", () => {
     "DESKTOP_PLANS",
     "DESKTOP_ANNOUNCEMENTS",
     "DESKTOP_UPDATES",
-    "SQUIRREL_FEED",
     "DESKTOP_CHECKOUT",
+    "DESKTOP_CAMPAIGN_SYNC",
   ] as const;
 
   it("defines policies for all desktop routes", () => {

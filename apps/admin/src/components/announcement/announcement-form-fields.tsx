@@ -1,4 +1,4 @@
-import type { AnnouncementCtaKind, AnnouncementSeverity } from "@khepree/db";
+import type { AnnouncementCtaKind, AnnouncementSeverity, AnnouncementType } from "@khepree/db";
 import { Input, Select, Textarea } from "@khepree/ui";
 
 const severityOptions = [
@@ -36,6 +36,12 @@ const ctaOptions = [
   { value: "open_path", label: "Mở đường dẫn nội bộ" },
 ];
 
+const typeOptions = [
+  { value: "general", label: "Thông thường (General)" },
+  { value: "whats_new", label: "Tính năng mới (What's New)" },
+  { value: "urgent", label: "Khẩn (Urgent — chỉ dùng với severity error/action_required)" },
+];
+
 export function AnnouncementFormFields({
   products,
   defaultProductId = "",
@@ -50,10 +56,13 @@ export function AnnouncementFormFields({
   defaultCtaKind = "none",
   defaultCtaUrl = "",
   defaultCtaPath = "",
+  defaultType = "general" as AnnouncementType,
   defaultTitleVi = "",
   defaultTitleEn = "",
   defaultBodyVi = "",
   defaultBodyEn = "",
+  defaultCtaLabelVi = "",
+  defaultCtaLabelEn = "",
 }: {
   products: Array<{ id: string; label: string }>;
   defaultProductId?: string;
@@ -68,10 +77,13 @@ export function AnnouncementFormFields({
   defaultCtaKind?: AnnouncementCtaKind;
   defaultCtaUrl?: string;
   defaultCtaPath?: string;
+  defaultType?: AnnouncementType;
   defaultTitleVi?: string;
   defaultTitleEn?: string;
   defaultBodyVi?: string;
   defaultBodyEn?: string;
+  defaultCtaLabelVi?: string;
+  defaultCtaLabelEn?: string;
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -82,6 +94,12 @@ export function AnnouncementFormFields({
         options={[{ value: "", label: "Toàn hệ sinh thái" }, ...products.map((p) => ({ value: p.id, label: p.label }))]}
       />
       <Select name="severity" label="Mức độ" defaultValue={defaultSeverity} options={severityOptions} />
+      <Select
+        name="type"
+        label="Loại thông báo (Rendering lane)"
+        defaultValue={defaultType}
+        options={typeOptions}
+      />
       <Select name="targetPlatform" label="Nền tảng" defaultValue={defaultPlatform} options={platformOptions} />
       <Select
         name="targetArchitecture"
@@ -131,6 +149,18 @@ export function AnnouncementFormFields({
           label="Nội dung (EN) — Markdown giới hạn"
           defaultValue={defaultBodyEn}
           rows={5}
+        />
+        <Input
+          name="ctaLabelVi"
+          label="Nhãn nút CTA (VI)"
+          defaultValue={defaultCtaLabelVi}
+          placeholder="Khám phá tính năng mới"
+        />
+        <Input
+          name="ctaLabelEn"
+          label="Nhãn nút CTA (EN)"
+          defaultValue={defaultCtaLabelEn}
+          placeholder="Explore what's new"
         />
       </div>
       <p className="md:col-span-2 text-xs text-khepree-slate/60">

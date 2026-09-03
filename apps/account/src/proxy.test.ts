@@ -21,9 +21,9 @@ describe("account proxy", () => {
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
   });
 
-  it("redirects authenticated users away from sign-in", async () => {
-    const res = await proxy(request("/sign-in", "session-token"));
-    expect(res.headers.get("location")).toContain("/dashboard");
+  it("does not bounce sign-in on cookie presence alone (avoids stale-cookie loops)", async () => {
+    const res = await proxy(request("/sign-in", "stale-session-token"));
+    expect(res.status).not.toBe(307);
   });
 
   it("redirects unauthenticated checkout with query as a safe return path", async () => {
@@ -37,20 +37,18 @@ describe("account proxy", () => {
     );
   });
 
-  it("sends authenticated users on sign-in to the safe next path", async () => {
-    const res = await proxy(request("/sign-in?next=%2Fcheckout%3Fplan%3Dabc", "session-token"));
-    const location = res.headers.get("location") ?? "";
-    expect(location).toContain("/checkout");
-    expect(location).toContain("plan=abc");
-  });
-
-  it("allows reset-password while authenticated", async () => {
+  it("allows reset-password while cookie present", async () => {
     const res = await proxy(request("/reset-password", "session-token"));
     expect(res.status).not.toBe(307);
   });
 
-  it("allows accept-legal while authenticated", async () => {
+  it("allows accept-legal while cookie present", async () => {
     const res = await proxy(request("/accept-legal", "session-token"));
+    expect(res.status).not.toBe(307);
+  });
+
+  it("allows protected routes when a session cookie is present", async () => {
+    const res = await proxy(request("/dashboard", "session-token"));
     expect(res.status).not.toBe(307);
   });
 });

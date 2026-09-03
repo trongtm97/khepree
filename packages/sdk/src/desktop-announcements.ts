@@ -12,6 +12,15 @@ export const DESKTOP_ANNOUNCEMENT_CTA_KINDS = ["none", "open_url", "open_path"] 
 
 export type DesktopAnnouncementCtaKind = (typeof DESKTOP_ANNOUNCEMENT_CTA_KINDS)[number];
 
+/**
+ * Desktop rendering lane. Old clients receive `undefined` and treat as `general`.
+ * `general`  : standard notification panel
+ * `whats_new`: What's New / release notes panel (not an urgent modal)
+ * `urgent`   : elevated modal (only valid with error/action_required severity)
+ */
+export const DESKTOP_ANNOUNCEMENT_TYPES = ["general", "whats_new", "urgent"] as const;
+export type DesktopAnnouncementType = (typeof DESKTOP_ANNOUNCEMENT_TYPES)[number];
+
 export interface DesktopAnnouncementCta {
   kind: DesktopAnnouncementCtaKind;
   payload: Record<string, unknown> | null;
@@ -20,8 +29,12 @@ export interface DesktopAnnouncementCta {
 export interface DesktopAnnouncementItem {
   publicId: string;
   severity: DesktopAnnouncementSeverity;
+  /** Desktop rendering lane. Absent in responses from old servers → treat as `general`. */
+  type?: DesktopAnnouncementType;
   title: string;
   body: string | null;
+  /** Locale-specific CTA button label. Absent = use platform default. */
+  ctaLabel?: string | null;
   publishedAt: string | null;
   expiresAt: string | null;
   cta: DesktopAnnouncementCta;

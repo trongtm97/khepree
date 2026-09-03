@@ -35,4 +35,47 @@ describe("parseAnnouncementDraftForm", () => {
     expect(parsed.minimumAppVersion).toBe("2.0.0");
     expect(parsed.maximumAppVersion).toBe("1.0.0");
   });
+
+  it("defaults type to general when not provided", () => {
+    const parsed = parseAnnouncementDraftForm({ titleVi: "T", ctaKind: "none" });
+    expect(parsed.type).toBe("general");
+  });
+
+  it("parses whats_new type", () => {
+    const parsed = parseAnnouncementDraftForm({ titleVi: "T", ctaKind: "none", type: "whats_new" });
+    expect(parsed.type).toBe("whats_new");
+  });
+
+  it("parses urgent type", () => {
+    const parsed = parseAnnouncementDraftForm({ titleVi: "T", ctaKind: "none", type: "urgent" });
+    expect(parsed.type).toBe("urgent");
+  });
+
+  it("falls back to general for unknown type", () => {
+    const parsed = parseAnnouncementDraftForm({ titleVi: "T", ctaKind: "none", type: "flying_saucer" });
+    expect(parsed.type).toBe("general");
+  });
+
+  it("parses ctaLabel per locale", () => {
+    const parsed = parseAnnouncementDraftForm({
+      titleVi: "Tiêu đề VI",
+      titleEn: "Title EN",
+      ctaKind: "none",
+      ctaLabelVi: "Khám phá tính năng mới",
+      ctaLabelEn: "Explore what's new",
+    });
+    const vi = parsed.translations.find((t) => t.locale === "vi");
+    const en = parsed.translations.find((t) => t.locale === "en");
+    expect(vi?.ctaLabel).toBe("Khám phá tính năng mới");
+    expect(en?.ctaLabel).toBe("Explore what's new");
+  });
+
+  it("sets ctaLabel to null when blank", () => {
+    const parsed = parseAnnouncementDraftForm({
+      titleVi: "T",
+      ctaKind: "none",
+      ctaLabelVi: "  ",
+    });
+    expect(parsed.translations[0]?.ctaLabel).toBeNull();
+  });
 });

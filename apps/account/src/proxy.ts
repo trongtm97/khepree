@@ -1,13 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { safeAccountNextPath } from "@khepree/auth/safe-account-next-path";
 import {
   attachSecurityHeaders,
   enforceRateLimit,
   isMaintenanceMode,
   RATE_LIMITS,
 } from "@khepree/security";
-import { isProtectedPath, isPublicAuthPath, AUTH_ROUTES } from "@/lib/routes";
+import { isProtectedPath, AUTH_ROUTES } from "@/lib/routes";
 
 function finish(request: NextRequest, response: NextResponse) {
   attachSecurityHeaders(request, response);
@@ -51,14 +50,9 @@ export async function proxy(request: NextRequest) {
     return finish(request, NextResponse.redirect(url));
   }
 
-  if (hasSession && isPublicAuthPath(pathname) && pathname !== AUTH_ROUTES.resetPassword && pathname !== AUTH_ROUTES.acceptLegal) {
-    const next = safeAccountNextPath(request.nextUrl.searchParams.get("next"));
-    const url = request.nextUrl.clone();
-    const [path, query] = next.split("?");
-    url.pathname = path || "/dashboard";
-    url.search = query ? `?${query}` : "";
-    return finish(request, NextResponse.redirect(url));
-  }
+  // ponytail: do not bounce auth pages on cookie presence alone — stale cookies
+  // looped sign-in ↔ dashboard (proxy "logged in" + requireSession "logged out").
+  // Real session redirect lives on the sign-in page via getSession.
 
   if (!hasSession && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();

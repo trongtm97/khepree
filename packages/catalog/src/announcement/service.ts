@@ -50,6 +50,7 @@ function mapAnnouncement(
     productId: row.productId,
     severity: row.severity,
     status: row.status,
+    type: row.type,
     targetPlatform: row.targetPlatform,
     targetArchitecture: row.targetArchitecture,
     releaseChannel: row.releaseChannel,
@@ -78,6 +79,7 @@ function normalizeTranslations(translations: AnnouncementTranslationInput[]): An
       locale,
       title,
       body: sanitizeAnnouncementBody(row.body),
+      ctaLabel: row.ctaLabel?.trim() || null,
     });
   }
   return [...byLocale.values()];
@@ -99,7 +101,7 @@ export class AnnouncementService {
     const byAnnouncement = new Map<string, AnnouncementTranslationInput[]>();
     for (const row of rows) {
       const list = byAnnouncement.get(row.announcementId) ?? [];
-      list.push({ locale: row.locale, title: row.title, body: row.body });
+      list.push({ locale: row.locale, title: row.title, body: row.body, ctaLabel: row.ctaLabel });
       byAnnouncement.set(row.announcementId, list);
     }
     return byAnnouncement;
@@ -170,6 +172,7 @@ export class AnnouncementService {
         locale: row.locale,
         title: row.title,
         body: row.body,
+        ctaLabel: row.ctaLabel ?? null,
       })),
     );
   }
@@ -185,6 +188,7 @@ export class AnnouncementService {
         publicId,
         productId: input.productId ?? null,
         severity: input.severity ?? "info",
+        type: input.type ?? "general",
         status: "draft",
         targetPlatform: input.targetPlatform ?? null,
         targetArchitecture: input.targetArchitecture ?? null,
@@ -232,6 +236,7 @@ export class AnnouncementService {
       .set({
         productId: input.productId ?? null,
         severity: input.severity ?? existing.severity,
+        type: input.type ?? existing.type,
         targetPlatform: input.targetPlatform ?? null,
         targetArchitecture: input.targetArchitecture ?? null,
         releaseChannel: input.releaseChannel ?? null,
@@ -484,7 +489,7 @@ export class AnnouncementService {
     const translationsByAnnouncement = new Map<string, AnnouncementTranslationInput[]>();
     for (const row of translationRows) {
       const list = translationsByAnnouncement.get(row.announcementId) ?? [];
-      list.push({ locale: row.locale, title: row.title, body: row.body });
+      list.push({ locale: row.locale, title: row.title, body: row.body, ctaLabel: row.ctaLabel });
       translationsByAnnouncement.set(row.announcementId, list);
     }
 
@@ -514,9 +519,10 @@ export class AnnouncementService {
           },
         });
 
+      const translations = translationsByAnnouncement.get(row.id) ?? [];
       const copy = resolveAnnouncementCopy(
         query.locale,
-        (translationsByAnnouncement.get(row.id) ?? []).map((entry) => ({
+        translations.map((entry) => ({
           locale: entry.locale,
           title: entry.title,
           body: entry.body ?? null,
@@ -524,11 +530,19 @@ export class AnnouncementService {
       );
       if (!copy) continue;
 
+      const ctaLabel =
+        translations.find((t) => t.locale === query.locale)?.ctaLabel ??
+        translations.find((t) => t.locale === "vi")?.ctaLabel ??
+        translations.find((t) => t.locale === "en")?.ctaLabel ??
+        null;
+
       views.push({
         publicId: row.publicId,
         severity: row.severity,
+        type: row.type,
         title: copy.title,
         body: copy.body,
+        ctaLabel,
         ctaKind: row.ctaKind,
         ctaPayload: (row.ctaPayload as Record<string, unknown> | null) ?? null,
         publishedAt: row.publishedAt,

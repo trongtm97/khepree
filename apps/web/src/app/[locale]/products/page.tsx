@@ -39,14 +39,17 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
         label: pageBreadcrumbLabel(content),
         href: localePath(locale, "/products"),
       })}
+      plain
     >
-      <p>{content.intro}</p>
+      <p className="max-w-2xl text-muted">{content.intro}</p>
       {products.length > 0 ? (
-        <div className="mt-8 grid gap-4">
+        <ul className="mt-8 grid list-none gap-3 p-0 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => (
-            <ProductCard key={product.publicId} product={product} locale={locale} messages={messages} />
+            <li key={product.publicId} className="min-w-0">
+              <ProductCard product={product} locale={locale} messages={messages} />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
         <div className="mt-8">
           <EmptyState

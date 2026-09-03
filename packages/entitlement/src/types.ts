@@ -119,3 +119,34 @@ export const DEVICE_TRANSFER_LIMIT_FEATURE = "devices.transfers.max";
 export const DEVICE_TRANSFER_WINDOW_FEATURE = "devices.transfers.window_days";
 export const LEASE_TTL_FEATURE = "lease.ttl_seconds";
 export const LEASE_GRACE_FEATURE = "lease.grace_seconds";
+
+// --- Novel / campaign capabilities (Phase 19) ---
+// These are resolved by desktop from the lease `features` map. Safe defaults mean "disabled / single".
+export const BATCH_IMPORT_FEATURE = "batch_import_enabled";
+export const CAMPAIGNS_FEATURE = "campaigns_enabled";
+export const MAX_CAMPAIGN_PROJECTS_FEATURE = "max_campaign_projects";
+export const MAX_CONCURRENT_NOVELS_FEATURE = "max_concurrent_novels";
+export const WHOLE_BOOK_AUDIT_FEATURE = "whole_book_audit_enabled";
+export const SERIES_MEMORY_FEATURE = "series_memory_enabled";
+export const CAMPAIGN_STATUS_SYNC_FEATURE = "campaign_status_sync_enabled";
+
+export const DEFAULT_BATCH_IMPORT_ENABLED = false;
+export const DEFAULT_CAMPAIGNS_ENABLED = false;
+export const DEFAULT_MAX_CAMPAIGN_PROJECTS = 1;
+export const DEFAULT_MAX_CONCURRENT_NOVELS = 1;
+export const DEFAULT_WHOLE_BOOK_AUDIT_ENABLED = false;
+export const DEFAULT_SERIES_MEMORY_ENABLED = false;
+export const DEFAULT_CAMPAIGN_STATUS_SYNC_ENABLED = false;
+
+/** Maximum allowed value for integer capability features; prevents accidental infinite grants. */
+export const MAX_CAPABILITY_INTEGER = 9_999;
+
+export interface DesktopCapabilities {
+  batchImportEnabled: boolean;
+  campaignsEnabled: boolean;
+  maxCampaignProjects: number;
+  maxConcurrentNovels: number;
+  wholeBookAuditEnabled: boolean;
+  seriesMemoryEnabled: boolean;
+  campaignStatusSyncEnabled: boolean;
+}

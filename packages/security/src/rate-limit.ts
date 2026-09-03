@@ -95,6 +95,7 @@ export const RATE_LIMITS = {
   DESKTOP_PLANS: { name: "desktop.plans", windowMs: 60_000, max: 60 },
   DESKTOP_ANNOUNCEMENTS: { name: "desktop.announcements", windowMs: 60_000, max: 60 },
   DESKTOP_UPDATES: { name: "desktop.updates", windowMs: 60_000, max: 60 },
+  DESKTOP_CAMPAIGN_SYNC: { name: "desktop.campaign-sync", windowMs: 60_000, max: 60 },
   SQUIRREL_FEED: { name: "squirrel.feed", windowMs: 60_000, max: 120 },
   DESKTOP_CHECKOUT: { name: "desktop.checkout", windowMs: 60_000, max: 20 },
 } as const satisfies Record<string, RateLimitPolicy>;
