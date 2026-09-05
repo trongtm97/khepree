@@ -16,8 +16,7 @@
  * CTA: open_path /release-notes → desktop maps to 'open-release-notes' action
  */
 
-import { and, eq } from "drizzle-orm";
-import { createPublicId } from "../lib/ids";
+import { eq } from "drizzle-orm";
 import { requireDb, closeDb } from "../client";
 import {
   announcementTranslations,

@@ -95,8 +95,10 @@ describe("serializeDesktopAnnouncement", () => {
     const serialized = serializeDesktopAnnouncement({
       publicId: "ann_sample",
       severity: "warning",
+      type: "general",
       title: "Maintenance",
       body: "Scheduled downtime",
+      ctaLabel: null,
       ctaKind: "open_url",
       ctaPayload: { url: "https://khepree.com/support" },
       publishedAt: new Date("2026-09-03T08:00:00.000Z"),
@@ -107,8 +109,10 @@ describe("serializeDesktopAnnouncement", () => {
     expect(serialized).toEqual({
       publicId: "ann_sample",
       severity: "warning",
+      type: "general",
       title: "Maintenance",
       body: "Scheduled downtime",
+      ctaLabel: null,
       publishedAt: "2026-09-03T08:00:00.000Z",
       expiresAt: "2026-09-04T08:00:00.000Z",
       cta: { kind: "open_url", payload: { url: "https://khepree.com/support" } },
