@@ -7,6 +7,8 @@
 --   DROP TYPE IF EXISTS "release_artifact_kind";
 -- Legacy software_releases columns (media_asset_id, file_name, …) are untouched.
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+--> statement-breakpoint
 CREATE TYPE "release_artifact_kind" AS ENUM(
   'installer',
   'full-nupkg',
