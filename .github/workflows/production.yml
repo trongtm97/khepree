@@ -45,6 +45,14 @@ jobs:
     env:
       TURBO_TELEMETRY_DISABLED: "1"
       DATABASE_URL: postgresql://khepree:khepree_local@localhost:5432/khepree_local
+      # Stub storage for Next.js prerender (changelog/product pages touch private storage factory).
+      S3_ENDPOINT: https://s3.ci.example
+      S3_REGION: auto
+      S3_ACCESS_KEY_ID: ci
+      S3_SECRET_ACCESS_KEY: ci
+      S3_BUCKET_PUBLIC: ci-public
+      S3_BUCKET_PRIVATE: ci-private
+      S3_PUBLIC_BASE_URL: https://cdn.ci.example
     steps:
       - uses: actions/checkout@v4
         with:
