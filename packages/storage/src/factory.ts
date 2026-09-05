@@ -1,4 +1,5 @@
 import {
+  isNextBuildPhase,
   isPrivateStorageConfigured,
   isPublicStorageConfigured,
   integrationStatus,
@@ -23,14 +24,15 @@ function createForBucket(bucket: StorageBucket): ObjectStorage {
 
   if (bucket === "public") {
     if (isPublicStorageConfigured()) return new S3ObjectStorage("public");
-    if (isDevLike()) return new MockObjectStorage();
+    if (isDevLike() || isNextBuildPhase()) return new MockObjectStorage();
     throw new StorageConfigurationError(
       "Public object storage is not configured. Set S3_BUCKET_PUBLIC and credentials.",
     );
   }
 
   if (isPrivateStorageConfigured()) return new S3ObjectStorage("private");
-  if (isDevLike()) return new MockObjectStorage();
+  // next build prerender may lack worker env; never fall back to the public bucket.
+  if (isDevLike() || isNextBuildPhase()) return new MockObjectStorage();
   throw new StorageConfigurationError(
     "Private object storage is not configured. Set S3_BUCKET_PRIVATE — never fall back to public.",
   );

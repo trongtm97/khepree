@@ -1,5 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReleaseService } from "./service";
+
+describe("ReleaseService construction", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("does not require private storage at construct time", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("S3_BUCKET_PRIVATE", "");
+    vi.stubEnv("S3_ENDPOINT", "");
+    expect(() => new ReleaseService({} as never, { record: async () => {} })).not.toThrow();
+  });
+});
 
 describe("ReleaseService.findLatestCompatible", () => {
   it("rejects missing or invalid currentVersion", async () => {

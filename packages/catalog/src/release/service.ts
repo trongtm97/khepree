@@ -96,15 +96,24 @@ function mapRelease(
 
 export class ReleaseService {
   private mediaService?: MediaService;
+  private privateStorageOverride?: ObjectStorage;
+  private privateStorageInstance?: ObjectStorage;
 
   constructor(
     private readonly db: Database,
     private readonly audit: AuditService,
     media?: MediaService,
-    private readonly privateStorage: ObjectStorage = getPrivateObjectStorage(),
+    privateStorage?: ObjectStorage,
     private readonly trustedPublicKeys?: Map<string, KeyObject>,
   ) {
     this.mediaService = media;
+    this.privateStorageOverride = privateStorage;
+  }
+
+  /** Lazy — public changelog/list paths must not require private object storage at construct time. */
+  private get privateStorage(): ObjectStorage {
+    return (this.privateStorageInstance ??=
+      this.privateStorageOverride ?? getPrivateObjectStorage());
   }
 
   private getTrustedPublicKeys(): Map<string, KeyObject> {

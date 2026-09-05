@@ -9,6 +9,7 @@ describe("storage factory production fail-fast", () => {
 
   it("throws when private bucket missing in production", async () => {
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PHASE", "");
     vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/khepree");
     vi.stubEnv("BETTER_AUTH_SECRET", "prod-secret-with-enough-entropy-here");
     vi.stubEnv("BETTER_AUTH_URL", "https://account.example.com");
@@ -42,6 +43,18 @@ describe("storage factory production fail-fast", () => {
     expect(() => getPrivateObjectStorage()).toThrow(
       /bucket configuration is required in production|Private object storage is not configured/,
     );
+  });
+
+  it("uses mock storage during next build when storage is not configured", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PHASE", "phase-production-build");
+    vi.stubEnv("S3_ENDPOINT", "");
+    vi.stubEnv("S3_BUCKET_PUBLIC", "");
+    vi.stubEnv("S3_BUCKET_PRIVATE", "");
+
+    const { getPrivateObjectStorage } = await import("./factory");
+    const storage = getPrivateObjectStorage();
+    expect(storage.provider).toBe("mock");
   });
 
   it("uses mock storage in development when storage is not configured", async () => {
