@@ -8,6 +8,7 @@ import {
   readDesktopActivateBody,
 } from "@/lib/desktop-http";
 import { getPlatform } from "@/lib/platform";
+import { isEntitlementMissingError, tryGrantFreeTrialOnce } from "@/lib/desktop-start-trial";
 
 export const dynamic = "force-dynamic";
 
@@ -37,23 +38,36 @@ export async function POST(request: Request) {
     const { session, client } = await platform.desktopAuth.resolveAccessSession(accessToken);
     platform.desktopAuth.assertSessionClient(session, client, input.clientId);
 
-    const result = await platform.licensing.activateByPrincipal({
-      principal: { type: "USER", id: session.userId },
+    const principal = { type: "USER" as const, id: session.userId };
+    const activateInput = {
+      principal,
       productId: client.productId,
       installationId: input.installationId,
       platform: input.platform,
       deviceName: input.deviceName,
-    });
+    };
+
+    let result;
+    try {
+      result = await platform.licensing.activateByPrincipal(activateInput);
+    } catch (error) {
+      if (!isEntitlementMissingError(error)) throw error;
+      const granted = await tryGrantFreeTrialOnce({
+        entitlement: platform.entitlement,
+        principal,
+        productId: client.productId,
+        actorUserId: session.userId,
+      });
+      if (!granted) throw error;
+      result = await platform.licensing.activateByPrincipal(activateInput);
+    }
 
     await platform.desktopAuth.bindSessionDevice(session.id, {
       deviceId: result.device.id,
       devicePublicKey: input.devicePublicKey?.trim() || undefined,
     });
 
-    const entitlementRows = await platform.entitlement.resolveEntitlementsForPrincipal({
-      type: "USER",
-      id: session.userId,
-    });
+    const entitlementRows = await platform.entitlement.resolveEntitlementsForPrincipal(principal);
     const entitlementRow = entitlementRows.find(
       (row) => row.entitlement.productId === client.productId,
     );
