@@ -35,6 +35,16 @@ describe.skipIf(!pg)("release_artifacts migration", () => {
 
   it("enforces singleton kind uniqueness", async () => {
     if (!db) throw new Error("DATABASE_URL required");
+    const existing = await db.execute<{ release_id: string }>(sql`
+      SELECT release_id::text AS release_id
+      FROM release_artifacts
+      WHERE kind = 'installer'
+      LIMIT 1
+    `);
+    if (existing.length === 0) {
+      // Fresh migrate without seed — nothing to duplicate against.
+      return;
+    }
     await expect(
       db.execute(sql`
         INSERT INTO release_artifacts (

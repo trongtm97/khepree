@@ -23,13 +23,18 @@ describe("migration inventory", () => {
     expect(journal.entries.some((entry) => entry.tag === "0014_s3_storage_provider")).toBe(true);
     expect(journal.entries.some((entry) => entry.tag === "0016_phase_k01_desktop_ecosystem")).toBe(true);
     expect(journal.entries.map((entry) => entry.idx)).toEqual([
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
     ]);
     expect(journal.entries.some((entry) => entry.tag === "0018_product_technical_identity")).toBe(
       true
     );
     expect(journal.entries.some((entry) => entry.tag === "0019_release_artifacts")).toBe(true);
     expect(journal.entries.some((entry) => entry.tag === "0020_system_announcements")).toBe(true);
+    expect(journal.entries.some((entry) => entry.tag === "0021_phase20_campaign_sync")).toBe(true);
+    expect(journal.entries.some((entry) => entry.tag === "0022_phase21_announcement_type")).toBe(true);
+    expect(journal.entries.some((entry) => entry.tag === "0023_announcement_software_update")).toBe(
+      true,
+    );
   });
 
   it("does not rewrite historical migrations 0000–0008", () => {

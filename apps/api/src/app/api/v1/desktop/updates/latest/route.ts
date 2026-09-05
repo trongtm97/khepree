@@ -1,4 +1,3 @@
-import { isDesktopAuthError } from "@khepree/desktop-auth";
 import { serializeDesktopLatestUpdate } from "@khepree/catalog";
 import { enforceRateLimit, RATE_LIMITS } from "@khepree/security";
 import { getRequestId, jsonError, jsonOk } from "@/lib/api-response";

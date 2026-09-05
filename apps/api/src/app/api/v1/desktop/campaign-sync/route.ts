@@ -4,7 +4,6 @@ import { readDesktopAccessToken, desktopActivateErrorResponse } from "@/lib/desk
 import { getPlatform } from "@/lib/platform";
 import { campaignSyncPayloadSchema } from "@/lib/campaign-sync-schema";
 import {
-  deleteCampaignSync,
   isCampaignSyncError,
   upsertCampaignSync,
 } from "@/lib/campaign-sync";
