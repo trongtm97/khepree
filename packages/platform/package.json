@@ -7,7 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "test": "vitest run",
+    "test": "vitest run src",
     "build:worker": "node scripts/build-outbox-worker.mjs",
     "outbox:run": "tsx src/run-outbox-cli.ts"
   },
