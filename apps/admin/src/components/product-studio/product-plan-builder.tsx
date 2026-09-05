@@ -4,9 +4,9 @@ import type { StudioPlan } from "@khepree/catalog/product/studio/types";
 import {
   ACCESS_TERM_PRESETS,
   detectAccessTermKind,
+  mergeFullDescription,
   type AccessTermKind,
 } from "@khepree/catalog/product/studio-field-policy";
-import { resolvePublicFullDescription, readMarketingMetadata } from "@khepree/catalog/product/compose-legacy-description";
 import { Input, Select } from "@khepree/ui";
 import { useMemo, useState } from "react";
 
@@ -251,18 +251,11 @@ export function ProductPlanBuilder({ plans, recommendedPlanPublicId }: Props) {
   );
 }
 
+/** Studio editor load: translation row only — never inject shared VI marketing into EN. */
 export function mergedDescriptionForLocale(
   translations: Array<{ locale: string; description: string | null; content: string | null }>,
   locale: string,
-  metadata?: Record<string, unknown>,
 ): string {
   const tr = translations.find((t) => t.locale === locale);
-  const marketing = readMarketingMetadata(metadata);
-  return (
-    resolvePublicFullDescription({
-      description: tr?.description ?? null,
-      content: tr?.content ?? null,
-      marketing,
-    }) ?? ""
-  );
+  return mergeFullDescription(tr?.description ?? null, tr?.content ?? null);
 }

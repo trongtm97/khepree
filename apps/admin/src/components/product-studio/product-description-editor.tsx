@@ -1,6 +1,6 @@
 "use client";
 
-import { PRODUCT_DESCRIPTION_TEMPLATE } from "@khepree/catalog/product/studio-field-policy";
+import { productDescriptionTemplate } from "@khepree/catalog/product/studio-field-policy";
 import { Button } from "@khepree/ui";
 import { useState } from "react";
 import { ContentTiptapEditor } from "@/components/content/content-tiptap-editor";
@@ -12,6 +12,7 @@ type Props = {
   onValueChange?: (value: string) => void;
 };
 
+/** Parent must remount with key={locale} so defaultValue initializes per locale. */
 export function ProductDescriptionEditor({ name, defaultValue = "", locale, onValueChange }: Props) {
   const [value, setValue] = useState(defaultValue);
   const [editorKey, setEditorKey] = useState(0);
@@ -25,8 +26,9 @@ export function ProductDescriptionEditor({ name, defaultValue = "", locale, onVa
           variant="secondary"
           className="text-xs"
           onClick={() => {
-            setValue(PRODUCT_DESCRIPTION_TEMPLATE);
-            onValueChange?.(PRODUCT_DESCRIPTION_TEMPLATE);
+            const template = productDescriptionTemplate(locale);
+            setValue(template);
+            onValueChange?.(template);
             setEditorKey((k) => k + 1);
           }}
         >

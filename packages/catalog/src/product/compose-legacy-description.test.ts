@@ -29,7 +29,27 @@ describe("compose-legacy-description", () => {
     expect(resolved).toBe("Primary copy\n\nMore copy");
   });
 
-  it("falls back to marketing when description empty", () => {
+  it("falls back to marketing when description empty for vi", () => {
+    const resolved = resolvePublicFullDescription({
+      description: null,
+      content: null,
+      marketing,
+      locale: "vi",
+    });
+    expect(resolved).toContain("Slow workflow");
+  });
+
+  it("does not fall back to marketing for en", () => {
+    const resolved = resolvePublicFullDescription({
+      description: null,
+      content: null,
+      marketing,
+      locale: "en",
+    });
+    expect(resolved).toBeNull();
+  });
+
+  it("defaults locale to vi for marketing fallback", () => {
     const resolved = resolvePublicFullDescription({
       description: null,
       content: null,

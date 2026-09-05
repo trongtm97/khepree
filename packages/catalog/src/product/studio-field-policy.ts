@@ -50,7 +50,7 @@ export const STUDIO_FEATURE_KEYS = {
   leaseGraceSeconds: "lease.grace_seconds",
 } as const;
 
-export const PRODUCT_DESCRIPTION_TEMPLATE = `## Giới thiệu
+export const PRODUCT_DESCRIPTION_TEMPLATE_VI = `## Giới thiệu
 
 ## Tính năng nổi bật
 
@@ -62,6 +62,26 @@ export const PRODUCT_DESCRIPTION_TEMPLATE = `## Giới thiệu
 
 ## Câu hỏi thường gặp
 `;
+
+export const PRODUCT_DESCRIPTION_TEMPLATE_EN = `## Introduction
+
+## Highlights
+
+## Who it's for
+
+## How it works
+
+## System requirements
+
+## FAQ
+`;
+
+/** @deprecated Prefer productDescriptionTemplate(locale) — kept as VI alias for callers. */
+export const PRODUCT_DESCRIPTION_TEMPLATE = PRODUCT_DESCRIPTION_TEMPLATE_VI;
+
+export function productDescriptionTemplate(locale: string): string {
+  return locale === "en" ? PRODUCT_DESCRIPTION_TEMPLATE_EN : PRODUCT_DESCRIPTION_TEMPLATE_VI;
+}
 
 export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
   "ai-tools": "AI Tools",

@@ -62,6 +62,7 @@ function mapProductSummary(
     description: translation.description,
     content: translation.content,
     marketing,
+    locale: translation.locale,
   });
   const seo = resolvePublicSeoFields({
     name: translation.name,

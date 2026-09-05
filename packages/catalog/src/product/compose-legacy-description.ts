@@ -79,9 +79,13 @@ export function resolvePublicFullDescription(input: {
   description: string | null;
   content: string | null;
   marketing?: ProductMarketingMetadata;
+  /** Marketing JSON is VI-only legacy; only fall back for this locale (default vi). */
+  locale?: string;
 }): string | null {
   const merged = mergeFullDescription(input.description, input.content);
   if (merged.trim()) return merged;
+  // Shared marketing blob uses hard-coded Vietnamese headings — never inject into EN.
+  if ((input.locale ?? "vi") !== "vi") return null;
   const legacy = composeMarketingToMarkdown(input.marketing ?? {});
   return legacy.trim() || null;
 }

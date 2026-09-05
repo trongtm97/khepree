@@ -38,7 +38,7 @@ function readLocale(snapshot: ProductStudioSnapshot, locale: Locale): LocaleFiel
   return {
     name: tr?.name ?? "",
     shortDescription: tr?.shortDescription ?? "",
-    fullDescription: mergedDescriptionForLocale(snapshot.translations, locale, snapshot.metadata),
+    fullDescription: mergedDescriptionForLocale(snapshot.translations, locale),
     seoTitle: tr?.seoTitle ?? "",
     seoDescription: tr?.seoDescription ?? "",
   };
@@ -165,6 +165,7 @@ export function ProductStudioWorkspace({ snapshot, previewUrl, canWrite, release
             }}
           />
           <ProductDescriptionEditor
+            key={locale}
             name={`fullDescription_${locale}_editor`}
             locale={locale}
             defaultValue={active.fullDescription}

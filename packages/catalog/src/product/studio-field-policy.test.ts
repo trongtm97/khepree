@@ -5,6 +5,8 @@ import {
   parseProductCategory,
   parseProductType,
   PRODUCT_DESCRIPTION_TEMPLATE,
+  PRODUCT_DESCRIPTION_TEMPLATE_EN,
+  productDescriptionTemplate,
 } from "./studio-field-policy";
 
 describe("studio-field-policy", () => {
@@ -46,8 +48,12 @@ describe("studio-field-policy", () => {
     expect(mergeFullDescription("A", null)).toBe("A");
   });
 
-  it("exposes description template sections", () => {
+  it("exposes locale-specific description templates", () => {
     expect(PRODUCT_DESCRIPTION_TEMPLATE).toContain("## Giới thiệu");
     expect(PRODUCT_DESCRIPTION_TEMPLATE).toContain("## Câu hỏi thường gặp");
+    expect(productDescriptionTemplate("vi")).toContain("## Giới thiệu");
+    expect(productDescriptionTemplate("en")).toBe(PRODUCT_DESCRIPTION_TEMPLATE_EN);
+    expect(productDescriptionTemplate("en")).toContain("## Introduction");
+    expect(productDescriptionTemplate("en")).not.toContain("## Giới thiệu");
   });
 });
