@@ -20,7 +20,12 @@ const SEVERITIES = new Set<AnnouncementSeverity>([
 const PLATFORMS = new Set<ReleasePlatform>(["windows", "macos", "linux"]);
 const ARCHITECTURES = new Set<ReleaseArchitecture>(["x64", "arm64", "universal"]);
 const CHANNELS = new Set<ReleaseChannel>(["stable", "beta", "alpha"]);
-const CTA_KINDS = new Set<AnnouncementCtaKind>(["none", "open_url", "open_path"]);
+const CTA_KINDS = new Set<AnnouncementCtaKind>([
+  "none",
+  "open_url",
+  "open_path",
+  "software_update",
+]);
 const ANNOUNCEMENT_TYPES = new Set<AnnouncementType>(["general", "whats_new", "urgent"]);
 
 function optionalEnum<T extends string>(value: string, allowed: Set<T>): T | null {
@@ -59,6 +64,7 @@ export interface AnnouncementDraftFormInput {
   ctaKind?: string;
   ctaUrl?: string;
   ctaPath?: string;
+  ctaReleasePublicId?: string;
   titleVi?: string;
   titleEn?: string;
   bodyVi?: string;
@@ -80,6 +86,12 @@ export function parseAnnouncementDraftForm(
     ctaPayload = validated ? { ...validated } : null;
   } else if (ctaKind === "open_path") {
     const validated = validateAnnouncementCta(ctaKind, { path: input.ctaPath ?? "" });
+    ctaPayload = validated ? { ...validated } : null;
+  } else if (ctaKind === "software_update") {
+    const validated = validateAnnouncementCta(ctaKind, {
+      releasePublicId: input.ctaReleasePublicId ?? "",
+      actions: ["download", "auto_update"],
+    });
     ctaPayload = validated ? { ...validated } : null;
   } else {
     validateAnnouncementCta("none", null);

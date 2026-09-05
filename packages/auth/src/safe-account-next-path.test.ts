@@ -25,6 +25,12 @@ describe("safeAccountNextPath", () => {
     );
   });
 
+  it("allows desktop authorize next with custom-scheme redirect_uri", () => {
+    const next =
+      "/desktop/authorize?client_id=khepree-tts-batch-ai-desktop&redirect_uri=khepreettsbatchai://auth/callback&code_challenge=x&code_challenge_method=S256&state=s";
+    expect(safeAccountNextPath(next)).toBe(next);
+  });
+
   it("falls back when empty", () => {
     expect(safeAccountNextPath(null)).toBe("/dashboard");
     expect(safeAccountNextPath(undefined, "/profile")).toBe("/profile");

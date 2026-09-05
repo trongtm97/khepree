@@ -855,7 +855,7 @@ export class ProductStudioService {
             : input.accessFeatureKey,
           desktopClientId: identityLock.locked
             ? snapshot.desktopClientId ?? undefined
-            : input.desktopClientId,
+            : input.desktopClientId || snapshot.desktopClientId || undefined,
           desktopProtocol: identityLock.locked
             ? parseDesktopProtocol(snapshot.metadata) ?? undefined
             : input.desktopProtocol,

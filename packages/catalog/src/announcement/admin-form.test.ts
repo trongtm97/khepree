@@ -70,12 +70,18 @@ describe("parseAnnouncementDraftForm", () => {
     expect(en?.ctaLabel).toBe("Explore what's new");
   });
 
-  it("sets ctaLabel to null when blank", () => {
+  it("parses software_update CTA with release public id", () => {
     const parsed = parseAnnouncementDraftForm({
-      titleVi: "T",
-      ctaKind: "none",
-      ctaLabelVi: "  ",
+      titleVi: "Có bản mới",
+      ctaKind: "software_update",
+      ctaReleasePublicId: "rel_abcdefghijkl",
+      type: "whats_new",
     });
-    expect(parsed.translations[0]?.ctaLabel).toBeNull();
+    expect(parsed.ctaKind).toBe("software_update");
+    expect(parsed.ctaPayload).toEqual({
+      releasePublicId: "rel_abcdefghijkl",
+      actions: ["download", "auto_update"],
+    });
+    expect(parsed.type).toBe("whats_new");
   });
 });

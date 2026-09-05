@@ -4,7 +4,6 @@ import { suggestProductSlug } from "./slug";
 const PRODUCT_CODE_PREFIX = "KHEPREE_";
 const PROTOCOL_PATTERN = /^[a-z][a-z0-9]{2,63}$/;
 const PRODUCT_CODE_PATTERN = /^[A-Z][A-Z0-9_]{2,80}$/;
-const DESKTOP_CLIENT_ID_PATTERN = /^[a-z0-9]+(\.[a-z0-9-]+)+$/;
 const CALLBACK_PATH = "auth/callback";
 
 /** Uppercase snake product code — stable internal identifier, not display text. */
@@ -21,6 +20,9 @@ export function suggestAccessFeatureKey(name: string): string {
   const base = (words.length ? words : ["product"]).join("_").toLowerCase();
   return `${base}.access`;
 }
+
+/** Public desktop OAuth client id — dotted studio form or hyphenated app contract. */
+const DESKTOP_CLIENT_ID_PATTERN = /^[a-z0-9]+([.-][a-z0-9-]+)+$/;
 
 /** Public desktop OAuth client id, e.g. khepree.novel-ai.desktop */
 export function suggestDesktopClientId(name: string): string {

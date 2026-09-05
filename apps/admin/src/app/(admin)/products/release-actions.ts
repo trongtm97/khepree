@@ -11,6 +11,7 @@ import { hasPermission, type Permission } from "@khepree/security";
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/components/action-form";
 import { requireAdmin } from "@/lib/admin-session";
+import { getAnnouncementService } from "@/lib/announcement-service";
 import { getReleaseService } from "@/lib/release-service";
 
 export type ReleaseUploadState = ActionState & {
@@ -104,14 +105,50 @@ export async function publishReleaseAction(_s: ActionState, formData: FormData):
     const session = await actor("catalog.write");
     const releaseId = String(formData.get("releaseId") ?? "");
     const productId = String(formData.get("productId") ?? "");
+    const notifyDesktop = formData.get("notifyDesktop") === "on";
     const readiness = await getReleaseService().getPublishReadiness(releaseId);
     if (!readiness.ready) {
       return { error: readiness.blockers[0] ?? "Release chưa verified" };
     }
-    await getReleaseService().publish(releaseId, session.user.id);
+    const published = await getReleaseService().publish(releaseId, session.user.id);
     revalidateRelease(productId);
     revalidatePath(`/releases/${String(formData.get("releasePublicId") ?? "")}`);
-    return { notice: "Đã xuất bản phiên bản" };
+
+    if (!notifyDesktop) {
+      return { notice: "Đã xuất bản phiên bản (không tạo thông báo desktop)" };
+    }
+
+    try {
+      const result = await getAnnouncementService().publishWhatsNewForRelease(
+        {
+          id: published.id,
+          publicId: published.publicId,
+          productId: published.productId,
+          version: published.version,
+          platform: published.platform,
+          architecture: published.architecture,
+          channel: published.channel,
+          releaseNotesVi: published.releaseNotesVi,
+          releaseNotesEn: published.releaseNotesEn,
+        },
+        session.user.id,
+      );
+      revalidatePath("/announcements");
+      if (result.created) {
+        return {
+          notice: `Đã xuất bản phiên bản và tạo thông báo desktop (${result.announcement.publicId})`,
+        };
+      }
+      return {
+        notice: `Đã xuất bản phiên bản — thông báo desktop đã tồn tại (${result.announcement.publicId})`,
+      };
+    } catch (notifyError) {
+      const message =
+        notifyError instanceof Error ? notifyError.message : "Không tạo được thông báo desktop";
+      return {
+        notice: `Đã xuất bản phiên bản, nhưng thông báo desktop thất bại: ${message}`,
+      };
+    }
   } catch (error) {
     return fail(error);
   }

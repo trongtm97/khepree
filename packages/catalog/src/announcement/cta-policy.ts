@@ -4,11 +4,14 @@ import {
   isKhepreeFirstPartyHost,
   isProtocolLink,
 } from "@khepree/config";
-import type { AnnouncementCtaKind } from "@khepree/db";
+import { isPublicId, type AnnouncementCtaKind } from "@khepree/db";
 import { isSafeRedirectPath } from "../content/redirect-path";
 
 const BLOCKED_URL_SCHEMES = /^(javascript|file|data|vbscript):/i;
 const SHELL_METACHAR = /[;|`$]|&&|\|\||\$\(/;
+
+export const SOFTWARE_UPDATE_ACTIONS = ["download", "auto_update"] as const;
+export type SoftwareUpdateAction = (typeof SOFTWARE_UPDATE_ACTIONS)[number];
 
 export interface OpenUrlCtaPayload {
   url: string;
@@ -18,7 +21,16 @@ export interface OpenPathCtaPayload {
   path: string;
 }
 
-export type ValidatedCtaPayload = OpenUrlCtaPayload | OpenPathCtaPayload | null;
+export interface SoftwareUpdateCtaPayload {
+  releasePublicId: string;
+  actions: SoftwareUpdateAction[];
+}
+
+export type ValidatedCtaPayload =
+  | OpenUrlCtaPayload
+  | OpenPathCtaPayload
+  | SoftwareUpdateCtaPayload
+  | null;
 
 export function isAllowedAnnouncementUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -32,6 +44,24 @@ export function isAllowedAnnouncementUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+function parseSoftwareUpdateActions(raw: unknown): SoftwareUpdateAction[] {
+  if (raw == null) return [...SOFTWARE_UPDATE_ACTIONS];
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new Error("CTA software_update actions must be a non-empty array");
+  }
+  const allowed = new Set<string>(SOFTWARE_UPDATE_ACTIONS);
+  const actions: SoftwareUpdateAction[] = [];
+  for (const item of raw) {
+    if (typeof item !== "string" || !allowed.has(item)) {
+      throw new Error("CTA software_update actions must be download and/or auto_update");
+    }
+    if (!actions.includes(item as SoftwareUpdateAction)) {
+      actions.push(item as SoftwareUpdateAction);
+    }
+  }
+  return actions;
 }
 
 export function validateAnnouncementCta(
@@ -72,6 +102,21 @@ export function validateAnnouncementCta(
       throw new Error("CTA path contains disallowed characters");
     }
     return { path: path.trim() };
+  }
+
+  if (kind === "software_update") {
+    const releasePublicId = (payload as SoftwareUpdateCtaPayload).releasePublicId;
+    if (typeof releasePublicId !== "string" || !releasePublicId.trim()) {
+      throw new Error("CTA software_update requires releasePublicId");
+    }
+    const trimmed = releasePublicId.trim();
+    if (!isPublicId(trimmed, "rel")) {
+      throw new Error("CTA software_update releasePublicId is invalid");
+    }
+    return {
+      releasePublicId: trimmed,
+      actions: parseSoftwareUpdateActions((payload as SoftwareUpdateCtaPayload).actions),
+    };
   }
 
   throw new Error(`Unsupported CTA kind: ${kind}`);

@@ -105,3 +105,18 @@ export function pickLatestPublishedRelease<T extends LatestReleaseCandidate>(
   if (eligible.length === 0) return null;
   return eligible.sort((a, b) => compareReleaseVersions(b.version, a.version))[0] ?? null;
 }
+
+/**
+ * Inclusive SemVer ceiling for targeting clients older than `version`.
+ * Used when auto-notifying a release so apps already on that version skip the banner.
+ */
+export function versionCeilingBelow(version: string): string | null {
+  const parsed = parseReleaseVersion(version);
+  if (!parsed) return null;
+  const v = semver.parse(parsed);
+  if (!v) return null;
+  if (v.patch > 0) return `${v.major}.${v.minor}.${v.patch - 1}`;
+  if (v.minor > 0) return `${v.major}.${v.minor - 1}.9999`;
+  if (v.major > 0) return `${v.major - 1}.9999.9999`;
+  return null;
+}

@@ -15,6 +15,7 @@ import {
   releaseArchitectureEnum,
   releaseChannelEnum,
   releasePlatformEnum,
+  softwareReleases,
 } from "./release";
 
 export const announcementSeverityEnum = pgEnum("announcement_severity", [
@@ -36,6 +37,7 @@ export const announcementCtaKindEnum = pgEnum("announcement_cta_kind", [
   "none",
   "open_url",
   "open_path",
+  "software_update",
 ]);
 
 /**
@@ -76,6 +78,10 @@ export const systemAnnouncements = pgTable(
     type: announcementTypeEnum("type").notNull().default("general"),
     ctaKind: announcementCtaKindEnum("cta_kind").notNull().default("none"),
     ctaPayload: jsonb("cta_payload").$type<Record<string, unknown>>(),
+    /** Optional link to a software release (dedupe auto-notify on publish). */
+    relatedReleaseId: uuid("related_release_id").references(() => softwareReleases.id, {
+      onDelete: "set null",
+    }),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
     updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
     ...timestamps,
@@ -86,6 +92,7 @@ export const systemAnnouncements = pgTable(
     index("system_announcements_published_at_idx").on(table.publishedAt),
     index("system_announcements_target_platform_idx").on(table.targetPlatform),
     index("system_announcements_release_channel_idx").on(table.releaseChannel),
+    unique("system_announcements_related_release_id_uidx").on(table.relatedReleaseId),
   ],
 );
 

@@ -90,6 +90,11 @@ export {
 export {
   isAllowedAnnouncementUrl,
   validateAnnouncementCta,
+  SOFTWARE_UPDATE_ACTIONS,
+} from "./announcement/cta-policy";
+export type {
+  SoftwareUpdateAction,
+  SoftwareUpdateCtaPayload,
 } from "./announcement/cta-policy";
 export {
   assertValidAnnouncementSchedule,
@@ -119,6 +124,13 @@ export type {
   ListDesktopAnnouncementsQuery,
   UpdateAnnouncementDraftInput,
 } from "./announcement/types";
+export {
+  buildReleaseWhatsNewDraftInput,
+} from "./announcement/release-notify";
+export type {
+  PublishWhatsNewForReleaseResult,
+  ReleaseNotifySource,
+} from "./announcement/release-notify";
 
 export {
   ReleaseService,
@@ -133,6 +145,7 @@ export {
   parseReleaseVersion,
   pickLatestCompatibleRelease,
   pickLatestPublishedRelease,
+  versionCeilingBelow,
 } from "./release/version";
 export type { LatestReleaseCandidate } from "./release/version";
 export {

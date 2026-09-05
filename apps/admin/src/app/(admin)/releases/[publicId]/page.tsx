@@ -78,6 +78,13 @@ export default async function ReleaseDetailPage({
               <input type="hidden" name="releaseId" value={release.id} />
               <input type="hidden" name="productId" value={release.productId} />
               <input type="hidden" name="releasePublicId" value={release.publicId} />
+              <label className="mt-3 flex items-start gap-2 text-sm text-khepree-slate">
+                <input type="checkbox" name="notifyDesktop" className="mt-1" />
+                <span>
+                  Tạo thông báo desktop (what&apos;s new) — bỏ chọn nếu muốn thông báo thủ công sau
+                  tại /announcements
+                </span>
+              </label>
             </ActionForm>
           ) : (
             <p className="text-sm text-khepree-slate/70">

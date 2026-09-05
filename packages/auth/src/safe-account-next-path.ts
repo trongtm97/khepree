@@ -24,8 +24,10 @@ export function safeAccountNextPath(
   const value = raw.trim();
   const lower = value.toLowerCase();
 
+  // Relative account paths only. Allow `://` inside query values
+  // (desktop authorize carries redirect_uri=app://callback).
   if (!value.startsWith("/") || value.startsWith("//")) return fallback;
-  if (value.includes("://") || value.includes("\\")) return fallback;
+  if (value.includes("\\")) return fallback;
   if (lower.startsWith("javascript:") || lower.startsWith("data:") || lower.startsWith("vbscript:")) {
     return fallback;
   }

@@ -8,9 +8,17 @@ export const DESKTOP_ANNOUNCEMENT_SEVERITIES = [
 
 export type DesktopAnnouncementSeverity = (typeof DESKTOP_ANNOUNCEMENT_SEVERITIES)[number];
 
-export const DESKTOP_ANNOUNCEMENT_CTA_KINDS = ["none", "open_url", "open_path"] as const;
+export const DESKTOP_ANNOUNCEMENT_CTA_KINDS = [
+  "none",
+  "open_url",
+  "open_path",
+  "software_update",
+] as const;
 
 export type DesktopAnnouncementCtaKind = (typeof DESKTOP_ANNOUNCEMENT_CTA_KINDS)[number];
+
+export const DESKTOP_SOFTWARE_UPDATE_ACTIONS = ["download", "auto_update"] as const;
+export type DesktopSoftwareUpdateAction = (typeof DESKTOP_SOFTWARE_UPDATE_ACTIONS)[number];
 
 /**
  * Desktop rendering lane. Old clients receive `undefined` and treat as `general`.
@@ -20,6 +28,11 @@ export type DesktopAnnouncementCtaKind = (typeof DESKTOP_ANNOUNCEMENT_CTA_KINDS)
  */
 export const DESKTOP_ANNOUNCEMENT_TYPES = ["general", "whats_new", "urgent"] as const;
 export type DesktopAnnouncementType = (typeof DESKTOP_ANNOUNCEMENT_TYPES)[number];
+
+export interface DesktopSoftwareUpdateCtaPayload {
+  releasePublicId: string;
+  actions: DesktopSoftwareUpdateAction[];
+}
 
 export interface DesktopAnnouncementCta {
   kind: DesktopAnnouncementCtaKind;

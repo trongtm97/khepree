@@ -20,6 +20,7 @@ export interface AnnouncementRecord {
   id: string;
   publicId: string;
   productId: string | null;
+  relatedReleaseId: string | null;
   severity: AnnouncementSeverity;
   status: AnnouncementStatus;
   type: AnnouncementType;
@@ -42,6 +43,9 @@ export interface AnnouncementRecord {
 
 export interface CreateAnnouncementDraftInput {
   productId?: string | null;
+  relatedReleaseId?: string | null;
+  /** When false, do not auto-bind related_release_id from software_update CTA (clone path). */
+  bindRelatedRelease?: boolean;
   severity?: AnnouncementSeverity;
   type?: AnnouncementType;
   targetPlatform?: ReleasePlatform | null;

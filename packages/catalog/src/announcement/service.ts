@@ -7,6 +7,7 @@ import {
   getDb,
   productTranslations,
   products,
+  softwareReleases,
   systemAnnouncements,
   type AnnouncementCtaKind,
   type AuditService,
@@ -16,6 +17,11 @@ import { CatalogError } from "../product/admin";
 import { sanitizeAnnouncementBody } from "./body";
 import { validateAnnouncementCta } from "./cta-policy";
 import { hasDefaultLocaleTranslation, resolveAnnouncementCopy } from "./locale";
+import {
+  buildReleaseWhatsNewDraftInput,
+  type PublishWhatsNewForReleaseResult,
+  type ReleaseNotifySource,
+} from "./release-notify";
 import {
   assertValidAnnouncementSchedule,
   assertValidAppVersionRange,
@@ -48,6 +54,7 @@ function mapAnnouncement(
     id: row.id,
     publicId: row.publicId,
     productId: row.productId,
+    relatedReleaseId: row.relatedReleaseId ?? null,
     severity: row.severity,
     status: row.status,
     type: row.type,
@@ -158,6 +165,34 @@ export class AnnouncementService {
     if (!product) throw new CatalogError("NOT_FOUND", "Sản phẩm không tồn tại");
   }
 
+  private async resolveRelatedReleaseId(input: {
+    relatedReleaseId?: string | null;
+    ctaKind: AnnouncementCtaKind;
+    ctaPayload: Record<string, unknown> | null;
+    productId: string | null;
+  }): Promise<string | null> {
+    if (input.relatedReleaseId) return input.relatedReleaseId;
+    if (input.ctaKind !== "software_update") return null;
+    const releasePublicId =
+      typeof input.ctaPayload?.releasePublicId === "string"
+        ? input.ctaPayload.releasePublicId
+        : null;
+    if (!releasePublicId) return null;
+
+    const [release] = await this.db
+      .select({ id: softwareReleases.id, productId: softwareReleases.productId })
+      .from(softwareReleases)
+      .where(eq(softwareReleases.publicId, releasePublicId))
+      .limit(1);
+    if (!release) {
+      throw new CatalogError("NOT_FOUND", "Release CTA không tồn tại");
+    }
+    if (input.productId && release.productId !== input.productId) {
+      throw new CatalogError("INVALID_INPUT", "Release CTA không thuộc sản phẩm đã chọn");
+    }
+    return release.id;
+  }
+
   private async replaceTranslations(
     announcementId: string,
     translations: AnnouncementTranslationInput[],
@@ -180,6 +215,25 @@ export class AnnouncementService {
   async createDraft(input: CreateAnnouncementDraftInput): Promise<AnnouncementRecord> {
     await this.assertProductExists(input.productId ?? null);
     const validated = this.validateDraftInput(input);
+    const relatedReleaseId =
+      input.bindRelatedRelease === false
+        ? null
+        : await this.resolveRelatedReleaseId({
+            relatedReleaseId: input.relatedReleaseId ?? null,
+            ctaKind: validated.ctaKind,
+            ctaPayload: validated.ctaPayload,
+            productId: input.productId ?? null,
+          });
+
+    if (relatedReleaseId) {
+      const existingForRelease = await this.findByRelatedReleaseId(relatedReleaseId);
+      if (existingForRelease) {
+        throw new CatalogError(
+          "CONFLICT",
+          `Release đã có thông báo liên kết (${existingForRelease.publicId})`,
+        );
+      }
+    }
 
     const publicId = createPublicId("ann");
     const [row] = await this.db
@@ -187,6 +241,7 @@ export class AnnouncementService {
       .values({
         publicId,
         productId: input.productId ?? null,
+        relatedReleaseId,
         severity: input.severity ?? "info",
         type: input.type ?? "general",
         status: "draft",
@@ -230,11 +285,28 @@ export class AnnouncementService {
 
     await this.assertProductExists(input.productId ?? null);
     const validated = this.validateDraftInput(input);
+    const relatedReleaseId = await this.resolveRelatedReleaseId({
+      relatedReleaseId: input.relatedReleaseId ?? null,
+      ctaKind: validated.ctaKind,
+      ctaPayload: validated.ctaPayload,
+      productId: input.productId ?? null,
+    });
+
+    if (relatedReleaseId) {
+      const existingForRelease = await this.findByRelatedReleaseId(relatedReleaseId);
+      if (existingForRelease && existingForRelease.id !== input.announcementId) {
+        throw new CatalogError(
+          "CONFLICT",
+          `Release đã có thông báo liên kết (${existingForRelease.publicId})`,
+        );
+      }
+    }
 
     const [row] = await this.db
       .update(systemAnnouncements)
       .set({
         productId: input.productId ?? null,
+        relatedReleaseId,
         severity: input.severity ?? existing.severity,
         type: input.type ?? existing.type,
         targetPlatform: input.targetPlatform ?? null,
@@ -797,6 +869,7 @@ export class AnnouncementService {
     return this.createDraft({
       productId: existing.productId,
       severity: existing.severity,
+      type: existing.type,
       targetPlatform: existing.targetPlatform,
       targetArchitecture: existing.targetArchitecture,
       releaseChannel: existing.releaseChannel,
@@ -808,7 +881,37 @@ export class AnnouncementService {
       ctaPayload: (existing.ctaPayload as Record<string, unknown> | null) ?? null,
       translations,
       actorUserId,
+      bindRelatedRelease: false,
     });
+  }
+
+  async findByRelatedReleaseId(releaseId: string): Promise<AnnouncementRecord | null> {
+    const [row] = await this.db
+      .select()
+      .from(systemAnnouncements)
+      .where(eq(systemAnnouncements.relatedReleaseId, releaseId))
+      .limit(1);
+    if (!row) return null;
+    const translationsById = await this.loadTranslations([row.id]);
+    return mapAnnouncement(row, translationsById.get(row.id) ?? []);
+  }
+
+  /**
+   * Idempotent: create+publish a whats_new announcement for a release, or return the existing one.
+   */
+  async publishWhatsNewForRelease(
+    release: ReleaseNotifySource,
+    actorUserId?: string | null,
+  ): Promise<PublishWhatsNewForReleaseResult> {
+    const existing = await this.findByRelatedReleaseId(release.id);
+    if (existing) {
+      return { announcement: existing, created: false };
+    }
+
+    const draftInput = buildReleaseWhatsNewDraftInput(release, actorUserId);
+    const draft = await this.createDraft(draftInput);
+    const announcement = await this.publish(draft.id, actorUserId);
+    return { announcement, created: true };
   }
 }
 

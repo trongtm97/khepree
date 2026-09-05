@@ -8,6 +8,7 @@ import {
   suggestInternalPlanCode,
   suggestProductCode,
   validateCallbackUri,
+  validateDesktopClientId,
   validateDesktopProtocol,
   validateProductCode,
 } from "./technical-identity";
@@ -50,6 +51,55 @@ describe("technical-identity — Khepree Novel AI", () => {
     expect(validateProductCode("bad-code")).toBe(false);
     expect(validateDesktopProtocol("khepreenovelai")).toBe(true);
     expect(validateDesktopProtocol("Bad_Protocol")).toBe(false);
+  });
+});
+
+describe("technical-identity — Khepree Livestream AI", () => {
+  const name = "Khepree Livestream AI";
+
+  it("derives catalog identity matching the desktop app contract", () => {
+    const derived = deriveTechnicalIdentity({ name, productType: "desktop-software" });
+    expect(derived.slug).toBe("khepree-livestream-ai");
+    expect(derived.productCode).toBe("KHEPREE_LIVESTREAM_AI");
+    expect(derived.accessFeatureKey).toBe("livestream_ai.access");
+    expect(derived.desktopProtocol).toBe("khepreelivestreamai");
+    expect(derived.desktopCallbackUri).toBe("khepreelivestreamai://auth/callback");
+  });
+
+  it("accepts the hyphenated desktop client id shipped by the app", () => {
+    expect(validateDesktopClientId("khepree-livestream-ai-desktop")).toBe(true);
+    expect(validateDesktopClientId("khepree.livestream-ai.desktop")).toBe(true);
+    expect(validateDesktopClientId("khepree")).toBe(false);
+  });
+
+  it("maps commercial plan codes from Product Studio presets", () => {
+    expect(suggestInternalPlanCode("KHEPREE_LIVESTREAM_AI", "trial")).toBe("LIVESTREAM_AI_FREE_TRIAL");
+    expect(suggestInternalPlanCode("KHEPREE_LIVESTREAM_AI", "month")).toBe("LIVESTREAM_AI_MONTHLY");
+    expect(suggestInternalPlanCode("KHEPREE_LIVESTREAM_AI", "year")).toBe("LIVESTREAM_AI_YEARLY");
+  });
+});
+
+describe("technical-identity — Khepree TTS Batch AI", () => {
+  const name = "Khepree TTS Batch AI";
+
+  it("derives catalog identity matching the desktop app contract", () => {
+    const derived = deriveTechnicalIdentity({ name, productType: "desktop-software" });
+    expect(derived.slug).toBe("khepree-tts-batch-ai");
+    expect(derived.productCode).toBe("KHEPREE_TTS_BATCH_AI");
+    expect(derived.accessFeatureKey).toBe("tts_batch_ai.access");
+    expect(derived.desktopProtocol).toBe("khepreettsbatchai");
+    expect(derived.desktopCallbackUri).toBe("khepreettsbatchai://auth/callback");
+  });
+
+  it("accepts the hyphenated desktop client id shipped by the app", () => {
+    expect(validateDesktopClientId("khepree-tts-batch-ai-desktop")).toBe(true);
+    expect(validateDesktopClientId("khepree.tts-batch-ai.desktop")).toBe(true);
+  });
+
+  it("maps commercial plan codes from Product Studio presets", () => {
+    expect(suggestInternalPlanCode("KHEPREE_TTS_BATCH_AI", "trial")).toBe("TTS_BATCH_AI_FREE_TRIAL");
+    expect(suggestInternalPlanCode("KHEPREE_TTS_BATCH_AI", "month")).toBe("TTS_BATCH_AI_MONTHLY");
+    expect(suggestInternalPlanCode("KHEPREE_TTS_BATCH_AI", "year")).toBe("TTS_BATCH_AI_YEARLY");
   });
 });
 

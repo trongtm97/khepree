@@ -28,7 +28,7 @@ import {
   renderAnnouncementBodyHtml,
   resolveAnnouncementCopy,
 } from "@khepree/catalog";
-import { listAdminProductsForPicker } from "@khepree/db";
+import { listAdminProductsForPicker, listAdminReleases } from "@khepree/db";
 import { hasPermission } from "@khepree/security";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -39,6 +39,9 @@ function ctaPreviewLabel(
 ): string | null {
   if (ctaKind === "open_url" && payload?.url) return `Mở liên kết: ${String(payload.url)}`;
   if (ctaKind === "open_path" && payload?.path) return `Mở: ${String(payload.path)}`;
+  if (ctaKind === "software_update" && payload?.releasePublicId) {
+    return `Cập nhật phần mềm: ${String(payload.releasePublicId)}`;
+  }
   return null;
 }
 
@@ -63,6 +66,13 @@ export default async function AnnouncementDetailPage({
   if (!record) notFound();
 
   const products = await listAdminProductsForPicker();
+  const releases = await listAdminReleases({ page: 1 });
+  const publishedReleases = releases
+    .filter((r) => r.status === "published")
+    .map((r) => ({
+      publicId: r.publicId,
+      label: `${r.nameVi ?? r.productSlug} · ${r.version} · ${r.platform}/${r.architecture} · ${r.channel}`,
+    }));
   const productLabel =
     products.find((p) => p.id === record.productId)?.nameVi ??
     products.find((p) => p.id === record.productId)?.slug ??
@@ -126,6 +136,7 @@ export default async function AnnouncementDetailPage({
             <input type="hidden" name="publicId" value={record.publicId} />
             <AnnouncementFormFields
               products={products.map((p) => ({ id: p.id, label: p.nameVi ?? p.slug }))}
+              releases={publishedReleases}
               defaultProductId={record.productId ?? ""}
               defaultSeverity={record.severity}
               defaultPlatform={record.targetPlatform ?? ""}
@@ -138,10 +149,16 @@ export default async function AnnouncementDetailPage({
               defaultCtaKind={record.ctaKind}
               defaultCtaUrl={ctaPayload?.url ? String(ctaPayload.url) : ""}
               defaultCtaPath={ctaPayload?.path ? String(ctaPayload.path) : ""}
+              defaultCtaReleasePublicId={
+                ctaPayload?.releasePublicId ? String(ctaPayload.releasePublicId) : ""
+              }
+              defaultType={record.type}
               defaultTitleVi={vi?.title ?? ""}
               defaultTitleEn={en?.title ?? ""}
               defaultBodyVi={vi?.body ?? ""}
               defaultBodyEn={en?.body ?? ""}
+              defaultCtaLabelVi={vi?.ctaLabel ?? ""}
+              defaultCtaLabelEn={en?.ctaLabel ?? ""}
             />
           </ActionForm>
 

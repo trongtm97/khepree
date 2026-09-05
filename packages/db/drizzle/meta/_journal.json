@@ -162,6 +162,13 @@
       "when": 1757340600000,
       "tag": "0022_phase21_announcement_type",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1757341200000,
+      "tag": "0023_announcement_software_update",
+      "breakpoints": true
     }
   ]
 }

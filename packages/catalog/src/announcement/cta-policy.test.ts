@@ -29,6 +29,44 @@ describe("validateAnnouncementCta", () => {
       /safe internal path/i,
     );
   });
+
+  it("accepts software_update with valid release public id and default actions", () => {
+    expect(
+      validateAnnouncementCta("software_update", {
+        releasePublicId: "rel_abcdefghijkl",
+      }),
+    ).toEqual({
+      releasePublicId: "rel_abcdefghijkl",
+      actions: ["download", "auto_update"],
+    });
+  });
+
+  it("accepts software_update with explicit actions subset", () => {
+    expect(
+      validateAnnouncementCta("software_update", {
+        releasePublicId: "rel_abcdefghijkl",
+        actions: ["download"],
+      }),
+    ).toEqual({
+      releasePublicId: "rel_abcdefghijkl",
+      actions: ["download"],
+    });
+  });
+
+  it("rejects software_update with invalid release id or actions", () => {
+    expect(() =>
+      validateAnnouncementCta("software_update", { releasePublicId: "not-a-rel-id" }),
+    ).toThrow(/invalid/i);
+    expect(() =>
+      validateAnnouncementCta("software_update", {
+        releasePublicId: "rel_abcdefghijkl",
+        actions: ["explode"],
+      }),
+    ).toThrow(/actions/i);
+    expect(() => validateAnnouncementCta("software_update", { releasePublicId: "" })).toThrow(
+      /releasePublicId/i,
+    );
+  });
 });
 
 describe("isAllowedAnnouncementUrl", () => {
@@ -44,20 +82,19 @@ describe("Phase 21 — Production Studio CTA: open_path /release-notes", () => {
   });
 
   it("rejects custom protocol deep links via open_url (not allowlisted)", () => {
-    // khepreenovelai:// is not HTTP/HTTPS → not allowlisted
-    expect(() => validateAnnouncementCta("open_url", { url: "khepreenovelai://open/release-notes" }))
-      .toThrow(/allowlisted/i);
+    expect(() =>
+      validateAnnouncementCta("open_url", { url: "khepreenovelai://open/release-notes" }),
+    ).toThrow(/allowlisted/i);
   });
 
   it("does not confuse whats_new announcement with urgent severity", () => {
-    // This is a contract check: type=whats_new should never require severity=action_required
-    // Validated at admin form layer. Here we just confirm the path CTA is fine for info severity.
     const cta = validateAnnouncementCta("open_path", { path: "/release-notes" });
     expect(cta).toBeTruthy();
   });
 
   it("rejects shell metacharacters in path", () => {
-    expect(() => validateAnnouncementCta("open_path", { path: "/release-notes;rm -rf" }))
-      .toThrow(/safe internal path|disallowed/i);
+    expect(() =>
+      validateAnnouncementCta("open_path", { path: "/release-notes;rm -rf" }),
+    ).toThrow(/safe internal path|disallowed/i);
   });
 });

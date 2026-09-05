@@ -22,6 +22,15 @@ export type {
   DesktopAnnouncementReadResponse,
   DesktopAnnouncementsResponse,
   DesktopAnnouncementSeverity,
+  DesktopAnnouncementType,
+  DesktopSoftwareUpdateAction,
+  DesktopSoftwareUpdateCtaPayload,
+} from "./desktop-announcements";
+export {
+  DESKTOP_ANNOUNCEMENT_CTA_KINDS,
+  DESKTOP_ANNOUNCEMENT_SEVERITIES,
+  DESKTOP_ANNOUNCEMENT_TYPES,
+  DESKTOP_SOFTWARE_UPDATE_ACTIONS,
 } from "./desktop-announcements";
 export type {
   DesktopLatestUpdate,

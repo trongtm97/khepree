@@ -34,6 +34,7 @@ const ctaOptions = [
   { value: "none", label: "Không có CTA" },
   { value: "open_url", label: "Mở URL" },
   { value: "open_path", label: "Mở đường dẫn nội bộ" },
+  { value: "software_update", label: "Cập nhật phần mềm (tải + auto-update)" },
 ];
 
 const typeOptions = [
@@ -44,6 +45,7 @@ const typeOptions = [
 
 export function AnnouncementFormFields({
   products,
+  releases = [],
   defaultProductId = "",
   defaultSeverity = "info",
   defaultPlatform = "",
@@ -56,6 +58,7 @@ export function AnnouncementFormFields({
   defaultCtaKind = "none",
   defaultCtaUrl = "",
   defaultCtaPath = "",
+  defaultCtaReleasePublicId = "",
   defaultType = "general" as AnnouncementType,
   defaultTitleVi = "",
   defaultTitleEn = "",
@@ -65,6 +68,7 @@ export function AnnouncementFormFields({
   defaultCtaLabelEn = "",
 }: {
   products: Array<{ id: string; label: string }>;
+  releases?: Array<{ publicId: string; label: string }>;
   defaultProductId?: string;
   defaultSeverity?: AnnouncementSeverity;
   defaultPlatform?: string;
@@ -77,6 +81,7 @@ export function AnnouncementFormFields({
   defaultCtaKind?: AnnouncementCtaKind;
   defaultCtaUrl?: string;
   defaultCtaPath?: string;
+  defaultCtaReleasePublicId?: string;
   defaultType?: AnnouncementType;
   defaultTitleVi?: string;
   defaultTitleEn?: string;
@@ -135,6 +140,15 @@ export function AnnouncementFormFields({
       <Select name="ctaKind" label="CTA" defaultValue={defaultCtaKind} options={ctaOptions} />
       <Input name="ctaUrl" label="URL CTA (first-party)" defaultValue={defaultCtaUrl} placeholder="https://khepree.com/support" />
       <Input name="ctaPath" label="Đường dẫn CTA" defaultValue={defaultCtaPath} placeholder="/vi/support" />
+      <Select
+        name="ctaReleasePublicId"
+        label="Release CTA (software_update)"
+        defaultValue={defaultCtaReleasePublicId}
+        options={[
+          { value: "", label: "Chọn release đã publish…" },
+          ...releases.map((r) => ({ value: r.publicId, label: r.label })),
+        ]}
+      />
       <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
         <Input name="titleVi" label="Tiêu đề (VI)" defaultValue={defaultTitleVi} required />
         <Input name="titleEn" label="Tiêu đề (EN)" defaultValue={defaultTitleEn} />
@@ -164,7 +178,8 @@ export function AnnouncementFormFields({
         />
       </div>
       <p className="md:col-span-2 text-xs text-khepree-slate/60">
-        Không hỗ trợ HTML thô. Nội dung được làm sạch trước khi lưu và hiển thị trên desktop.
+        CTA software_update: desktop hiện nút Tải về + Tự động cập nhật. Chọn sản phẩm khớp release.
+        Không hỗ trợ HTML thô — nội dung được làm sạch trước khi lưu.
       </p>
     </div>
   );
